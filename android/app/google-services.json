@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "216531343276",
+    "project_id": "commiteeapp-7cd16",
+    "storage_bucket": "commiteeapp-7cd16.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:216531343276:android:4904ebd09b93956d490c09",
+        "android_client_info": {
+          "package_name": "com.committee.committee_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCyuYVFnF-enUcSfOge_7M40EenOwQKFqQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
