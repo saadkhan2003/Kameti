@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../utils/app_theme.dart';
+import '../services/update_service.dart';
 import 'auth/login_screen.dart';
 import 'viewer/join_committee_screen.dart';
 
@@ -19,6 +20,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadVersion();
+    // Check for updates after a short delay
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        UpdateService.checkForUpdate(context);
+      }
+    });
   }
 
   Future<void> _loadVersion() async {

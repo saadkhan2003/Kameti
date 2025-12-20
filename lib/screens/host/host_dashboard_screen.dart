@@ -116,27 +116,23 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
         _isSyncing = false;
       });
 
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                result.success ? Icons.cloud_done : Icons.cloud_off,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Text(result.success ? 'Synced!' : result.message),
-            ],
+      // Only show error toast, not success
+      if (!result.success) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.cloud_off, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Text(result.message),
+              ],
+            ),
+            backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
-          backgroundColor:
-              result.success ? AppTheme.secondaryColor : AppTheme.errorColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
+        );
+      }
 
       if (result.success) {
         _loadCommittees();

@@ -14,26 +14,36 @@ class UpdateService {
   
   static Future<void> checkForUpdate(BuildContext context) async {
     // Only check on Android (not web)
-    if (kIsWeb) return;
+    if (kIsWeb) {
+      debugPrint('Update check: Skipping on web');
+      return;
+    }
 
     try {
+      debugPrint('Update check: Starting...');
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
+      debugPrint('Update check: Current version = $currentVersion');
 
       // Fetch version info from server
       final response = await http.get(Uri.parse(_versionCheckUrl));
+      debugPrint('Update check: Fetched version.json, status = ${response.statusCode}');
       if (response.statusCode != 200) return;
 
       final versionData = json.decode(response.body);
       final latestVersion = versionData['version'] as String;
       final apkUrl = versionData['apkUrl'] as String;
       final releaseNotes = versionData['releaseNotes'] as String? ?? 'Bug fixes';
+      debugPrint('Update check: Latest version = $latestVersion');
 
       // Compare versions
       if (_isNewerVersion(currentVersion, latestVersion)) {
+        debugPrint('Update check: Update available! Showing dialog...');
         if (context.mounted) {
           _showUpdateDialog(context, latestVersion, releaseNotes, apkUrl);
         }
+      } else {
+        debugPrint('Update check: Already up to date');
       }
     } catch (e) {
       debugPrint('Update check failed: $e');
@@ -275,11 +285,6 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
               valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               minHeight: 8,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _progress > 0 ? '${(_progress * 100).toInt()}%' : 'Please wait...',
-            style: TextStyle(color: Colors.grey[400], fontSize: 12),
           ),
           const SizedBox(height: 16),
           Text(

@@ -35,9 +35,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final authService = AuthService();
     final user = authService.currentUser;
-    final displayName =
-        user?.displayName ?? user?.email?.split('@')[0] ?? 'User';
-    final email = user?.email ?? 'No email';
+    // Handle anonymous users with no email/displayName
+    String displayName = user?.displayName ?? user?.email?.split('@')[0] ?? '';
+    if (displayName.isEmpty) displayName = 'Guest';
+    final email = user?.email ?? 'Anonymous User';
     final createdAt = user?.metadata.creationTime;
 
     return Scaffold(
