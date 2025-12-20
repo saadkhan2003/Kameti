@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/database_service.dart';
+import '../../services/sync_service.dart';
 import '../../services/auto_sync_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
@@ -19,20 +20,23 @@ class ShuffleMembersScreen extends StatefulWidget {
 class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
     with SingleTickerProviderStateMixin {
   final _dbService = DatabaseService();
+  final _syncService = SyncService();
   final _autoSyncService = AutoSyncService();
   List<Member> _members = [];
   bool _isShuffling = false;
   bool _isReordering = false;
+  bool _isSyncing = false;
   late AnimationController _animController;
 
   @override
   void initState() {
     super.initState();
-    _loadMembers();
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
+    // Sync from cloud first, then load
+    _syncAndLoad();
   }
 
   @override
@@ -41,7 +45,24 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
     super.dispose();
   }
 
+  Future<void> _syncAndLoad() async {
+    if (_isSyncing) return;
+    setState(() => _isSyncing = true);
+    
+    try {
+      await _syncService.syncMembers(widget.committee.id);
+    } catch (e) {
+      debugPrint('Sync error: $e');
+    }
+    
+    _loadMembers();
+    if (mounted) {
+      setState(() => _isSyncing = false);
+    }
+  }
+
   void _loadMembers() {
+    if (!mounted) return;
     setState(() {
       _members = _dbService.getMembersByCommittee(widget.committee.id);
       _members.sort((a, b) => a.payoutOrder.compareTo(b.payoutOrder));
