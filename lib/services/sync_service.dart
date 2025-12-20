@@ -179,12 +179,13 @@ class SyncService {
     int downloaded = 0;
 
     // Upload local payments to Firestore
+    // Using .set() without merge to ensure full document is written
     final localPayments = _dbService.getPaymentsByCommittee(committeeId);
     for (final payment in localPayments) {
       await _firestore
           .collection(paymentsCollection)
           .doc(payment.id)
-          .set(payment.toJson(), SetOptions(merge: true));
+          .set(payment.toJson()); // No merge - overwrites entire document
       uploaded++;
     }
 
@@ -197,17 +198,28 @@ class SyncService {
 
     for (final doc in snapshot.docs) {
       final cloudPayment = Payment.fromJson(doc.data());
-      // Always take the latest markedAt timestamp
       final existingPayment = _dbService.getPayment(
         cloudPayment.memberId,
         cloudPayment.date,
       );
 
-      if (existingPayment == null ||
-          (cloudPayment.markedAt != null &&
-              existingPayment.markedAt != null &&
-              cloudPayment.markedAt!.isAfter(existingPayment.markedAt!)) ||
-          (cloudPayment.markedAt != null && existingPayment.markedAt == null)) {
+      bool shouldDownload = false;
+      
+      if (existingPayment == null) {
+        shouldDownload = true;
+      } else if (cloudPayment.isPaid != existingPayment.isPaid) {
+        // Payment status changed - compare timestamps
+        if (cloudPayment.markedAt != null && existingPayment.markedAt != null) {
+          shouldDownload = cloudPayment.markedAt!.isAfter(existingPayment.markedAt!);
+        } else if (cloudPayment.markedAt != null) {
+          shouldDownload = true;
+        }
+      } else if (cloudPayment.markedAt != null && existingPayment.markedAt != null) {
+        // Same status but check if cloud is newer
+        shouldDownload = cloudPayment.markedAt!.isAfter(existingPayment.markedAt!);
+      }
+
+      if (shouldDownload) {
         await _dbService.savePayment(cloudPayment);
         downloaded++;
       }

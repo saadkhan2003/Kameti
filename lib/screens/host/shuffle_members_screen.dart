@@ -100,16 +100,9 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
   }
 
   Future<void> _revertPayout(Member member) async {
-    final updated = Member(
-      id: member.id,
-      committeeId: member.committeeId,
-      memberCode: member.memberCode,
-      name: member.name,
-      phone: member.phone,
-      payoutOrder: member.payoutOrder,
+    final updated = member.copyWith(
       hasReceivedPayout: false,
-      payoutDate: null,
-      createdAt: member.createdAt,
+      clearPayoutDate: true,
     );
     await _autoSyncService.saveMember(updated);
     _loadMembers();

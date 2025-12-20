@@ -1,5 +1,5 @@
 {
   "version": "1.1.0",
   "apkUrl": "https://github.com/saadkhan2003/Committee_app_personal/releases/download/v1.1.0/app-release.apk",
-  "releaseNotes": "New features: Enter key submits login form, improved UI"
+  "releaseNotes": "Add pull-to-refresh to committee details, implement automatic update checks, and refine member sync logic"
 }

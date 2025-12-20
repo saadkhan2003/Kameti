@@ -79,6 +79,7 @@ class Member extends HiveObject {
     int? payoutOrder,
     bool? hasReceivedPayout,
     DateTime? payoutDate,
+    bool clearPayoutDate = false,
   }) {
     return Member(
       id: id,
@@ -88,7 +89,7 @@ class Member extends HiveObject {
       phone: phone ?? this.phone,
       payoutOrder: payoutOrder ?? this.payoutOrder,
       hasReceivedPayout: hasReceivedPayout ?? this.hasReceivedPayout,
-      payoutDate: payoutDate ?? this.payoutDate,
+      payoutDate: clearPayoutDate ? null : (payoutDate ?? this.payoutDate),
       createdAt: createdAt,
     );
   }

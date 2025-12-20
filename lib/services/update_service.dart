@@ -147,25 +147,25 @@ class UpdateService {
         (event) {
           debugPrint('OTA Status: ${event.status}, Value: ${event.value}');
           if (event.status == OtaStatus.INSTALLING) {
-            if (context.mounted) {
+            try {
               Navigator.of(context, rootNavigator: true).pop();
-            }
+            } catch (_) {}
           }
         },
         onError: (e) {
           debugPrint('OTA Error: $e');
-          if (context.mounted) {
+          try {
             Navigator.of(context, rootNavigator: true).pop();
-            _showFallbackDialog(context, apkUrl, e.toString());
-          }
+          } catch (_) {}
+          _showFallbackDialog(context, apkUrl, e.toString());
         },
       );
     } catch (e) {
       debugPrint('OTA Exception: $e');
-      if (context.mounted) {
+      try {
         Navigator.of(context, rootNavigator: true).pop();
-        _showFallbackDialog(context, apkUrl, e.toString());
-      }
+      } catch (_) {}
+      _showFallbackDialog(context, apkUrl, e.toString());
     }
   }
 
