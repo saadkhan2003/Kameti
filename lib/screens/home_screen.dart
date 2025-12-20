@@ -108,24 +108,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.grey[400],
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        // Version badge - dynamic
-                        if (_appVersion.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withAlpha(30),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              _appVersion,
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
                         const SizedBox(height: 48),
                         // View Committees Button
                         SizedBox(
