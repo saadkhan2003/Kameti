@@ -10,7 +10,7 @@ import '../utils/app_theme.dart';
 class UpdateService {
   // GitHub Releases URL for version.json
   static const String _versionCheckUrl = 
-      'https://raw.githubusercontent.com/saadkhan2003/Committee_app_personal/main/version.json';
+      'https://raw.githubusercontent.com/saadkhan2003/Committee_App/main/version.json';
   
   static Future<void> checkForUpdate(BuildContext context) async {
     // Only check on Android (not web)
