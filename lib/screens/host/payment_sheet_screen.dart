@@ -8,6 +8,7 @@ import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
 import '../../services/export_service.dart';
 import '../../services/auto_sync_service.dart';
+import '../../services/sync_service.dart';
 import '../../services/update_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
@@ -33,6 +34,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   final _authService = AuthService();
   final _exportService = ExportService();
   final _autoSyncService = AutoSyncService();
+  final SyncService _syncService = SyncService();
 
   List<Member> _members = [];
   List<DateTime> _dates = [];
@@ -51,10 +53,25 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _syncAndLoad();
+  }
+
+  Future<void> _syncAndLoad() async {
+    setState(() => _isLoading = true);
+    
+    // Sync from cloud first
+    try {
+      await _syncService.syncMembers(widget.committee.id);
+      await _syncService.syncPayments(widget.committee.id);
+    } catch (e) {
+      debugPrint('Sync error: $e');
+    }
+    
+    await _loadData();
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     _members = _dbService.getMembersByCommittee(widget.committee.id);

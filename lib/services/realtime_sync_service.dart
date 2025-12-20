@@ -6,6 +6,14 @@ import '../models/member.dart';
 import '../models/payment.dart';
 import 'database_service.dart';
 
+/// Helper to parse dates that can be Timestamp or String
+DateTime? _parseDate(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
+
 /// Real-time sync service that listens to Firestore changes
 /// and updates local database automatically
 class RealtimeSyncService {
@@ -118,13 +126,13 @@ class RealtimeSyncService {
         hostId: data['hostId'] ?? '',
         contributionAmount: (data['contributionAmount'] ?? 0).toDouble(),
         frequency: data['frequency'] ?? 'monthly',
-        startDate: (data['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        startDate: _parseDate(data['startDate']) ?? DateTime.now(),
         totalMembers: data['totalMembers'] ?? 0,
-        createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        createdAt: _parseDate(data['createdAt']) ?? DateTime.now(),
         isActive: data['isActive'] ?? true,
         paymentIntervalDays: data['paymentIntervalDays'] ?? 30,
         isArchived: data['isArchived'] ?? false,
-        archivedAt: (data['archivedAt'] as Timestamp?)?.toDate(),
+        archivedAt: _parseDate(data['archivedAt']),
       );
 
       if (change.type == DocumentChangeType.removed) {
@@ -194,8 +202,8 @@ class RealtimeSyncService {
         phone: data['phone'] ?? '',
         payoutOrder: data['payoutOrder'] ?? 0,
         hasReceivedPayout: data['hasReceivedPayout'] ?? false,
-        payoutDate: (data['payoutDate'] as Timestamp?)?.toDate(),
-        createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        payoutDate: _parseDate(data['payoutDate']),
+        createdAt: _parseDate(data['createdAt']) ?? DateTime.now(),
       );
 
       if (change.type == DocumentChangeType.removed) {
@@ -229,10 +237,10 @@ class RealtimeSyncService {
         id: paymentId,
         memberId: data['memberId'] ?? '',
         committeeId: data['committeeId'] ?? '',
-        date: (data['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        date: _parseDate(data['date']) ?? DateTime.now(),
         isPaid: data['isPaid'] ?? false,
         markedBy: data['markedBy'] ?? '',
-        markedAt: (data['markedAt'] as Timestamp?)?.toDate(),
+        markedAt: _parseDate(data['markedAt']),
       );
 
       if (change.type == DocumentChangeType.removed) {
