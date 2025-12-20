@@ -70,14 +70,16 @@ class SyncService {
     int uploaded = 0;
     int downloaded = 0;
 
-    // Upload local committees to Firestore
+    // Upload local committees to Firestore using batch (faster)
     final localCommittees = _dbService.getHostedCommittees(hostId);
-    for (final committee in localCommittees) {
-      await _firestore
-          .collection(committeesCollection)
-          .doc(committee.id)
-          .set(committee.toJson(), SetOptions(merge: true));
-      uploaded++;
+    if (localCommittees.isNotEmpty) {
+      final batch = _firestore.batch();
+      for (final committee in localCommittees) {
+        final docRef = _firestore.collection(committeesCollection).doc(committee.id);
+        batch.set(docRef, committee.toJson());
+        uploaded++;
+      }
+      await batch.commit();
     }
 
     // Download committees from Firestore
@@ -108,15 +110,16 @@ class SyncService {
     int uploaded = 0;
     int downloaded = 0;
 
-    // Upload local members to Firestore
-    // Using .set() without merge to ensure null values (like reverted payoutDate) are written
+    // Upload local members to Firestore using batch (faster)
     final localMembers = _dbService.getMembersByCommittee(committeeId);
-    for (final member in localMembers) {
-      await _firestore
-          .collection(membersCollection)
-          .doc(member.id)
-          .set(member.toJson()); // No merge - overwrites entire document
-      uploaded++;
+    if (localMembers.isNotEmpty) {
+      final batch = _firestore.batch();
+      for (final member in localMembers) {
+        final docRef = _firestore.collection(membersCollection).doc(member.id);
+        batch.set(docRef, member.toJson());
+        uploaded++;
+      }
+      await batch.commit();
     }
 
     // Download members from Firestore
@@ -178,15 +181,24 @@ class SyncService {
     int uploaded = 0;
     int downloaded = 0;
 
-    // Upload local payments to Firestore
-    // Using .set() without merge to ensure full document is written
+    // Upload local payments to Firestore using batch (faster)
     final localPayments = _dbService.getPaymentsByCommittee(committeeId);
-    for (final payment in localPayments) {
-      await _firestore
-          .collection(paymentsCollection)
-          .doc(payment.id)
-          .set(payment.toJson()); // No merge - overwrites entire document
-      uploaded++;
+    if (localPayments.isNotEmpty) {
+      // Firebase batch limit is 500, so chunk if needed
+      final chunks = <List<dynamic>>[];
+      for (var i = 0; i < localPayments.length; i += 500) {
+        chunks.add(localPayments.skip(i).take(500).toList());
+      }
+      
+      for (final chunk in chunks) {
+        final batch = _firestore.batch();
+        for (final payment in chunk) {
+          final docRef = _firestore.collection(paymentsCollection).doc(payment.id);
+          batch.set(docRef, payment.toJson());
+          uploaded++;
+        }
+        await batch.commit();
+      }
     }
 
     // Download payments from Firestore
