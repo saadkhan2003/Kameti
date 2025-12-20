@@ -66,6 +66,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
   }
 
   void _loadCommittees() {
+    if (!mounted) return;
     final userId = _authService.currentUser?.uid ?? '';
     final all = _dbService.getHostedCommittees(userId);
     setState(() {

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 // Project imports
 import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
 import '../../services/export_service.dart';
 import '../../services/auto_sync_service.dart';
+import '../../services/update_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../utils/app_theme.dart';
@@ -1392,6 +1394,12 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
   void initState() {
     super.initState();
     _selectedMonth = DateTime.now();
+    // Check for updates (viewers only, Android only)
+    if (!kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        UpdateService.checkForUpdate(context);
+      });
+    }
   }
 
   List<DateTime> _getDaysInMonth(DateTime month) {

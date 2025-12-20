@@ -109,12 +109,13 @@ class SyncService {
     int downloaded = 0;
 
     // Upload local members to Firestore
+    // Using .set() without merge to ensure null values (like reverted payoutDate) are written
     final localMembers = _dbService.getMembersByCommittee(committeeId);
     for (final member in localMembers) {
       await _firestore
           .collection(membersCollection)
           .doc(member.id)
-          .set(member.toJson(), SetOptions(merge: true));
+          .set(member.toJson()); // No merge - overwrites entire document
       uploaded++;
     }
 

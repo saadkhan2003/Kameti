@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/database_service.dart';
+import '../../services/sync_service.dart';
 import '../../services/auto_sync_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
@@ -21,10 +22,12 @@ class CommitteeDetailScreen extends StatefulWidget {
 
 class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
   final _dbService = DatabaseService();
+  final _syncService = SyncService();
   final _autoSyncService = AutoSyncService();
   late Committee _committee;
   List<Member> _members = [];
   bool _showCollectionDetails = false;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -34,9 +37,36 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
   }
 
   void _loadMembers() {
+    if (!mounted) return;
     setState(() {
       _members = _dbService.getMembersByCommittee(_committee.id);
     });
+  }
+
+  Future<void> _refreshCommittee() async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+    
+    try {
+      // Sync only this committee's members and payments
+      await _syncService.syncMembers(_committee.id);
+      await _syncService.syncPayments(_committee.id);
+      
+      // Reload from local DB
+      _loadMembers();
+      
+      // Refresh committee data from cloud
+      final updatedCommittee = _dbService.getCommitteeById(_committee.id);
+      if (updatedCommittee != null && mounted) {
+        setState(() => _committee = updatedCommittee);
+      }
+    } catch (e) {
+      debugPrint('Refresh error: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
   }
 
   void _copyCode() {
@@ -304,10 +334,13 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: RefreshIndicator(
+        onRefresh: _refreshCommittee,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Committee Info Card
             Container(
@@ -636,6 +669,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
               },
             ),
           ],
+          ),
         ),
       ),
     );
