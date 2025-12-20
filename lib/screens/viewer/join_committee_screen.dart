@@ -413,7 +413,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                             ),
                           )
                           : const Icon(Icons.visibility),
-                  label: const Text('View My Payments'),
+                  label: Text(_isLoading ? 'Loading...' : 'View My Payments'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.secondaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 18),

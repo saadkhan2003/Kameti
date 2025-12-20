@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/auto_sync_service.dart';
+import '../../services/realtime_sync_service.dart';
 import '../../services/update_service.dart';
 import '../../models/committee.dart';
 import '../../utils/app_theme.dart';
@@ -27,6 +28,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
   final _dbService = DatabaseService();
   final _syncService = SyncService();
   final _autoSyncService = AutoSyncService();
+  final _realtimeSyncService = RealtimeSyncService();
   List<Committee> _activeCommittees = [];
   List<Committee> _archivedCommittees = [];
   bool _isSyncing = false;
@@ -37,8 +39,17 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadCommittees();
+    
+    // Start real-time sync listener
+    final userId = _authService.currentUser?.uid ?? '';
+    if (userId.isNotEmpty) {
+      _realtimeSyncService.onDataChanged = _loadCommittees;
+      _realtimeSyncService.startListening(userId);
+    }
+    
     // Trigger silent sync on load to fetch fresh data
     _syncDataSilent();
+    
     // Check for app updates (Android only)
     if (!kIsWeb) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -49,6 +60,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
   @override
   void dispose() {
+    _realtimeSyncService.stopListening();
     _tabController.dispose();
     super.dispose();
   }
