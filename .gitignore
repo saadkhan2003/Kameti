@@ -62,4 +62,5 @@ app.*.map.json
 # Firebase sensitive files (keep your own copies safe)
 # google-services.json
 # GoogleService-Info.plist
-# sadads
+# netlify.toml
+
