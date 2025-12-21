@@ -185,6 +185,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
 
+            // Change Password Button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _showChangePasswordDialog(context, authService),
+                icon: const Icon(Icons.lock_outline),
+                label: const Text('Change Password'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.primaryColor,
+                  side: const BorderSide(color: AppTheme.primaryColor),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // Delete Account Button
             SizedBox(
               width: double.infinity,
@@ -267,6 +286,79 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showChangePasswordDialog(BuildContext context, AuthService authService) {
+    final user = authService.currentUser;
+    if (user == null || user.email == null) return;
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppTheme.darkCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.lock_outline, color: AppTheme.primaryColor),
+            SizedBox(width: 8),
+            Text('Change Password'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'We will send a password reset link to:',
+              style: TextStyle(color: Colors.grey[400]),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              user.email!,
+              style: const TextStyle(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Click the link in the email to set a new password.',
+              style: TextStyle(color: Colors.grey[400], fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await authService.resetPassword(user.email!);
+                if (mounted) {
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Password reset email sent to ${user.email}'),
+                      backgroundColor: AppTheme.secondaryColor,
+                    ),
+                  );
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(e.toString()),
+                    backgroundColor: AppTheme.errorColor,
+                  ),
+                );
+              }
+            },
+            child: const Text('Send Reset Email'),
           ),
         ],
       ),

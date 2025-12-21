@@ -82,6 +82,74 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _showForgotPasswordDialog() {
+    final resetEmailController = TextEditingController(text: _emailController.text);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.darkCard,
+        title: const Text('Reset Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Enter your email address and we\'ll send you a link to reset your password.',
+              style: TextStyle(color: Colors.grey[400]),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: resetEmailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.email_outlined),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final email = resetEmailController.text.trim();
+              if (email.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter your email')),
+                );
+                return;
+              }
+              
+              try {
+                await _authService.resetPassword(email);
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Password reset email sent to $email'),
+                      backgroundColor: AppTheme.secondaryColor,
+                    ),
+                  );
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(e.toString()),
+                    backgroundColor: AppTheme.errorColor,
+                  ),
+                );
+              }
+            },
+            child: const Text('Send Reset Link'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -266,7 +334,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           )
                         : Text(_isLogin ? 'Sign In' : 'Create Account'),
                   ),
-                  const SizedBox(height: 24),
+                  
+                  // Forgot Password (only in login mode)
+                  if (_isLogin) ...[
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: () => _showForgotPasswordDialog(),
+                      child: Text(
+                        'Forgot Password?',
+                        style: TextStyle(color: Colors.grey[400]),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
 
                   // Toggle Login/Signup
                   Row(
