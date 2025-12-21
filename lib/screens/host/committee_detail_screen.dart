@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/auto_sync_service.dart';
@@ -69,16 +70,14 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
     }
   }
 
-  void _copyCode() {
-    Clipboard.setData(ClipboardData(text: _committee.code));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Committee code copied!'),
-        backgroundColor: AppTheme.secondaryColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+  void _showShareOptions() {
+    // Share committee info only (no member codes)
+    String message = '📋 *${_committee.name}*\n\n'
+        '*Committee Code:* ${_committee.code}\n'
+        '*Contribution:* Rs. ${_committee.contributionAmount.toInt()}\n'
+        '*Duration:* ${_members.length} months\n\n'
+        '_Download Committee App to view payments!_';
+    Share.share(message, subject: '${_committee.name} - Committee Details');
   }
 
   void _showEditDialog() {
@@ -289,7 +288,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.share_rounded),
-            onPressed: _copyCode,
+            onPressed: _showShareOptions,
             tooltip: 'Share Code',
           ),
           PopupMenuButton<String>(
@@ -370,7 +369,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                             ),
                             const SizedBox(height: 4),
                             GestureDetector(
-                              onTap: _copyCode,
+                              onTap: _showShareOptions,
                               child: Row(
                                 children: [
                                   Text(

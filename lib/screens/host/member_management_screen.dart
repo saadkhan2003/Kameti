@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 import '../../services/database_service.dart';
 import '../../services/auto_sync_service.dart';
@@ -66,6 +67,15 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
       _searchQuery = query;
       _filterMembers();
     });
+  }
+
+  void _shareMemberCode(Member member) {
+    String message = '📋 *${widget.committee.name}*\n\n'
+        'Hi ${member.name}! 👋\n\n'
+        '*Committee Code:* ${widget.committee.code}\n'
+        '*Your Member Code:* ${member.memberCode}\n\n'
+        '_Download Committee App to track your payments!_';
+    Share.share(message, subject: '${member.name} - Committee Code');
   }
 
   void _showAddMemberDialog({Member? existingMember}) {
@@ -466,9 +476,21 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                   _showAddMemberDialog(existingMember: member);
                 } else if (value == 'delete') {
                   _deleteMember(member);
+                } else if (value == 'share') {
+                  _shareMemberCode(member);
                 }
               },
               itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'share',
+                  child: Row(
+                    children: [
+                      Icon(Icons.share, size: 18, color: AppTheme.primaryColor),
+                      SizedBox(width: 8),
+                      Text('Share Code'),
+                    ],
+                  ),
+                ),
                 const PopupMenuItem(
                   value: 'edit',
                   child: Row(
