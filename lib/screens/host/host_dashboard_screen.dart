@@ -355,7 +355,9 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     final displayName =
         user?.displayName ?? user?.email?.split('@')[0] ?? 'Host';
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('My Committees'),
         automaticallyImplyLeading: false,
@@ -597,6 +599,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
         icon: const Icon(Icons.add),
         label: const Text('New Committee'),
       ),
+    ),
     );
   }
 

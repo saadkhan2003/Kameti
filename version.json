@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2",
-  "apkUrl": "https://github.com/saadkhan2003/Committee_App/releases/download/v1.0.2/app-release.apk",
-  "releaseNotes": "• Email verification for new signups\n• Custom styled toast notifications\n• Member Dashboard with personalized stats\n• Payout countdown & payment progress\n• Forgot Password & Change Password\n• Firebase Analytics integration\n• Bug fixes and UI improvements"
+  "version": "1.0.3",
+  "apkUrl": "https://github.com/saadkhan2003/Committee_App/releases/download/v1.0.3/app-release.apk",
+  "releaseNotes": "• Fixed back navigation issue on host dashboard\n• Improved app stability after login\n• Bug fixes and improvements"
 }
