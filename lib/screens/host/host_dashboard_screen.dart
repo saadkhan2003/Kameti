@@ -18,6 +18,9 @@ import '../viewer/join_committee_screen.dart';
 import 'profile_screen.dart';
 import 'legal_info_screen.dart';
 import 'contact_screen.dart';
+import 'about_screen.dart';
+import 'privacy_policy_screen.dart';
+import 'terms_screen.dart';
 
 class HostDashboardScreen extends StatefulWidget {
   const HostDashboardScreen({super.key});
@@ -674,7 +677,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const LegalInfoScreen()),
+                MaterialPageRoute(builder: (context) => const AboutScreen()),
               );
             },
           ),
@@ -687,7 +690,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const LegalInfoScreen()),
+                MaterialPageRoute(builder: (context) => const TermsScreen()),
               );
             },
           ),
@@ -700,7 +703,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const LegalInfoScreen()),
+                MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
               );
             },
           ),

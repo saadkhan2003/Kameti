@@ -51,7 +51,7 @@ class ContactScreen extends StatelessWidget {
           _buildContactCard(
             icon: Icons.email_outlined,
             title: 'Email',
-            subtitle: 'support@committeeapp.com',
+            subtitle: 'msaad.official6@gmail.com',
             onTap: () => _launchEmail(),
           ),
           const SizedBox(height: 12),
@@ -59,7 +59,7 @@ class ContactScreen extends StatelessWidget {
           _buildContactCard(
             icon: Icons.phone_outlined,
             title: 'Phone',
-            subtitle: '+92 300 1234567',
+            subtitle: '+92 321 8685488',
             onTap: () => _launchPhone(),
           ),
           const SizedBox(height: 12),
@@ -202,21 +202,21 @@ class ContactScreen extends StatelessWidget {
   }
 
   Future<void> _launchEmail() async {
-    final uri = Uri.parse('mailto:support@committeeapp.com');
+    final uri = Uri.parse('mailto:msaad.official6@gmail.com');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
   }
 
   Future<void> _launchPhone() async {
-    final uri = Uri.parse('tel:+923001234567');
+    final uri = Uri.parse('tel:+923218685488');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
   }
 
   Future<void> _launchWhatsApp() async {
-    final uri = Uri.parse('https://wa.me/923001234567');
+    final uri = Uri.parse('https://wa.me/923218685488');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
