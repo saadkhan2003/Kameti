@@ -16,6 +16,7 @@ import 'create_committee_screen.dart';
 import 'committee_detail_screen.dart';
 import '../viewer/join_committee_screen.dart';
 import 'profile_screen.dart';
+import 'legal_info_screen.dart';
 
 class HostDashboardScreen extends StatefulWidget {
   const HostDashboardScreen({super.key});
@@ -361,22 +362,15 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
       appBar: AppBar(
         title: const Text('My Committees'),
         automaticallyImplyLeading: false,
-        actions: [
-          // Profile Icon
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            tooltip: 'Profile',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ProfileScreen(),
-                ),
-              );
-            },
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            tooltip: 'Menu',
+            onPressed: () => Scaffold.of(context).openDrawer(),
           ),
-        ],
+        ),
       ),
+      drawer: _buildDrawer(context),
       body: RefreshIndicator(
         onRefresh: _syncData,
         color: AppTheme.primaryColor,
@@ -600,6 +594,116 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
         label: const Text('New Committee'),
       ),
     ),
+    );
+  }
+
+
+  Widget _buildDrawer(BuildContext context) {
+    final user = _authService.currentUser;
+    final displayName = user?.displayName ?? user?.email?.split('@')[0] ?? 'Guest';
+    final email = user?.email ?? 'Anonymous User';
+
+    return Drawer(
+      backgroundColor: AppTheme.darkCard,
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          // Drawer Header
+          DrawerHeader(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(51),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.person, color: Colors.white, size: 32),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  displayName,
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  email,
+                  style: GoogleFonts.inter(
+                    color: Colors.white70,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Profile
+          ListTile(
+            leading: const Icon(Icons.person_outline, color: Colors.white70),
+            title: const Text('Profile', style: TextStyle(color: Colors.white)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+          ),
+
+          const Divider(color: Colors.white10),
+
+          // About & Legal
+          ListTile(
+            leading: const Icon(Icons.info_outline, color: Colors.white70),
+            title: const Text('About & Legal', style: TextStyle(color: Colors.white)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LegalInfoScreen()),
+              );
+            },
+          ),
+
+          // Privacy Policy
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined, color: Colors.white70),
+            title: const Text('Privacy Policy', style: TextStyle(color: Colors.white)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LegalInfoScreen()),
+              );
+            },
+          ),
+
+          const Divider(color: Colors.white10),
+
+          // Logout
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.redAccent),
+            title: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
+            onTap: () async {
+              Navigator.pop(context);
+              await _logout();
+            },
+          ),
+        ],
+      ),
     );
   }
 
