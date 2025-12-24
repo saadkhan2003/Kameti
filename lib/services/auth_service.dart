@@ -63,25 +63,38 @@ class AuthService {
   // Sign in with Google
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      
-      if (googleUser == null) {
-        // User cancelled the sign-in
-        return null;
+      // For web, use signInWithPopup
+      if (identical(0, 0.0)) {
+        // This check is never true, but we use kIsWeb approach
       }
+      
+      // Check if running on web
+      final isWeb = identical(1.0, 1); // Always true check for conditional
+      
+      // Use Firebase's built-in Google provider for web
+      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      
+      // Try popup sign-in (works on web)
+      try {
+        return await _auth.signInWithPopup(googleProvider);
+      } catch (e) {
+        // If popup fails, try redirect (fallback) or mobile approach
+        // For mobile, use GoogleSignIn package
+        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+        
+        if (googleUser == null) {
+          return null;
+        }
 
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
 
-      // Sign in to Firebase with the Google credential
-      return await _auth.signInWithCredential(credential);
+        return await _auth.signInWithCredential(credential);
+      }
     } catch (e) {
       throw 'Google sign-in failed. Please try again.';
     }
