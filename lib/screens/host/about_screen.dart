@@ -104,30 +104,6 @@ class _AboutScreenState extends State<AboutScreen> {
             '• View payout schedules and history\n'
             '• Export data to PDF',
           ),
-
-          // Developer Info
-          _buildCard(
-            icon: Icons.code,
-            title: 'Developer',
-            children: [
-              _buildInfoRow('Name', 'Saad Khan'),
-              _buildInfoRow('Email', 'msaad.official6@gmail.com'),
-              _buildInfoRow('Location', 'Pakistan'),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Tech Stack
-          _buildCard(
-            icon: Icons.build_outlined,
-            title: 'Built With',
-            children: [
-              _buildInfoRow('Framework', 'Flutter'),
-              _buildInfoRow('Backend', 'Firebase'),
-              _buildInfoRow('Database', 'Cloud Firestore'),
-              _buildInfoRow('Auth', 'Firebase Auth'),
-            ],
-          ),
           const SizedBox(height: 24),
 
           // Copyright
