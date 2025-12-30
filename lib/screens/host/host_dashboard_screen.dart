@@ -7,7 +7,6 @@ import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/auto_sync_service.dart';
 import '../../services/realtime_sync_service.dart';
-import '../../services/update_service.dart';
 import '../../services/localization_service.dart';
 import '../../services/toast_service.dart';
 import '../../models/committee.dart';
@@ -61,12 +60,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     // Trigger silent sync on load to fetch fresh data
     _syncDataSilent();
     
-    // Check for app updates (Android only)
-    if (!kIsWeb) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        UpdateService.checkForUpdate(context);
-      });
-    }
+
     
     // Start email verification check timer
     _startEmailVerificationCheck();

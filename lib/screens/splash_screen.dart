@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/sync_service.dart';
-import '../services/update_service.dart';
 import '../services/database_service.dart';
 import '../services/biometric_service.dart';
 import '../screens/home_screen.dart';
@@ -137,13 +136,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         );
         
         // Check for updates after navigation (for real hosts only)
-        if (isRealHost) {
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted) {
-              UpdateService.checkForUpdate(context);
-            }
-          });
-        }
+
       }
     } catch (e) {
       debugPrint('Splash init error: $e');

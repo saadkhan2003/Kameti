@@ -9,7 +9,6 @@ import '../../services/database_service.dart';
 import '../../services/export_service.dart';
 import '../../services/auto_sync_service.dart';
 import '../../services/sync_service.dart';
-import '../../services/update_service.dart';
 import '../../services/analytics_service.dart';
 import '../../services/toast_service.dart';
 import '../../models/committee.dart';
@@ -718,7 +717,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                     color: Colors.blue[400]!,
                                     value:
                                         'PKR ${(stats['currentCycleCollected'] as double).toInt()}',
-                                    label: 'Amount of (${stats['daysElapsed']} days)',
+                                    label: 'Amount of\n(${stats['daysElapsed']} days)',
                                   ),
                                 ),
                               ],
@@ -1423,12 +1422,7 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
   void initState() {
     super.initState();
     _selectedMonth = DateTime.now();
-    // Check for updates (viewers only, Android only)
-    if (!kIsWeb) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        UpdateService.checkForUpdate(context);
-      });
-    }
+
   }
 
   List<DateTime> _getDaysInMonth(DateTime month) {
