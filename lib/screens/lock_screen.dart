@@ -4,10 +4,11 @@ import '../utils/app_theme.dart';
 import '../services/biometric_service.dart';
 import 'home_screen.dart';
 import 'host/host_dashboard_screen.dart';
-import '../services/auth_service.dart';
+
 
 class LockScreen extends StatefulWidget {
   final bool isHost;
+  static bool isShown = false;
   
   const LockScreen({super.key, required this.isHost});
 
@@ -23,6 +24,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    LockScreen.isShown = true;
     WidgetsBinding.instance.addObserver(this);
     _initBiometricType();
     _authenticate();
@@ -30,6 +32,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    LockScreen.isShown = false;
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

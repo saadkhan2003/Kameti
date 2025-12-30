@@ -8,6 +8,8 @@ import '../screens/home_screen.dart';
 import '../screens/host/host_dashboard_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/lock_screen.dart';
+import '../services/remote_config_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -46,6 +48,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   Future<void> _initializeApp() async {
     try {
+      // Step 0: Check for updates
+      setState(() => _status = 'Checking for updates...');
+      final remoteConfig = RemoteConfigService();
+      await remoteConfig.initialize();
+      final needsUpdate = await remoteConfig.isUpdateRequired();
+
+      if (needsUpdate && mounted) {
+        _showForceUpdateDialog();
+        return;
+      }
+
       // Step 1: Database
       setState(() => _status = 'Loading database...');
       await Future.delayed(const Duration(milliseconds: 300));
@@ -254,6 +267,31 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  void _showForceUpdateDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: const Text('Update Required'),
+          content: Text(RemoteConfigService().updateMessage),
+          actions: [
+            ElevatedButton(
+              onPressed: () async {
+                final url = Uri.parse(RemoteConfigService().playStoreUrl);
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                }
+              },
+              child: const Text('Update Now'),
+            ),
+          ],
         ),
       ),
     );
