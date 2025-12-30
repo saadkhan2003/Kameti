@@ -350,6 +350,17 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       }
     }
 
+    // Calculate total payout amount (members × contribution × collections per payout)
+    final collectionInterval = widget.committee.frequency == 'daily'
+        ? 1
+        : widget.committee.frequency == 'weekly'
+            ? 7
+            : 30;
+    final collectionsPerPayout = payoutInterval > 0
+        ? payoutInterval ~/ collectionInterval
+        : 1;
+    final totalPayoutAmount = _members.length * amountPerCell * collectionsPerPayout;
+
     return {
       'totalPaid': totalPaid,
       'totalDue': totalDue,
@@ -360,6 +371,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       'currentCycleDue': currentCycleDue,
       'currentCycleCollected': currentCyclePaid * amountPerCell,
       'currentPayoutCycle': currentPayoutCycle + 1,
+      'totalPayoutAmount': totalPayoutAmount,
+      'collectionsPerPayout': collectionsPerPayout,
     };
   }
 
@@ -703,8 +716,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                     icon: Icons.today,
                                     color: Colors.blue[400]!,
                                     value:
-                                        'PKR ${(stats['currentCycleCollected'] as double).toInt()}',
-                                    label: 'Payout Amount',
+                                        'PKR ${(stats['currentCycleCollected'] as double).toInt()} / ${(stats['totalPayoutAmount'] as double).toInt()}',
+                                    label: 'Collected / Payout',
                                   ),
                                 ),
                               ],

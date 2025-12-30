@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:ota_update/ota_update.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -13,38 +12,43 @@ class UpdateService {
   // GitHub Releases URL for version.json
   static const String _versionCheckUrl = 
       'https://raw.githubusercontent.com/saadkhan2003/Committee_App/main/version.json';
-  
-  // Cached APK path for retry without re-download
-  static String? _cachedApkPath;
-  static String? _cachedVersion;
 
-  // Get the local APK file path
+  // Get the local APK file path in app's external storage
   static Future<String> _getLocalApkPath(String version) async {
     final directory = await getExternalStorageDirectory();
-    return '${directory?.path ?? "/storage/emulated/0/Download"}/Committee-$version.apk';
+    return '${directory?.path}/Committee-$version.apk';
   }
 
   // Check if APK is already downloaded
   static Future<bool> _isApkCached(String version) async {
-    final path = await _getLocalApkPath(version);
-    final file = File(path);
-    return file.existsSync();
+    try {
+      final path = await _getLocalApkPath(version);
+      final file = File(path);
+      final exists = await file.exists();
+      if (exists) {
+        // Check file size is reasonable (> 10MB)
+        final size = await file.length();
+        debugPrint('Cached APK found: $path (${(size / 1024 / 1024).toStringAsFixed(1)} MB)');
+        return size > 10 * 1024 * 1024;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error checking cached APK: $e');
+      return false;
+    }
   }
 
   // Delete cached APK
-  static Future<void> clearCachedApk() async {
-    if (_cachedApkPath != null) {
-      try {
-        final file = File(_cachedApkPath!);
-        if (await file.exists()) {
-          await file.delete();
-          debugPrint('Deleted cached APK: $_cachedApkPath');
-        }
-      } catch (e) {
-        debugPrint('Failed to delete cached APK: $e');
+  static Future<void> clearCachedApk(String version) async {
+    try {
+      final path = await _getLocalApkPath(version);
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+        debugPrint('Deleted cached APK: $path');
       }
-      _cachedApkPath = null;
-      _cachedVersion = null;
+    } catch (e) {
+      debugPrint('Failed to delete cached APK: $e');
     }
   }
 
@@ -114,10 +118,7 @@ class UpdateService {
   ) async {
     // Check if APK is already cached
     final isCached = await _isApkCached(version);
-    if (isCached) {
-      _cachedApkPath = await _getLocalApkPath(version);
-      _cachedVersion = version;
-    }
+    final apkFileName = 'Committee-$version.apk';
 
     if (!context.mounted) return;
 
@@ -188,15 +189,15 @@ class UpdateService {
             ),
           if (isCached)
             ElevatedButton.icon(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                _retryInstall(context, apkUrl, version);
+                await _installFromCache(context, version, apkUrl);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
               ),
               icon: const Icon(Icons.install_mobile, size: 18),
-              label: const Text('Retry Install'),
+              label: const Text('Install Now'),
             )
           else
             ElevatedButton.icon(
@@ -205,27 +206,29 @@ class UpdateService {
                 _showDownloadProgress(context, apkUrl, version);
               },
               icon: const Icon(Icons.download_rounded, size: 18),
-              label: Text(isForced ? 'Update Required' : 'Update Now'),
+              label: Text(isForced ? 'Update Required' : 'Download Update'),
             ),
         ],
       ),
     );
   }
 
-  // Retry installation from cached APK
-  static void _retryInstall(BuildContext context, String apkUrl, String version) async {
-    if (_cachedApkPath == null) {
-      _showDownloadProgress(context, apkUrl, version);
-      return;
-    }
-
-    final file = File(_cachedApkPath!);
+  // Install from cached APK
+  static Future<void> _installFromCache(BuildContext context, String version, String apkUrl) async {
+    final path = await _getLocalApkPath(version);
+    final file = File(path);
+    
     if (!await file.exists()) {
-      _showDownloadProgress(context, apkUrl, version);
+      // File was deleted, re-download
+      if (context.mounted) {
+        _showDownloadProgress(context, apkUrl, version);
+      }
       return;
     }
 
     // Show installing dialog
+    if (!context.mounted) return;
+    
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -243,7 +246,7 @@ class UpdateService {
             ),
             const SizedBox(height: 8),
             Text(
-              'The installer will open. Please tap "Install" when prompted.',
+              'Tap "Install" when prompted.',
               style: TextStyle(color: Colors.grey[400], fontSize: 12),
               textAlign: TextAlign.center,
             ),
@@ -252,33 +255,38 @@ class UpdateService {
       ),
     );
 
-    // Use OTA update to install from local file
+    // Try to install using Android intent
     try {
-      OtaUpdate().execute('file://${_cachedApkPath!}').listen(
-        (event) {
-          debugPrint('Retry OTA Status: ${event.status}');
-          if (event.status == OtaStatus.INSTALLING && context.mounted) {
-            Navigator.of(context).pop();
-          }
-        },
-        onError: (e) {
-          debugPrint('Retry install error: $e');
-          if (context.mounted) {
-            Navigator.of(context).pop();
-            _showRetryDialog(context, apkUrl, version, e.toString());
-          }
-        },
-      );
-    } catch (e) {
+      // Use url_launcher to open the APK file
+      final uri = Uri.parse('file://$path');
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        // Fallback: show manual install instructions
+        if (context.mounted) {
+          Navigator.of(context).pop();
+          _showManualInstallDialog(context, version, apkUrl);
+        }
+        return;
+      }
+      
+      // Close dialog after a delay
+      await Future.delayed(const Duration(seconds: 1));
       if (context.mounted) {
         Navigator.of(context).pop();
-        _showRetryDialog(context, apkUrl, version, e.toString());
+        _showPostInstallDialog(context, version, apkUrl);
+      }
+    } catch (e) {
+      debugPrint('Install error: $e');
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        _showManualInstallDialog(context, version, apkUrl);
       }
     }
   }
 
-  // Show retry dialog after failed installation
-  static void _showRetryDialog(BuildContext context, String apkUrl, String version, String error) {
+  // Show dialog after installation attempt
+  static void _showPostInstallDialog(BuildContext context, String version, String apkUrl) {
     final apkFileName = 'Committee-$version.apk';
     
     showDialog(
@@ -286,30 +294,25 @@ class UpdateService {
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.darkCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Installation Interrupted', style: TextStyle(color: Colors.white)),
+        title: const Text('Installation Started', style: TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.info_outline, size: 48, color: Colors.orange),
+            const Icon(Icons.info_outline, size: 48, color: AppTheme.primaryColor),
             const SizedBox(height: 16),
             const Text(
-              'The update was downloaded but installation was interrupted.',
+              'If installation failed or was interrupted:',
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'You have two options:',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               '1. Tap "Retry Install" below',
               style: TextStyle(color: Colors.grey[300], fontSize: 13),
             ),
             const SizedBox(height: 4),
             Text(
-              '2. Open your file manager, go to Downloads folder, and tap:',
+              '2. Or open File Manager → Android → data → com.committee.committee_app → files',
               style: TextStyle(color: Colors.grey[300], fontSize: 13),
             ),
             const SizedBox(height: 8),
@@ -350,9 +353,9 @@ class UpdateService {
             child: const Text('Close'),
           ),
           ElevatedButton.icon(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              _retryInstall(context, apkUrl, version);
+              await _installFromCache(context, version, apkUrl);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             icon: const Icon(Icons.refresh, size: 18),
@@ -363,6 +366,88 @@ class UpdateService {
     );
   }
 
+  // Show manual install instructions
+  static void _showManualInstallDialog(BuildContext context, String version, String apkUrl) {
+    final apkFileName = 'Committee-$version.apk';
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.darkCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Manual Installation', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.folder_open, size: 48, color: AppTheme.primaryColor),
+            const SizedBox(height: 16),
+            const Text(
+              'The update is downloaded. Install manually:',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '1. Open your File Manager app',
+              style: TextStyle(color: Colors.grey[300], fontSize: 13),
+            ),
+            Text(
+              '2. Go to: Android → data → com.committee.committee_app → files',
+              style: TextStyle(color: Colors.grey[300], fontSize: 13),
+            ),
+            Text(
+              '3. Tap on the APK file to install:',
+              style: TextStyle(color: Colors.grey[300], fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withAlpha(30),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.android, color: Colors.green, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    apkFileName,
+                    style: const TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'If "Package conflicts" error shows, uninstall the old app first.',
+              style: TextStyle(color: Colors.orange[300], fontSize: 11),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              Navigator.pop(context);
+              // Try to open file manager
+              final uri = Uri.parse('content://com.android.externalstorage.documents/document/primary');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            icon: const Icon(Icons.folder_open, size: 18),
+            label: const Text('Open Files'),
+          ),
+        ],
+      ),
+    );
+  }
 
   static void _showDownloadProgress(BuildContext context, String apkUrl, String version) {
     showDialog(
@@ -371,28 +456,88 @@ class UpdateService {
       builder: (dialogContext) => _DownloadProgressDialog(
         apkUrl: apkUrl,
         version: version,
-        onError: (error) => _showRetryDialog(context, apkUrl, version, error),
-        onSuccess: (path) {
-          _cachedApkPath = path;
-          _cachedVersion = version;
+        onComplete: (path) async {
+          if (context.mounted) {
+            await _installFromCache(context, version, apkUrl);
+          }
         },
+        onError: (error) {
+          if (context.mounted) {
+            _showDownloadErrorDialog(context, apkUrl, version, error);
+          }
+        },
+      ),
+    );
+  }
+
+  // Show download error dialog
+  static void _showDownloadErrorDialog(BuildContext context, String apkUrl, String version, String error) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.darkCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Download Failed', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            const Text(
+              'Failed to download the update. Please check your internet connection.',
+              style: TextStyle(color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Error: $error',
+              style: TextStyle(color: Colors.grey[600], fontSize: 10),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _showDownloadProgress(context, apkUrl, version);
+            },
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('Retry'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              Navigator.pop(context);
+              final uri = Uri.parse(apkUrl);
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            icon: const Icon(Icons.open_in_browser, size: 18),
+            label: const Text('Browser'),
+          ),
+        ],
       ),
     );
   }
 }
 
-// Stateful widget for download progress
+// Stateful widget for download progress with manual HTTP download
 class _DownloadProgressDialog extends StatefulWidget {
   final String apkUrl;
   final String version;
+  final Function(String) onComplete;
   final Function(String) onError;
-  final Function(String) onSuccess;
 
   const _DownloadProgressDialog({
     required this.apkUrl,
     required this.version,
+    required this.onComplete,
     required this.onError,
-    required this.onSuccess,
   });
 
   @override
@@ -401,8 +546,10 @@ class _DownloadProgressDialog extends StatefulWidget {
 
 class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
   double _progress = 0.0;
-  String _status = 'Starting download...';
-  String? _localPath;
+  String _status = 'Connecting...';
+  int _downloadedBytes = 0;
+  int _totalBytes = 0;
+  bool _isDownloading = true;
 
   @override
   void initState() {
@@ -412,55 +559,66 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
 
   void _startDownload() async {
     try {
-      // Get local path for saving
-      final directory = await getExternalStorageDirectory();
-      _localPath = '${directory?.path ?? "/storage/emulated/0/Download"}/Committee-${widget.version}.apk';
+      final localPath = await UpdateService._getLocalApkPath(widget.version);
+      final file = File(localPath);
+      
+      debugPrint('Downloading APK to: $localPath');
+      
+      // Create HTTP client for streaming download
+      final client = http.Client();
+      final request = http.Request('GET', Uri.parse(widget.apkUrl));
+      final response = await client.send(request);
+      
+      if (response.statusCode != 200) {
+        throw Exception('HTTP ${response.statusCode}');
+      }
 
-      OtaUpdate().execute(widget.apkUrl).listen(
-        (event) {
-          debugPrint('OTA Status: ${event.status}, Value: ${event.value}');
-          
-          if (!mounted) return;
-          
-          switch (event.status) {
-            case OtaStatus.DOWNLOADING:
-              final progress = double.tryParse(event.value ?? '0') ?? 0;
-              setState(() {
-                _progress = progress / 100;
-                _status = 'Downloading... ${progress.toInt()}%';
-              });
-              // Cache the path when download starts
-              if (_localPath != null) {
-                widget.onSuccess(_localPath!);
-              }
-              break;
-            case OtaStatus.INSTALLING:
-              setState(() {
-                _progress = 1.0;
-                _status = 'Opening installer...';
-              });
-              Future.delayed(const Duration(milliseconds: 500), () {
-                if (mounted) Navigator.of(context).pop();
-              });
-              break;
-            case OtaStatus.DOWNLOAD_ERROR:
-              Navigator.of(context).pop();
-              widget.onError(event.value ?? 'Download failed');
-              break;
-            default:
-              break;
-          }
-        },
-        onError: (e) {
-          debugPrint('OTA Error: $e');
-          if (mounted) {
-            Navigator.of(context).pop();
-            widget.onError(e.toString());
-          }
-        },
-      );
+      _totalBytes = response.contentLength ?? 0;
+      _downloadedBytes = 0;
+      
+      // Open file for writing
+      final sink = file.openWrite();
+      
+      await for (final chunk in response.stream) {
+        if (!_isDownloading) break;
+        
+        sink.add(chunk);
+        _downloadedBytes += chunk.length;
+        
+        if (mounted) {
+          setState(() {
+            if (_totalBytes > 0) {
+              _progress = _downloadedBytes / _totalBytes;
+              final mbDownloaded = (_downloadedBytes / 1024 / 1024).toStringAsFixed(1);
+              final mbTotal = (_totalBytes / 1024 / 1024).toStringAsFixed(1);
+              _status = 'Downloading... $mbDownloaded / $mbTotal MB';
+            } else {
+              final mbDownloaded = (_downloadedBytes / 1024 / 1024).toStringAsFixed(1);
+              _status = 'Downloading... $mbDownloaded MB';
+            }
+          });
+        }
+      }
+      
+      await sink.close();
+      client.close();
+      
+      if (!_isDownloading) return;
+      
+      // Verify file was downloaded
+      if (await file.exists()) {
+        final size = await file.length();
+        debugPrint('Download complete: ${(size / 1024 / 1024).toStringAsFixed(1)} MB');
+        
+        if (mounted) {
+          Navigator.of(context).pop();
+          widget.onComplete(localPath);
+        }
+      } else {
+        throw Exception('File not saved');
+      }
     } catch (e) {
-      debugPrint('OTA Exception: $e');
+      debugPrint('Download error: $e');
       if (mounted) {
         Navigator.of(context).pop();
         widget.onError(e.toString());
@@ -469,8 +627,15 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
   }
 
   @override
+  void dispose() {
+    _isDownloading = false;
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final apkFileName = 'Committee-${widget.version}.apk';
+    final percentText = _totalBytes > 0 ? '${(_progress * 100).toInt()}%' : '';
     
     return AlertDialog(
       backgroundColor: AppTheme.darkCard,
@@ -492,6 +657,17 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
               fontWeight: FontWeight.w600,
             ),
           ),
+          if (percentText.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              percentText,
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
@@ -506,12 +682,6 @@ class _DownloadProgressDialogState extends State<_DownloadProgressDialog> {
           Text(
             'Saving as: $apkFileName',
             style: TextStyle(color: Colors.grey[500], fontSize: 11),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'The installer will open automatically',
-            style: TextStyle(color: Colors.grey[600], fontSize: 11),
             textAlign: TextAlign.center,
           ),
         ],

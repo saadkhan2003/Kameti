@@ -321,7 +321,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                   ),
                 ),
                 Text(
-                  'View Another Committee',
+                  'View Your Payments',
                   style: GoogleFonts.inter(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
