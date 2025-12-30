@@ -3,8 +3,12 @@ import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/sync_service.dart';
 import '../services/update_service.dart';
+import '../services/database_service.dart';
+import '../services/biometric_service.dart';
 import '../screens/home_screen.dart';
 import '../screens/host/host_dashboard_screen.dart';
+import '../screens/onboarding_screen.dart';
+import '../screens/lock_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -47,6 +51,29 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       setState(() => _status = 'Loading database...');
       await Future.delayed(const Duration(milliseconds: 300));
       
+      // Step 1.5: Check if first launch (show onboarding)
+      final dbService = DatabaseService();
+      final isFirstLaunch = await dbService.isFirstLaunch();
+      
+      if (isFirstLaunch) {
+        setState(() => _status = 'Welcome!');
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const OnboardingScreen(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 500),
+            ),
+          );
+        }
+        return;
+      }
+      
       // Step 2: Check auth
       setState(() => _status = 'Checking authentication...');
       await Future.delayed(const Duration(milliseconds: 300));
@@ -79,7 +106,25 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       await Future.delayed(const Duration(milliseconds: 500));
       
       if (mounted) {
-        // Navigate: Real hosts go to Dashboard, everyone else (including anonymous) goes to HomeScreen
+        // Check if biometric lock is enabled
+        final isBiometricEnabled = await BiometricService.isBiometricLockEnabled();
+        
+        if (isBiometricEnabled) {
+          // Show lock screen
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  LockScreen(isHost: isRealHost),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 500),
+            ),
+          );
+          return;
+        }
+        
+        // Navigate: Real hosts go to Dashboard, everyone else goes to HomeScreen
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) =>

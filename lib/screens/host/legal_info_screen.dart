@@ -198,7 +198,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
 const String _privacyPolicy = '''
 Privacy Policy
 
-Last updated: December 2024
+Last updated: December 2025
 
 Introduction
 Committee - Payment Tracker respects your privacy. This Privacy Policy explains how we collect, use, and protect your information.
@@ -232,7 +232,7 @@ For questions, contact the developer through the app store listing.
 const String _termsOfService = '''
 Terms of Service
 
-Last updated: December 2024
+Last updated: December 2025
 
 1. Acceptance of Terms
 By using Committee - Payment Tracker, you agree to these terms.

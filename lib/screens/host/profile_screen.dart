@@ -6,8 +6,10 @@ import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/toast_service.dart';
+import '../../services/localization_service.dart';
 import '../../utils/app_theme.dart';
 import '../home_screen.dart';
+import '../settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,11 +20,13 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String _appVersion = '';
+  String _currentLanguage = 'en';
 
   @override
   void initState() {
     super.initState();
     _loadVersion();
+    _loadLanguage();
   }
 
   Future<void> _loadVersion() async {
@@ -30,6 +34,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _appVersion = 'v${packageInfo.version}';
     });
+  }
+
+  Future<void> _loadLanguage() async {
+    await LocalizationService().initialize();
+    if (mounted) {
+      setState(() {
+        _currentLanguage = LocalizationService().currentLanguage;
+      });
+    }
   }
 
   @override
@@ -116,10 +129,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (createdAt != null)
               _buildInfoCard(
                 icon: Icons.calendar_today_outlined,
-                label: 'Member Since',
+            const SizedBox(height: 12),
+            if (createdAt != null)
+              _buildInfoCard(
+                icon: Icons.calendar_today_outlined,
+                label: 'member_since'.tr,
                 value:
                     '${createdAt.day}/${createdAt.month}/${createdAt.year}',
               ),
+
+            const SizedBox(height: 32),
+
+            // Settings Button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                   await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                  );
+                  // Refresh language on return
+                  _loadLanguage();
+                },
+                icon: const Icon(Icons.settings_outlined),
+                label: Text('settings'.tr),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white24),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
 
             const SizedBox(height: 40),
 

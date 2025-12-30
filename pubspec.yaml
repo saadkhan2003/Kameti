@@ -65,6 +65,11 @@ dependencies:
   url_launcher: ^6.3.2
   firebase_analytics: ^11.6.0
 
+  # New Features
+  introduction_screen: ^3.1.14  # Onboarding
+  local_auth: ^2.3.0            # Biometric Lock
+  home_widget: ^0.7.0           # Home Screen Widget
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

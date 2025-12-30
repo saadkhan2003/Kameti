@@ -373,6 +373,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       'currentPayoutCycle': currentPayoutCycle + 1,
       'totalPayoutAmount': totalPayoutAmount,
       'collectionsPerPayout': collectionsPerPayout,
+      'daysElapsed': daysElapsed,
     };
   }
 
@@ -716,8 +717,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                     icon: Icons.today,
                                     color: Colors.blue[400]!,
                                     value:
-                                        'PKR ${(stats['currentCycleCollected'] as double).toInt()} / ${(stats['totalPayoutAmount'] as double).toInt()}',
-                                    label: 'Collected / Payout',
+                                        'PKR ${(stats['currentCycleCollected'] as double).toInt()}',
+                                    label: 'Amount of (${stats['daysElapsed']} days)',
                                   ),
                                 ),
                               ],

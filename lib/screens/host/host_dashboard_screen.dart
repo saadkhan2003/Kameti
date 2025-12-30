@@ -8,17 +8,20 @@ import '../../services/sync_service.dart';
 import '../../services/auto_sync_service.dart';
 import '../../services/realtime_sync_service.dart';
 import '../../services/update_service.dart';
+import '../../services/localization_service.dart';
 import '../../services/toast_service.dart';
 import '../../models/committee.dart';
 import '../../utils/app_theme.dart';
+import '../settings_screen.dart';
 import '../home_screen.dart';
 import 'create_committee_screen.dart';
 import 'committee_detail_screen.dart';
 import '../viewer/join_committee_screen.dart';
 import 'profile_screen.dart';
-import 'legal_info_screen.dart';
 import 'contact_screen.dart';
 import 'about_screen.dart';
+import 'privacy_policy_screen.dart';
+import 'terms_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'terms_screen.dart';
 
@@ -657,7 +660,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           // Profile
           ListTile(
             leading: const Icon(Icons.person_outline, color: Colors.white70),
-            title: const Text('Profile', style: TextStyle(color: Colors.white)),
+            title: Text('profile'.tr, style: const TextStyle(color: Colors.white)),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -672,7 +675,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           // About
           ListTile(
             leading: const Icon(Icons.info_outline, color: Colors.white70),
-            title: const Text('About', style: TextStyle(color: Colors.white)),
+            title: Text('about'.tr, style: const TextStyle(color: Colors.white)),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -682,10 +685,23 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
             },
           ),
 
+          // Settings
+          ListTile(
+            leading: const Icon(Icons.settings_outlined, color: Colors.white70),
+            title: Text('settings'.tr, style: const TextStyle(color: Colors.white)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
+
           // Terms & Conditions
           ListTile(
             leading: const Icon(Icons.article_outlined, color: Colors.white70),
-            title: const Text('Terms & Conditions', style: TextStyle(color: Colors.white)),
+            title: Text('terms_conditions'.tr, style: const TextStyle(color: Colors.white)),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -698,7 +714,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           // Privacy Policy
           ListTile(
             leading: const Icon(Icons.privacy_tip_outlined, color: Colors.white70),
-            title: const Text('Privacy Policy', style: TextStyle(color: Colors.white)),
+            title: Text('privacy_policy'.tr, style: const TextStyle(color: Colors.white)),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -711,7 +727,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           // Contact Us
           ListTile(
             leading: const Icon(Icons.mail_outline, color: Colors.white70),
-            title: const Text('Contact Us', style: TextStyle(color: Colors.white)),
+            title: Text('contact_us'.tr, style: const TextStyle(color: Colors.white)),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -726,7 +742,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           // Logout
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.redAccent),
-            title: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
+            title: Text('logout'.tr, style: const TextStyle(color: Colors.redAccent)),
             onTap: () async {
               Navigator.pop(context);
               await _logout();

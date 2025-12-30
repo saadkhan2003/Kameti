@@ -97,7 +97,7 @@ class TermsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Center(
             child: Text(
-              'Last updated: December 2024',
+              'Last updated: December 2025',
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ),

@@ -216,5 +216,55 @@ class DatabaseService {
     await Hive.box<Payment>(paymentsBox).clear();
     await Hive.box<Map>(joinedCommitteesBox).clear();
     await Hive.box<Map>(committeeUIBox).clear();
+    // Note: Don't clear settingsBox on logout (keep first launch, biometric settings)
+  }
+
+  // ============ APP SETTINGS ============
+
+  static const String settingsBox = 'app_settings';
+
+  static Future<void> _ensureSettingsBox() async {
+    if (!Hive.isBoxOpen(settingsBox)) {
+      await Hive.openBox(settingsBox);
+    }
+  }
+
+  // First Launch / Onboarding
+  Future<bool> isFirstLaunch() async {
+    await _ensureSettingsBox();
+    final box = Hive.box(settingsBox);
+    return box.get('firstLaunchComplete', defaultValue: false) == false;
+  }
+
+  Future<void> setFirstLaunchComplete() async {
+    await _ensureSettingsBox();
+    final box = Hive.box(settingsBox);
+    await box.put('firstLaunchComplete', true);
+  }
+
+  // Biometric Lock
+  Future<bool> isBiometricEnabled() async {
+    await _ensureSettingsBox();
+    final box = Hive.box(settingsBox);
+    return box.get('biometricEnabled', defaultValue: false) == true;
+  }
+
+  Future<void> setBiometricEnabled(bool enabled) async {
+    await _ensureSettingsBox();
+    final box = Hive.box(settingsBox);
+    await box.put('biometricEnabled', enabled);
+  }
+
+  // Language Setting
+  Future<String> getLanguage() async {
+    await _ensureSettingsBox();
+    final box = Hive.box(settingsBox);
+    return box.get('language', defaultValue: 'en') as String;
+  }
+
+  Future<void> setLanguage(String languageCode) async {
+    await _ensureSettingsBox();
+    final box = Hive.box(settingsBox);
+    await box.put('language', languageCode);
   }
 }
