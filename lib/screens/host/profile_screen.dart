@@ -126,10 +126,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               value: email,
             ),
             const SizedBox(height: 12),
-            if (createdAt != null)
-              _buildInfoCard(
-                icon: Icons.calendar_today_outlined,
-            const SizedBox(height: 12),
+
             if (createdAt != null)
               _buildInfoCard(
                 icon: Icons.calendar_today_outlined,
