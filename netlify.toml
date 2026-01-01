@@ -1,6 +1,12 @@
 [build]
-  # Build command - remove existing flutter if present, then clone and build
-  command = "rm -rf flutter && git clone https://github.com/flutter/flutter.git -b stable --depth 1 && flutter/bin/flutter config --enable-web && flutter/bin/flutter build web --release"
+  # Build command - only download Flutter if not cached
+  command = """
+    if [ ! -d "flutter" ]; then
+      git clone https://github.com/flutter/flutter.git -b stable --depth 1
+    fi
+    flutter/bin/flutter config --enable-web
+    flutter/bin/flutter build web --release
+  """
   
   # The directory to publish
   publish = "build/web"
