@@ -1,0 +1,88 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+.packages
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio build artifacts
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/.gradle/
+/android/local.properties
+/android/app/*.keystore
+/android/key.properties
+
+# iOS
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/Generated.xcconfig
+
+# Build outputs
+*.aab
+build/
+
+# Firebase sensitive files (keep your own copies safe)
+# google-services.json
+# GoogleService-Info.plist
+
+# Keep version.json tracked for OTA updates
+!version.json
+
+# Signing keys (IMPORTANT - never commit these!)
+*.jks
+*.keystore
+key.properties
+upload-keystore.jks
+
+# Environment files
+.env
+.env.*
+*.env
+
+# APK and build artifacts
+*.apk
+*.aab
+
+# Local configuration
+local.properties
+
+# Firebase sensitive files (keep your own copies safe)
+google-services.json
+GoogleService-Info.plist
+
