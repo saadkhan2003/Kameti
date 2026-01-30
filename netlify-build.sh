@@ -40,6 +40,14 @@ flutter gen-l10n
 echo "📦 Refreshing package cache..."
 flutter pub get
 
+# Clean build cache to ensure fresh build
+echo "🧹 Cleaning build cache..."
+flutter clean
+
+# Get dependencies again after clean
+echo "📚 Getting dependencies after clean..."
+flutter pub get
+
 # Build for web
 echo "🏗️  Building web app..."
 flutter build web --release
