@@ -4,7 +4,7 @@ import 'package:committee_app/core/theme/app_colors.dart';
 import 'package:committee_app/core/theme/app_decorations.dart';
 
 /// Unified app theme - combines colors, typography, and decorations
-/// 
+///
 /// This file creates the Flutter ThemeData using our custom design tokens.
 /// For quick changes, edit:
 /// - Colors → app_colors.dart
@@ -16,7 +16,7 @@ class AppTheme {
   // ═══════════════════════════════════════════════════════════════════════════
   // RE-EXPORT COMMONLY USED ITEMS FOR BACKWARD COMPATIBILITY
   // ═══════════════════════════════════════════════════════════════════════════
-  
+
   // Colors (for existing code that uses AppTheme.primaryColor)
   static const Color primaryColor = AppColors.primary;
   static const Color primaryDark = AppColors.primaryDark;
@@ -25,42 +25,43 @@ class AppTheme {
   static const Color errorColor = AppColors.error;
   static const Color warningColor = AppColors.warning;
   static const Color infoColor = AppColors.info;
-  
+
   // Dark theme colors
   static const Color darkBg = AppColors.darkBg;
   static const Color darkSurface = AppColors.darkSurface;
   static const Color darkCard = AppColors.darkCard;
-  
+
   // Light theme colors
   static const Color lightBg = AppColors.lightBg;
   static const Color lightSurface = AppColors.lightSurface;
   static const Color lightCard = AppColors.lightCard;
   static const Color lightBorder = AppColors.lightBorder;
-  
+
   // Pastel colors
   static const Color pastelLavender = AppColors.pastelLavender;
   static const Color pastelMint = AppColors.pastelMint;
   static const Color pastelYellow = AppColors.pastelYellow;
   static const Color pastelPink = AppColors.pastelPink;
   static const Color pastelBlue = AppColors.pastelBlue;
-  
+
   // Text colors
   static const Color textDark = AppColors.textDark;
   static const Color textMedium = AppColors.textMedium;
   static const Color textLight = AppColors.textLight;
-  
+
   // Accent
   static const Color accentCoral = AppColors.accent;
-  
+
   // Gradients
   static LinearGradient get primaryGradient => AppColors.primaryGradient;
   static LinearGradient get purpleGradient => AppColors.primaryGradient;
-  
+
   // Shadows
   static List<BoxShadow> get softShadow => AppDecorations.shadowSm;
   static List<BoxShadow> get cardShadow => AppDecorations.shadowMd;
-  static List<BoxShadow> primaryShadow([double opacity = 0.3]) => AppDecorations.shadowPrimary(opacity);
-  
+  static List<BoxShadow> primaryShadow([double opacity = 0.3]) =>
+      AppDecorations.shadowPrimary(opacity);
+
   // Border radius
   static const double radiusSmall = AppDecorations.radiusSm;
   static const double radiusMedium = AppDecorations.radiusMd;
@@ -83,7 +84,10 @@ class AppTheme {
         surface: AppColors.darkSurface,
         error: AppColors.error,
       ),
-      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme).apply(
+        bodyColor: AppColors.textDark, // Black text for input fields
+        displayColor: AppColors.textDark,
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.darkSurface,
         elevation: 0,
@@ -91,8 +95,9 @@ class AppTheme {
         titleTextStyle: GoogleFonts.inter(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: AppColors.textDark,
         ),
+        iconTheme: const IconThemeData(color: AppColors.textDark),
       ),
       cardTheme: CardThemeData(
         color: AppColors.darkCard,
@@ -105,12 +110,16 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          elevation: 0,
+          elevation: 2,
+          shadowColor: AppColors.primary.withOpacity(0.3),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
           ),
-          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -121,7 +130,10 @@ class AppTheme {
             borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
           ),
           side: const BorderSide(color: AppColors.primary, width: 2),
-          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -129,11 +141,11 @@ class AppTheme {
         fillColor: AppColors.darkCard,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: Colors.grey[300]!),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: Colors.grey[300]!),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
@@ -143,8 +155,16 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
           borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         hintStyle: TextStyle(color: Colors.grey[500]),
+        labelStyle: const TextStyle(color: AppColors.textMedium),
+        floatingLabelStyle: const TextStyle(color: AppColors.primary),
+        iconColor: AppColors.textMedium, // Make icons visible
+        prefixIconColor: AppColors.textMedium, // Make prefix icons visible
+        suffixIconColor: AppColors.textMedium, // Make suffix icons visible
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
@@ -156,10 +176,7 @@ class AppTheme {
         selectedItemColor: AppColors.primary,
         unselectedItemColor: Colors.grey,
       ),
-      dividerTheme: DividerThemeData(
-        color: Colors.grey[800],
-        thickness: 1,
-      ),
+      dividerTheme: DividerThemeData(color: Colors.grey[800], thickness: 1),
     );
   }
 
@@ -206,7 +223,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
           ),
-          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -217,7 +237,10 @@ class AppTheme {
             borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
           ),
           side: const BorderSide(color: AppColors.primary, width: 2),
-          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -239,7 +262,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
           borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         hintStyle: TextStyle(color: AppColors.textLight),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(

@@ -9,7 +9,7 @@ import 'package:committee_app/screens/host/host_dashboard_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   final bool startInSignupMode;
-  
+
   const LoginScreen({super.key, this.startInSignupMode = false});
 
   @override
@@ -21,7 +21,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
-  
+
   late bool _isLogin;
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -51,32 +51,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       if (_isLogin) {
-        await ref.read(authServiceProvider).signIn(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
+        await ref
+            .read(authServiceProvider)
+            .signIn(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            );
         AnalyticsService.logLogin();
       } else {
-        await ref.read(authServiceProvider).signUp(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-          displayName: _nameController.text.trim(),
-        );
+        await ref
+            .read(authServiceProvider)
+            .signUp(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+              displayName: _nameController.text.trim(),
+            );
         // Send verification email
         await ref.read(authServiceProvider).sendEmailVerification();
         AnalyticsService.logSignUp();
-        
+
         if (mounted) {
-          ToastService.success(context, 'Verification email sent! Please check your inbox.');
+          ToastService.success(
+            context,
+            'Verification email sent! Please check your inbox.',
+          );
         }
       }
 
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const HostDashboardScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const HostDashboardScreen()),
         );
       }
     } catch (e) {
@@ -97,28 +102,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _isLoading = true;
       _errorMessage = null;
     });
-    
+
     try {
       final credential = await ref.read(authServiceProvider).signInWithGoogle();
-      
+
       if (credential != null && mounted) {
         AnalyticsService.logLogin();
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const HostDashboardScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const HostDashboardScreen()),
         );
+      } else {
+        // User cancelled sign-in, reset loading state
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _errorMessage = e.toString();
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
           _isLoading = false;
         });
       }
@@ -126,68 +131,77 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _showForgotPasswordDialog() {
-    final resetEmailController = TextEditingController(text: _emailController.text);
-    
+    final resetEmailController = TextEditingController(
+      text: _emailController.text,
+    );
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
-        title: const Text('Reset Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Enter your email address and we\'ll send you a link to reset your password.',
-              style: TextStyle(color: Colors.grey[400]),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: AppTheme.darkCard,
+            title: const Text('Reset Password'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Enter your email address and we\'ll send you a link to reset your password.',
+                  style: TextStyle(color: Colors.grey[400]),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: resetEmailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[600]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: AppTheme.darkSurface,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: resetEmailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                prefixIcon: const Icon(Icons.email_outlined),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[600]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
-                ),
-                filled: true,
-                fillColor: AppTheme.darkSurface,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+              ElevatedButton(
+                onPressed: () async {
+                  final email = resetEmailController.text.trim();
+                  if (email.isEmpty) {
+                    ToastService.warning(context, 'Please enter your email');
+                    return;
+                  }
+
+                  try {
+                    await ref.read(authServiceProvider).resetPassword(email);
+                    if (mounted) {
+                      Navigator.pop(context);
+                      ToastService.success(
+                        context,
+                        'Password reset email sent to $email',
+                      );
+                    }
+                  } catch (e) {
+                    ToastService.error(context, e.toString());
+                  }
+                },
+                child: const Text('Send Reset Link'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final email = resetEmailController.text.trim();
-              if (email.isEmpty) {
-                ToastService.warning(context, 'Please enter your email');
-                return;
-              }
-              
-              try {
-                await ref.read(authServiceProvider).resetPassword(email);
-                if (mounted) {
-                  Navigator.pop(context);
-                  ToastService.success(context, 'Password reset email sent to $email');
-                }
-              } catch (e) {
-                ToastService.error(context, e.toString());
-              }
-            },
-            child: const Text('Send Reset Link'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -203,10 +217,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.darkBg,
-              AppTheme.darkSurface,
-            ],
+            colors: [AppTheme.darkBg, AppTheme.darkSurface],
           ),
         ),
         child: SafeArea(
@@ -238,7 +249,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppTheme.textDark,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -248,7 +259,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         : 'Start hosting your own committees',
                     style: GoogleFonts.inter(
                       fontSize: 14,
-                      color: Colors.grey[400],
+                      color: AppTheme.textMedium,
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -364,18 +375,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 18),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(_isLogin ? 'Sign In' : 'Create Account'),
+                    child:
+                        _isLoading
+                            ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                            : Text(_isLogin ? 'Sign In' : 'Create Account'),
                   ),
-                  
+
                   // Forgot Password (only in login mode)
                   if (_isLogin) ...[
                     const SizedBox(height: 16),
@@ -383,7 +395,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onPressed: () => _showForgotPasswordDialog(),
                       child: Text(
                         'Forgot Password?',
-                        style: TextStyle(color: Colors.grey[400]),
+                        style: TextStyle(color: AppTheme.textMedium),
                       ),
                     ),
                   ],
@@ -397,7 +409,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         _isLogin
                             ? "Don't have an account? "
                             : 'Already have an account? ',
-                        style: TextStyle(color: Colors.grey[400]),
+                        style: TextStyle(color: AppTheme.textMedium),
                       ),
                       GestureDetector(
                         onTap: () {
@@ -421,46 +433,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.grey[700])),
+                      Expanded(child: Divider(color: Colors.grey[400])),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'OR',
-                          style: TextStyle(color: Colors.grey[500]),
+                          style: TextStyle(color: Colors.grey[600]),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.grey[700])),
+                      Expanded(child: Divider(color: Colors.grey[400])),
                     ],
                   ),
                   const SizedBox(height: 24),
 
                   // Google Sign-In Button
-                  OutlinedButton.icon(
-                    onPressed: _isLoading ? null : _signInWithGoogle,
+                  OutlinedButton(
+                    onPressed: _isLoading ? () {} : _signInWithGoogle, // Empty function instead of null
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: Colors.grey[700]!),
+                      side: BorderSide(color: Colors.grey[400]!, width: 1.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      backgroundColor: _isLoading ? Colors.grey[50] : null, // Light background when loading
                     ),
-                    icon: Image.network(
-                      'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                      height: 24,
-                      width: 24,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                        Icons.g_mobiledata,
-                        size: 24,
-                        color: Colors.white,
-                      ),
-                    ),
-                    label: const Text(
-                      'Continue with Google',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppTheme.textDark,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Signing in...',
+                                style: TextStyle(
+                                  color: AppTheme.textDark,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Text(
+                            'Continue with Google',
+                            style: TextStyle(
+                              color: AppTheme.textDark,
+                              fontSize: 16,
+                            ),
+                          ),
                   ),
                 ],
               ),
