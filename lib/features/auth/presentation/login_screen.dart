@@ -448,44 +448,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Google Sign-In Button
                   OutlinedButton(
-                    onPressed: _isLoading ? () {} : _signInWithGoogle, // Empty function instead of null
+                    onPressed:
+                        _isLoading
+                            ? () {}
+                            : _signInWithGoogle, // Empty function instead of null
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: BorderSide(color: Colors.grey[400]!, width: 1.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      backgroundColor: _isLoading ? Colors.grey[50] : null, // Light background when loading
+                      backgroundColor:
+                          _isLoading
+                              ? Colors.grey[50]
+                              : null, // Light background when loading
                     ),
-                    child: _isLoading
-                        ? const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                height: 16,
-                                width: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppTheme.textDark,
+                    child:
+                        _isLoading
+                            ? const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  height: 16,
+                                  width: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppTheme.textDark,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Signing in...',
-                                style: TextStyle(
-                                  color: AppTheme.textDark,
-                                  fontSize: 16,
+                                SizedBox(width: 8),
+                                Text(
+                                  'Signing in...',
+                                  style: TextStyle(
+                                    color: AppTheme.textDark,
+                                    fontSize: 16,
+                                  ),
                                 ),
+                              ],
+                            )
+                            : const Text(
+                              'Continue with Google',
+                              style: TextStyle(
+                                color: AppTheme.textDark,
+                                fontSize: 16,
                               ),
-                            ],
-                          )
-                        : const Text(
-                            'Continue with Google',
-                            style: TextStyle(
-                              color: AppTheme.textDark,
-                              fontSize: 16,
                             ),
-                          ),
                   ),
                 ],
               ),
