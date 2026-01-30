@@ -3,10 +3,10 @@ set -e
 
 echo "🔧 Installing Flutter SDK..."
 
-# Download and extract Flutter SDK
+# Download and extract Flutter SDK matching your project version
 if [ ! -d "flutter" ]; then
-  echo "📦 Downloading Flutter ${FLUTTER_VERSION:-stable}..."
-  git clone --depth 1 --branch stable https://github.com/flutter/flutter.git flutter
+  echo "📦 Downloading Flutter 3.7.0 (matching pubspec.yaml)..."
+  git clone --depth 1 --branch 3.7.0 https://github.com/flutter/flutter.git flutter
 fi
 
 # Add Flutter to PATH
