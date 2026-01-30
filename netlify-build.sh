@@ -36,6 +36,10 @@ done
 echo "🌍 Generating localizations..."
 flutter gen-l10n
 
+# Run pub get again to recognize generated packages
+echo "📦 Refreshing package cache..."
+flutter pub get
+
 # Build for web
 echo "🏗️  Building web app..."
 flutter build web --release
