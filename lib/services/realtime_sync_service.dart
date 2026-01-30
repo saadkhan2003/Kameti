@@ -37,8 +37,8 @@ class RealtimeSyncService {
   final Set<String> _pendingMemberDeletes = {};
   final Set<String> _pendingPaymentUpdates = {};  // For payment toggles and reverts
 
-  // Callback for UI updates
-  VoidCallback? onDataChanged;
+  // Listeners for UI updates
+  final List<VoidCallback> _listeners = [];
 
   bool _isListening = false;
   String? _currentHostId;
@@ -154,7 +154,7 @@ class RealtimeSyncService {
     }
 
     // Notify UI to refresh
-    onDataChanged?.call();
+    _notifyListeners();
   }
 
   /// Start listening to members and payments for a committee
@@ -219,7 +219,7 @@ class RealtimeSyncService {
       }
     }
 
-    onDataChanged?.call();
+    _notifyListeners();
   }
 
   /// Handle payment changes
@@ -254,7 +254,7 @@ class RealtimeSyncService {
       }
     }
 
-    onDataChanged?.call();
+    _notifyListeners();
   }
 
   /// Stop listening to a specific committee's data
@@ -284,5 +284,21 @@ class RealtimeSyncService {
 
     _isListening = false;
     _currentHostId = null;
+  }
+
+  void addListener(VoidCallback listener) {
+    if (!_listeners.contains(listener)) {
+      _listeners.add(listener);
+    }
+  }
+
+  void removeListener(VoidCallback listener) {
+    _listeners.remove(listener);
+  }
+
+  void _notifyListeners() {
+    for (final listener in _listeners) {
+      listener();
+    }
   }
 }

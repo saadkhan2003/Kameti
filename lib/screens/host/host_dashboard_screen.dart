@@ -46,7 +46,7 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
     final userId = ref.read(authServiceProvider).currentUser?.uid ?? '';
     if (userId.isNotEmpty) {
       final realtimeService = ref.read(realtimeSyncServiceProvider);
-      realtimeService.onDataChanged = _loadCommittees;
+      realtimeService.addListener(_loadCommittees);
       realtimeService.startListening(userId);
     }
 
@@ -77,6 +77,7 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
   @override
   void dispose() {
     _emailVerificationTimer?.cancel();
+    _realtimeSyncService.removeListener(_loadCommittees);
     _realtimeSyncService.stopListening();
     _tabController.dispose();
     super.dispose();

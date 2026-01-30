@@ -51,6 +51,11 @@ void main() {
     
     when(mockDatabaseService.getHostedCommittees(any)).thenReturn([]);
     when(mockSyncService.syncAll(any)).thenAnswer((_) async => SyncResult(success: true, message: 'Synced'));
+    
+    when(mockRealtimeSyncService.addListener(any)).thenReturn(null);
+    when(mockRealtimeSyncService.removeListener(any)).thenReturn(null);
+    when(mockRealtimeSyncService.startListening(any)).thenReturn(null);
+    when(mockRealtimeSyncService.stopListening()).thenReturn(null);
   });
 
   Widget createSubject() {

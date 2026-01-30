@@ -7,23 +7,22 @@ import 'package:committee_app/screens/host/shuffle_members_screen.dart';
 import 'package:committee_app/services/auto_sync_service.dart';
 import 'package:committee_app/services/database_service.dart';
 import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/core/providers/service_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 
-class CommitteeDetailScreen extends StatefulWidget {
+class CommitteeDetailScreen extends ConsumerStatefulWidget {
   final Committee committee;
 
   const CommitteeDetailScreen({super.key, required this.committee});
 
   @override
-  State<CommitteeDetailScreen> createState() => _CommitteeDetailScreenState();
+  ConsumerState<CommitteeDetailScreen> createState() => _CommitteeDetailScreenState();
 }
 
-class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
-  final _dbService = DatabaseService();
-  final _syncService = SyncService();
-  final _autoSyncService = AutoSyncService();
+class _CommitteeDetailScreenState extends ConsumerState<CommitteeDetailScreen> {
   late Committee _committee;
   List<Member> _members = [];
   bool _showCollectionDetails = false;
@@ -34,12 +33,28 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
     super.initState();
     _committee = widget.committee;
     _loadMembers();
+    ref.read(realtimeSyncServiceProvider).addListener(_loadData);
+  }
+
+  @override
+  void dispose() {
+    ref.read(realtimeSyncServiceProvider).removeListener(_loadData);
+    super.dispose();
+  }
+
+  void _loadData() {
+    if (!mounted) return;
+    _loadMembers();
+    final updated = ref.read(databaseServiceProvider).getCommitteeById(_committee.id);
+    if (updated != null) {
+      setState(() => _committee = updated);
+    }
   }
 
   void _loadMembers() {
     if (!mounted) return;
     setState(() {
-      _members = _dbService.getMembersByCommittee(_committee.id);
+      _members = ref.read(databaseServiceProvider).getMembersByCommittee(_committee.id);
     });
   }
 
@@ -48,12 +63,12 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
     setState(() => _isRefreshing = true);
 
     try {
-      await _syncService.syncMembers(_committee.id);
-      await _syncService.syncPayments(_committee.id);
+      await ref.read(syncServiceProvider).syncMembers(_committee.id);
+      await ref.read(syncServiceProvider).syncPayments(_committee.id);
 
       _loadMembers();
 
-      final updatedCommittee = _dbService.getCommitteeById(_committee.id);
+      final updatedCommittee = ref.read(databaseServiceProvider).getCommitteeById(_committee.id);
       if (updatedCommittee != null && mounted) {
         setState(() => _committee = updatedCommittee);
       }
@@ -156,7 +171,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     name: name,
                     contributionAmount: amount,
                   );
-                  await _autoSyncService.saveCommittee(updated);
+                  await ref.read(autoSyncServiceProvider).saveCommittee(updated);
                   setState(() {
                     _committee = updated;
                   });
@@ -208,7 +223,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                 onPressed: () async {
                   Navigator.pop(dialogContext);
 
-                  await _autoSyncService.deleteCommittee(
+                  await ref.read(autoSyncServiceProvider).deleteCommittee(
                     _committee.id,
                     _committee.hostId,
                   );
@@ -242,7 +257,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
     final paidMembers = _members.where((m) => m.hasReceivedPayout).length;
     final totalAmount = _committee.contributionAmount * _members.length;
 
-    final payments = _dbService.getPaymentsByCommittee(_committee.id);
+    final payments = ref.read(databaseServiceProvider).getPaymentsByCommittee(_committee.id);
     final paidPayments = payments.where((p) => p.isPaid).length;
     final totalCollected = paidPayments * _committee.contributionAmount;
 

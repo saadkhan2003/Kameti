@@ -821,15 +821,6 @@ class MockRealtimeSyncService extends _i1.Mock
   }
 
   @override
-  set onDataChanged(_i13.VoidCallback? _onDataChanged) => super.noSuchMethod(
-        Invocation.setter(
-          #onDataChanged,
-          _onDataChanged,
-        ),
-        returnValueForMissingStub: null,
-      );
-
-  @override
   void markCommitteeForDelete(String? committeeId) => super.noSuchMethod(
         Invocation.method(
           #markCommitteeForDelete,
@@ -888,6 +879,24 @@ class MockRealtimeSyncService extends _i1.Mock
         Invocation.method(
           #stopListening,
           [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #addListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #removeListener,
+          [listener],
         ),
         returnValueForMissingStub: null,
       );
