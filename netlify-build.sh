@@ -32,6 +32,10 @@ for i in {1..3}; do
   sleep 5
 done
 
+# Generate localizations
+echo "🌍 Generating localizations..."
+flutter gen-l10n
+
 # Build for web
 echo "🏗️  Building web app..."
 flutter build web --release
