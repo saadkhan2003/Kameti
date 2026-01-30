@@ -3,9 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../utils/app_theme.dart';
-import 'auth/login_screen.dart';
-import 'viewer/join_committee_screen.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/features/auth/presentation/login_screen.dart';
+import 'package:committee_app/screens/viewer/join_committee_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

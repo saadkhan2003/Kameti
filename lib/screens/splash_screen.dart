@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:lottie/lottie.dart';
-import '../utils/app_theme.dart';
-import '../services/auth_service.dart';
-import '../services/sync_service.dart';
-import '../services/database_service.dart';
-import '../services/biometric_service.dart';
-import '../screens/home_screen.dart';
-import '../screens/host/host_dashboard_screen.dart';
-import '../screens/onboarding_screen.dart';
-import '../screens/lock_screen.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/biometric_service.dart';
+import 'package:committee_app/screens/home_screen.dart';
+import 'package:committee_app/screens/host/host_dashboard_screen.dart';
+import 'package:committee_app/screens/onboarding_screen.dart';
+import 'package:committee_app/screens/lock_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../theme/app_colors.dart';
+import 'package:committee_app/core/theme/app_colors.dart';
 
 /// Empty state widget for when there's no data
 /// 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/app_theme.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
 
 enum ToastType { success, error, warning, info }
 

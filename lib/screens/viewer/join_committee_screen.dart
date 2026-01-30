@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../services/auth_service.dart';
-import '../../services/database_service.dart';
-import '../../services/sync_service.dart';
-import '../../utils/app_theme.dart';
-import '../host/payment_sheet_screen.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/screens/host/payment_sheet_screen.dart';
 
 class JoinCommitteeScreen extends StatefulWidget {
   const JoinCommitteeScreen({super.key});

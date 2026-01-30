@@ -3,18 +3,18 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 // import 'package:flutter/foundation.dart' show kIsWeb;
 
-import '../../services/auth_service.dart';
-import '../../services/database_service.dart';
-import '../../services/export_service.dart';
-import '../../services/auto_sync_service.dart';
-import '../../services/sync_service.dart';
-import '../../services/analytics_service.dart';
-import '../../services/toast_service.dart';
-import '../../models/committee.dart';
-import '../../models/member.dart';
-import '../../utils/app_theme.dart';
-import 'member_management_screen.dart';
-import '../viewer/member_dashboard_screen.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/export_service.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/services/analytics_service.dart';
+import 'package:committee_app/services/toast_service.dart';
+import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/core/models/member.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/screens/host/member_management_screen.dart';
+import 'package:committee_app/screens/viewer/member_dashboard_screen.dart';
 
 class PaymentSheetScreen extends StatefulWidget {
   final Committee committee;

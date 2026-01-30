@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../utils/app_theme.dart';
-import '../services/database_service.dart';
-import 'home_screen.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/screens/home_screen.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
 
 /// Controller for authentication business logic
 class AuthController extends ChangeNotifier {

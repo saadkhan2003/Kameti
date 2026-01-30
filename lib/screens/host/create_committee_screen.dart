@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
-import '../../services/auth_service.dart';
-import '../../services/database_service.dart';
-import '../../services/sync_service.dart';
-import '../../services/analytics_service.dart';
-import '../../models/committee.dart';
-import '../../utils/app_theme.dart';
-import '../../utils/code_generator.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/services/analytics_service.dart';
+import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/core/utils/code_generator.dart';
 
 class CreateCommitteeScreen extends StatefulWidget {
   const CreateCommitteeScreen({super.key});

@@ -8,10 +8,10 @@ import 'package:csv/csv.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import '../models/committee.dart';
-// import '../models/member.dart';
-import '../models/payment.dart';
-import 'database_service.dart';
+import 'package:committee_app/core/models/committee.dart';
+// import 'package:committee_app/core/models/member.dart';
+import 'package:committee_app/core/models/payment.dart';
+import 'package:committee_app/services/database_service.dart';
 
 class ExportService {
   final DatabaseService _dbService = DatabaseService();

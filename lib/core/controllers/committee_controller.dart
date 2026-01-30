@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../services/database_service.dart';
-import '../../services/auth_service.dart';
-import '../../services/auto_sync_service.dart';
-import '../../services/sync_service.dart';
-import '../../models/committee.dart';
-import '../../models/member.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/core/models/member.dart';
 
 /// Controller for committee detail business logic
 /// 

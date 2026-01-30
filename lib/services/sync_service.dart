@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import '../models/committee.dart';
-import '../models/member.dart';
-import '../models/payment.dart';
-import 'database_service.dart';
+import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/core/models/member.dart';
+import 'package:committee_app/core/models/payment.dart';
+import 'package:committee_app/services/database_service.dart';
 
 class SyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

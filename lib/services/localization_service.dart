@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'database_service.dart';
+import 'package:committee_app/services/database_service.dart';
 
 /// Simple localization service for English and Urdu
 class LocalizationService extends ChangeNotifier {

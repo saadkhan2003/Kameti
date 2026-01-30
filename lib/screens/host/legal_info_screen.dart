@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../../utils/app_theme.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
 
 class LegalInfoScreen extends StatefulWidget {
   const LegalInfoScreen({super.key});

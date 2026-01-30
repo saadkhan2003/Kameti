@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../../services/auth_service.dart';
-import '../../services/database_service.dart';
-import '../../services/sync_service.dart';
-import '../../services/toast_service.dart';
-import '../../services/localization_service.dart';
-import '../../utils/app_theme.dart';
-import '../home_screen.dart';
-import '../settings_screen.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/services/toast_service.dart';
+import 'package:committee_app/services/localization_service.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/screens/home_screen.dart';
+import 'package:committee_app/screens/settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

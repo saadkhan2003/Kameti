@@ -1,10 +1,10 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'sync_service.dart';
-import 'database_service.dart';
-import 'realtime_sync_service.dart';
-import '../models/committee.dart';
-import '../models/member.dart';
-import '../models/payment.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/realtime_sync_service.dart';
+import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/core/models/member.dart';
+import 'package:committee_app/core/models/payment.dart';
 
 /// A wrapper service that automatically syncs data to Firebase
 /// whenever changes are made locally.

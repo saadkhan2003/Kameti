@@ -1,13 +1,13 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../services/database_service.dart';
-import '../../services/sync_service.dart';
-import '../../services/auto_sync_service.dart';
-import '../../services/toast_service.dart';
-import '../../models/committee.dart';
-import '../../models/member.dart';
-import '../../utils/app_theme.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/toast_service.dart';
+import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/core/models/member.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
 
 class ShuffleMembersScreen extends StatefulWidget {
   final Committee committee;
