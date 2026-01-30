@@ -34,6 +34,6 @@ done
 
 # Build for web
 echo "🏗️  Building web app..."
-flutter build web --release --web-renderer canvaskit
+flutter build web --release
 
 echo "✅ Build complete!"
