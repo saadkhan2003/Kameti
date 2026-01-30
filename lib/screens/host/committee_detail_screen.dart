@@ -1,16 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
 import 'package:committee_app/screens/host/member_management_screen.dart';
 import 'package:committee_app/screens/host/payment_sheet_screen.dart';
 import 'package:committee_app/screens/host/shuffle_members_screen.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 
 class CommitteeDetailScreen extends StatefulWidget {
   final Committee committee;
@@ -68,7 +67,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
   }
 
   void _showShareOptions() {
-    String message =
+    final message =
         '📋 *${_committee.name}*\n\n'
         '*Committee Code:* ${_committee.code}\n'
         '*Contribution:* Rs. ${_committee.contributionAmount.toInt()}\n'

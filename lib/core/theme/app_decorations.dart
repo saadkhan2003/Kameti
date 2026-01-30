@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:committee_app/core/theme/app_colors.dart';
+import 'package:flutter/material.dart';
 
 /// App decorations (shadows, borders, radius) - CHANGE THESE TO UPDATE STYLING APP-WIDE
 class AppDecorations {

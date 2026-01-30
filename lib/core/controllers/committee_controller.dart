@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/sync_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:flutter/material.dart';
 
 /// Controller for committee detail business logic
 /// 
@@ -140,14 +140,14 @@ class CommitteeController extends ChangeNotifier {
   /// Get total collected amount
   double getTotalCollected() {
     final payments = _dbService.getPaymentsByCommittee(committeeId);
-    int paidCount = payments.where((p) => p.isPaid).length;
+    final paidCount = payments.where((p) => p.isPaid).length;
     return paidCount * (_committee?.contributionAmount ?? 0);
   }
 
   /// Get pending amount
   double getPendingAmount() {
     final payments = _dbService.getPaymentsByCommittee(committeeId);
-    int unpaidCount = payments.where((p) => !p.isPaid).length;
+    final unpaidCount = payments.where((p) => !p.isPaid).length;
     return unpaidCount * (_committee?.contributionAmount ?? 0);
   }
 

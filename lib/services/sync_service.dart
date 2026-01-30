@@ -1,13 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/models/payment.dart';
 import 'package:committee_app/services/database_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class SyncService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final DatabaseService _dbService = DatabaseService();
+  final FirebaseFirestore _firestore;
+  final DatabaseService _dbService;
+
+  SyncService({
+    FirebaseFirestore? firestore,
+    DatabaseService? dbService,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _dbService = dbService ?? DatabaseService();
 
   // Collection names
   static const String committeesCollection = 'committees';
@@ -28,8 +34,8 @@ class SyncService {
     }
 
     try {
-      int uploaded = 0;
-      int downloaded = 0;
+      var uploaded = 0;
+      var downloaded = 0;
 
       // Sync committees first (must complete before members/payments)
       final committeesResult = await syncCommittees(hostId);
@@ -67,8 +73,8 @@ class SyncService {
   // ============ COMMITTEE SYNC ============
 
   Future<SyncCounts> syncCommittees(String hostId) async {
-    int uploaded = 0;
-    int downloaded = 0;
+    var uploaded = 0;
+    var downloaded = 0;
 
     // Upload local committees to Firestore using batch (faster)
     final localCommittees = _dbService.getHostedCommittees(hostId);
@@ -107,8 +113,8 @@ class SyncService {
   // ============ MEMBER SYNC ============
 
   Future<SyncCounts> syncMembers(String committeeId) async {
-    int uploaded = 0;
-    int downloaded = 0;
+    var uploaded = 0;
+    var downloaded = 0;
 
     // Upload local members to Firestore using batch (faster)
     final localMembers = _dbService.getMembersByCommittee(committeeId);
@@ -134,7 +140,7 @@ class SyncService {
       final localMember = _dbService.getMemberById(cloudMember.id);
 
       // Check if cloud is newer - compare payout status
-      bool shouldDownload = false;
+      var shouldDownload = false;
       
       if (localMember == null) {
         shouldDownload = true;
@@ -178,8 +184,8 @@ class SyncService {
   // ============ PAYMENT SYNC ============
 
   Future<SyncCounts> syncPayments(String committeeId) async {
-    int uploaded = 0;
-    int downloaded = 0;
+    var uploaded = 0;
+    var downloaded = 0;
 
     // Upload local payments to Firestore using batch (faster)
     final localPayments = _dbService.getPaymentsByCommittee(committeeId);
@@ -215,7 +221,7 @@ class SyncService {
         cloudPayment.date,
       );
 
-      bool shouldDownload = false;
+      var shouldDownload = false;
       
       if (existingPayment == null) {
         shouldDownload = true;

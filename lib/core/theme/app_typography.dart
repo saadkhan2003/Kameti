@@ -1,6 +1,6 @@
+import 'package:committee_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:committee_app/core/theme/app_colors.dart';
 
 /// App typography styles - CHANGE THESE TO UPDATE TEXT STYLES APP-WIDE
 class AppTypography {

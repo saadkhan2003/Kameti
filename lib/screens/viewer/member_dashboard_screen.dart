@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-import 'package:committee_app/services/database_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class MemberDashboardScreen extends StatefulWidget {
   final Committee committee;
@@ -47,7 +47,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     final intervalDays = widget.committee.paymentIntervalDays;
     final endDate = startDate.add(Duration(days: intervalDays * totalCycles));
     
-    int totalDays = 0;
+    var totalDays = 0;
     if (widget.committee.frequency == 'daily') {
       final actualEndDate = today.isBefore(endDate) ? today : endDate;
       totalDays = actualEndDate.difference(startDate).inDays + 1;
@@ -107,7 +107,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   colors: [AppTheme.primaryColor, AppTheme.primaryDark],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -180,7 +180,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.bar_chart_rounded, color: Colors.white, size: 24),
+                      const Icon(Icons.bar_chart_rounded, color: Colors.white, size: 24),
                       const SizedBox(width: 12),
                       Text(
                         'Your Payment Status',

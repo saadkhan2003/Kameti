@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/realtime_sync_service.dart';
+
 import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/realtime_sync_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:flutter/material.dart';
 
 /// Controller for dashboard business logic
 /// 
@@ -150,7 +151,7 @@ class DashboardController extends ChangeNotifier {
 
   /// Get total members across all active committees
   int getTotalMembers() {
-    int total = 0;
+    var total = 0;
     for (var committee in _activeCommittees) {
       total += _dbService.getMembersByCommittee(committee.id).length;
     }

@@ -1,4 +1,4 @@
 /// Core exports - import this file to get all core components
-library core;
+library;
 
 export 'controllers/controllers.dart';

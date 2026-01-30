@@ -1,0 +1,100 @@
+{
+  "appTitle": "Committee App",
+  "myKametis": "My Kametis",
+  "joinedAKameti": "Joined a Kameti?",
+  "viewKametiPayments": "View Kameti Payments",
+  "yourHostedKametis": "Your Hosted Kametis",
+  "archivedSection": "Archived",
+  "archivedKametis": "Archived Kametis",
+  "newCommittee": "New Committee",
+  "noArchivedKametis": "No archived kametis",
+  "verifyEmail": "Verify your email",
+  "checkInbox": "Check your inbox for verification link",
+  "resend": "Resend",
+  "verificationEmailSent": "Verification email sent!",
+  "emailVerifiedSuccess": "Email verified successfully! ✓",
+  "archive": "Archive",
+  "undo": "Undo",
+  "delete": "Delete",
+  "cancel": "Cancel",
+  "restore": "Restore",
+  "kametiArchived": "{name} archived",
+  "@kametiArchived": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "kametiDeleted": "{name} deleted",
+  "@kametiDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "archiveKametiTitle": "Archive Kameti?",
+  "archiveKametiContent": "This will move \"{name}\" to the archived section. You can restore it later.",
+  "@archiveKametiContent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteKametiTitle": "Delete Kameti?",
+  "deleteKametiContent": "This will permanently delete \"{name}\" and all its data. This cannot be undone.",
+  "@deleteKametiContent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profile": "Profile",
+  "about": "About",
+  "settings": "Settings",
+  "termsConditions": "Terms & Conditions",
+  "privacyPolicy": "Privacy Policy",
+  "contactUs": "Contact Us",
+  "logout": "Logout",
+  "activeKametis": "active kametis",
+  "noCommitteesYet": "No Committees Yet",
+  "createFirstCommittee": "Create your first committee to get started",
+  "hostLogin": "Host Login",
+  "createAccount": "Create Account",
+  "welcomeBack": "Welcome Back!",
+  "createYourAccount": "Create Your Account",
+  "signInToManage": "Sign in to manage your committees",
+  "startHosting": "Start hosting your own committees",
+  "fullName": "Full Name",
+  "pleaseEnterName": "Please enter your name",
+  "email": "Email",
+  "pleaseEnterEmail": "Please enter your email",
+  "enterValidEmail": "Please enter a valid email",
+  "password": "Password",
+  "pleaseEnterPassword": "Please enter your password",
+  "passwordMinLength": "Password must be at least 6 characters",
+  "signIn": "Sign In",
+  "forgotPassword": "Forgot Password?",
+  "dontHaveAccount": "Don't have an account? ",
+  "alreadyHaveAccount": "Already have an account? ",
+  "signUp": "Sign Up",
+  "or": "OR",
+  "signingIn": "Signing in...",
+  "continueWithGoogle": "Continue with Google",
+  "verificationSent": "Verification email sent! Please check your inbox.",
+  "resetPassword": "Reset Password",
+  "resetPasswordDesc": "Enter your email address and we'll send you a link to reset your password.",
+  "sendResetLink": "Send Reset Link",
+  "passwordResetSent": "Password reset email sent to {email}",
+  "@passwordResetSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "enterEmail": "Please enter your email"
+}

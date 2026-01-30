@@ -1,6 +1,6 @@
+import 'package:committee_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:committee_app/core/theme/app_colors.dart';
 // import 'package:committee_app/core/theme/app_decorations.dart';
 
 /// Reusable app drawer widget
@@ -53,7 +53,7 @@ class AppDrawer extends StatelessWidget {
         children: [
           // Header
           DrawerHeader(
-            decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+            decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,

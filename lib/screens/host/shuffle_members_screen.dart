@@ -1,13 +1,14 @@
 import 'dart:math';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/toast_service.dart';
+
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/services/toast_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ShuffleMembersScreen extends StatefulWidget {
   final Committee committee;
@@ -76,14 +77,14 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
       _isShuffling = true;
     });
 
-    for (int i = 0; i < 10; i++) {
+    for (var i = 0; i < 10; i++) {
       await Future.delayed(const Duration(milliseconds: 100));
       setState(() {
         _members.shuffle(Random());
       });
     }
 
-    for (int i = 0; i < _members.length; i++) {
+    for (var i = 0; i < _members.length; i++) {
       final member = _members[i];
       await _autoSyncService.updateMemberPayoutOrder(
         member.id,
@@ -196,7 +197,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
       _members.insert(newIndex, item);
     });
 
-    for (int i = 0; i < _members.length; i++) {
+    for (var i = 0; i < _members.length; i++) {
       await _autoSyncService.updateMemberPayoutOrder(
         _members[i].id,
         i + 1,
@@ -458,7 +459,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
             color: Colors.white,
           ),
         ),
-        Text(label, style: TextStyle(fontSize: 11, color: Colors.white70)),
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.white70)),
       ],
     );
   }
@@ -610,15 +611,15 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                   Row(
                     children: [
                       if (hasReceived)
-                        Row(
+                        const Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.check_circle,
                               size: 12,
                               color: AppTheme.secondaryColor,
                             ),
-                            const SizedBox(width: 4),
-                            const Text(
+                            SizedBox(width: 4),
+                            Text(
                               'Received',
                               style: TextStyle(
                                 fontSize: 11,

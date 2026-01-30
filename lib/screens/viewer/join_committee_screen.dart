@@ -1,11 +1,11 @@
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/screens/host/payment_sheet_screen.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/screens/host/payment_sheet_screen.dart';
 
 class JoinCommitteeScreen extends StatefulWidget {
   const JoinCommitteeScreen({super.key});
@@ -290,7 +290,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 24),
               const Divider(color: Colors.grey),
               const SizedBox(height: 24),

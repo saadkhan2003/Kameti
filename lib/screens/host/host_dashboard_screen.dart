@@ -1,57 +1,53 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-// import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/realtime_sync_service.dart';
-import 'package:committee_app/services/localization_service.dart';
-import 'package:committee_app/services/toast_service.dart';
+
 import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/core/providers/service_providers.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
 import 'package:committee_app/screens/home_screen.dart';
-import 'package:committee_app/screens/host/create_committee_screen.dart';
-import 'package:committee_app/screens/host/committee_detail_screen.dart';
-import 'package:committee_app/screens/viewer/join_committee_screen.dart';
-import 'package:committee_app/screens/host/profile_screen.dart';
-import 'package:committee_app/screens/host/contact_screen.dart';
 import 'package:committee_app/screens/host/about_screen.dart';
+import 'package:committee_app/screens/host/committee_detail_screen.dart';
+import 'package:committee_app/screens/host/contact_screen.dart';
+import 'package:committee_app/screens/host/create_committee_screen.dart';
 import 'package:committee_app/screens/host/privacy_policy_screen.dart';
+import 'package:committee_app/screens/host/profile_screen.dart';
 import 'package:committee_app/screens/host/terms_screen.dart';
 import 'package:committee_app/screens/settings_screen.dart';
+import 'package:committee_app/screens/viewer/join_committee_screen.dart';
+import 'package:committee_app/services/realtime_sync_service.dart';
+import 'package:committee_app/services/toast_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class HostDashboardScreen extends StatefulWidget {
+class HostDashboardScreen extends ConsumerStatefulWidget {
   const HostDashboardScreen({super.key});
 
   @override
-  State<HostDashboardScreen> createState() => _HostDashboardScreenState();
+  ConsumerState<HostDashboardScreen> createState() => _HostDashboardScreenState();
 }
 
-class _HostDashboardScreenState extends State<HostDashboardScreen>
+class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
     with SingleTickerProviderStateMixin {
-  final _authService = AuthService();
-  final _dbService = DatabaseService();
-  final _syncService = SyncService();
-  final _autoSyncService = AutoSyncService();
-  final _realtimeSyncService = RealtimeSyncService();
   List<Committee> _activeCommittees = [];
   List<Committee> _archivedCommittees = [];
   bool _isSyncing = false;
   late TabController _tabController;
   Timer? _emailVerificationTimer;
+  late RealtimeSyncService _realtimeSyncService;
 
   @override
   void initState() {
     super.initState();
+    _realtimeSyncService = ref.read(realtimeSyncServiceProvider);
     _tabController = TabController(length: 2, vsync: this);
     _loadCommittees();
 
-    final userId = _authService.currentUser?.uid ?? '';
+    final userId = ref.read(authServiceProvider).currentUser?.uid ?? '';
     if (userId.isNotEmpty) {
-      _realtimeSyncService.onDataChanged = _loadCommittees;
-      _realtimeSyncService.startListening(userId);
+      final realtimeService = ref.read(realtimeSyncServiceProvider);
+      realtimeService.onDataChanged = _loadCommittees;
+      realtimeService.startListening(userId);
     }
 
     _syncDataSilent();
@@ -60,17 +56,18 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
   }
 
   void _startEmailVerificationCheck() {
-    final user = _authService.currentUser;
+    final authService = ref.read(authServiceProvider);
+    final user = authService.currentUser;
     if (user != null && !user.emailVerified) {
       _emailVerificationTimer = Timer.periodic(const Duration(seconds: 3), (
         timer,
       ) async {
-        await _authService.reloadUser();
-        if (_authService.isEmailVerified) {
+        await authService.reloadUser();
+        if (authService.isEmailVerified) {
           timer.cancel();
           if (mounted) {
             setState(() {});
-            ToastService.success(context, 'Email verified successfully! ✓');
+            ToastService.success(context, AppLocalizations.of(context)!.emailVerifiedSuccess);
           }
         }
       });
@@ -87,8 +84,8 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
   void _loadCommittees() {
     if (!mounted) return;
-    final userId = _authService.currentUser?.uid ?? '';
-    final all = _dbService.getHostedCommittees(userId);
+    final userId = ref.read(authServiceProvider).currentUser?.uid ?? '';
+    final all = ref.read(databaseServiceProvider).getHostedCommittees(userId);
     setState(() {
       _activeCommittees = all.where((c) => !c.isArchived).toList();
       _archivedCommittees = all.where((c) => c.isArchived).toList();
@@ -102,8 +99,8 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
       _isSyncing = true;
     });
 
-    final hostId = _authService.currentUser?.uid ?? '';
-    final result = await _syncService.syncAll(hostId);
+    final hostId = ref.read(authServiceProvider).currentUser?.uid ?? '';
+    final result = await ref.read(syncServiceProvider).syncAll(hostId);
 
     if (mounted) {
       setState(() {
@@ -125,8 +122,8 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    final hostId = _authService.currentUser?.uid ?? '';
-    final result = await _syncService.syncAll(hostId);
+    final hostId = ref.read(authServiceProvider).currentUser?.uid ?? '';
+    final result = await ref.read(syncServiceProvider).syncAll(hostId);
 
     if (mounted) {
       setState(() {
@@ -159,7 +156,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
   }
 
   Future<void> _logout() async {
-    await _authService.signOut();
+    await ref.read(authServiceProvider).signOut();
     if (mounted) {
       Navigator.pushAndRemoveUntil(
         context,
@@ -188,7 +185,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                     const Icon(Icons.archive, color: AppTheme.primaryColor),
                     const SizedBox(width: 12),
                     Text(
-                      'Archived Kametis',
+                      AppLocalizations.of(context)!.archivedKametis,
                       style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -203,7 +200,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                     padding: const EdgeInsets.all(20),
                     child: Center(
                       child: Text(
-                        'No archived kametis',
+                        AppLocalizations.of(context)!.noArchivedKametis,
                         style: TextStyle(color: Colors.grey[500]),
                       ),
                     ),
@@ -233,13 +230,13 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                           ),
                           trailing: TextButton(
                             onPressed: () async {
-                              await _autoSyncService.unarchiveCommittee(
+                              await ref.read(autoSyncServiceProvider).unarchiveCommittee(
                                 committee,
                               );
                               _loadCommittees();
                               if (mounted) Navigator.pop(context);
                             },
-                            child: const Text('Restore'),
+                            child: Text(AppLocalizations.of(context)!.restore),
                           ),
                           onTap: () {
                             Navigator.pop(context);
@@ -268,37 +265,37 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
       builder:
           (context) => AlertDialog(
             backgroundColor: Colors.white,
-            title: const Text('Archive Kameti?'),
+            title: Text(AppLocalizations.of(context)!.archiveKametiTitle),
             content: Text(
-              'This will move "${committee.name}" to the archived section. You can restore it later.',
+              AppLocalizations.of(context)!.archiveKametiContent(committee.name),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                 ),
-                child: const Text('Archive'),
+                child: Text(AppLocalizations.of(context)!.archive),
               ),
             ],
           ),
     );
 
     if (confirm == true) {
-      await _autoSyncService.archiveCommittee(committee);
+      await ref.read(autoSyncServiceProvider).archiveCommittee(committee);
       _loadCommittees();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${committee.name} archived'),
+            content: Text(AppLocalizations.of(context)!.kametiArchived(committee.name)),
             action: SnackBarAction(
-              label: 'Undo',
+              label: AppLocalizations.of(context)!.undo,
               onPressed: () async {
-                await _autoSyncService.unarchiveCommittee(committee);
+                await ref.read(autoSyncServiceProvider).unarchiveCommittee(committee);
                 _loadCommittees();
               },
             ),
@@ -314,39 +311,39 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
       builder:
           (context) => AlertDialog(
             backgroundColor: Colors.white,
-            title: const Text('Delete Kameti?'),
+            title: Text(AppLocalizations.of(context)!.deleteKametiTitle),
             content: Text(
-              'This will permanently delete "${committee.name}" and all its data. This cannot be undone.',
+              AppLocalizations.of(context)!.deleteKametiContent(committee.name),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.errorColor,
                 ),
-                child: const Text('Delete'),
+                child: Text(AppLocalizations.of(context)!.delete),
               ),
             ],
           ),
     );
 
     if (confirm == true) {
-      final hostId = _authService.currentUser?.uid ?? '';
-      await _autoSyncService.deleteCommittee(committee.id, hostId);
+      final hostId = ref.read(authServiceProvider).currentUser?.uid ?? '';
+      await ref.read(autoSyncServiceProvider).deleteCommittee(committee.id, hostId);
       _loadCommittees();
       if (mounted) {
-        ToastService.error(context, '${committee.name} deleted');
+        ToastService.error(context, AppLocalizations.of(context)!.kametiDeleted(committee.name));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = _authService.currentUser;
+    final user = ref.read(authServiceProvider).currentUser;
     final displayName =
         user?.displayName ?? user?.email?.split('@')[0] ?? 'Host';
 
@@ -355,7 +352,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
       child: Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: const Text('My Kametis'),
+          title: Text(AppLocalizations.of(context)!.myKametis),
           automaticallyImplyLeading: false,
           backgroundColor: Colors.white,
           elevation: 0,
@@ -404,15 +401,15 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Verify your email',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.of(context)!.verifyEmail,
+                              style: const TextStyle(
                                 color: AppTheme.warningColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
-                              'Check your inbox for verification link',
+                              AppLocalizations.of(context)!.checkInbox,
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 12,
@@ -423,7 +420,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                       ),
                       TextButton(
                         onPressed: () async {
-                          await _authService.sendEmailVerification();
+                          await ref.read(authServiceProvider).sendEmailVerification();
                           if (mounted) {
                             ToastService.success(
                               context,
@@ -431,9 +428,9 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                             );
                           }
                         },
-                        child: const Text(
-                          'Resend',
-                          style: TextStyle(color: AppTheme.warningColor),
+                        child: Text(
+                          AppLocalizations.of(context)!.resend,
+                          style: const TextStyle(color: AppTheme.warningColor),
                         ),
                       ),
                     ],
@@ -469,7 +466,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${_activeCommittees.length} active kametis',
+                      '${_activeCommittees.length} ${AppLocalizations.of(context)!.activeKametis}',
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         color: Colors.white70,
@@ -530,7 +527,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Joined a Kameti?',
+                                  AppLocalizations.of(context)!.joinedAKameti,
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
                                     color: Colors.grey[600],
@@ -538,7 +535,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'View Kameti Payments',
+                                  AppLocalizations.of(context)!.viewKametiPayments,
                                   style: GoogleFonts.inter(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -568,7 +565,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Your Hosted Kametis',
+                      AppLocalizations.of(context)!.yourHostedKametis,
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -579,7 +576,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                       TextButton.icon(
                         onPressed: () => _showArchivedSheet(),
                         icon: const Icon(Icons.archive_outlined, size: 18),
-                        label: Text('Archived (${_archivedCommittees.length})'),
+                        label: Text('${AppLocalizations.of(context)!.archivedSection} (${_archivedCommittees.length})'),
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.grey[600],
                         ),
@@ -601,7 +598,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                         child: _buildCommitteeCard(committee),
                       ),
                     )
-                    .toList(),
+                    ,
             ],
           ),
         ),
@@ -618,7 +615,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
             }
           },
           icon: const Icon(Icons.add),
-          label: const Text('New Committee'),
+          label: Text(AppLocalizations.of(context)!.newCommittee),
           backgroundColor: AppTheme.primaryColor,
         ),
       ),
@@ -626,7 +623,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
   }
 
   Widget _buildDrawer(BuildContext context) {
-    final user = _authService.currentUser;
+    final user = ref.read(authServiceProvider).currentUser;
     final displayName =
         user?.displayName ?? user?.email?.split('@')[0] ?? 'Guest';
     final email = user?.email ?? 'Anonymous User';
@@ -681,7 +678,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           ListTile(
             leading: Icon(Icons.person_outline, color: Colors.grey[700]),
             title: Text(
-              'profile'.tr,
+              AppLocalizations.of(context)!.profile,
               style: const TextStyle(color: Colors.black87),
             ),
             onTap: () {
@@ -698,7 +695,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           ListTile(
             leading: Icon(Icons.info_outline, color: Colors.grey[700]),
             title: Text(
-              'about'.tr,
+              AppLocalizations.of(context)!.about,
               style: const TextStyle(color: Colors.black87),
             ),
             onTap: () {
@@ -713,7 +710,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           ListTile(
             leading: Icon(Icons.settings_outlined, color: Colors.grey[700]),
             title: Text(
-              'settings'.tr,
+              AppLocalizations.of(context)!.settings,
               style: const TextStyle(color: Colors.black87),
             ),
             onTap: () {
@@ -728,7 +725,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           ListTile(
             leading: Icon(Icons.article_outlined, color: Colors.grey[700]),
             title: Text(
-              'terms_conditions'.tr,
+              AppLocalizations.of(context)!.termsConditions,
               style: const TextStyle(color: Colors.black87),
             ),
             onTap: () {
@@ -743,7 +740,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           ListTile(
             leading: Icon(Icons.privacy_tip_outlined, color: Colors.grey[700]),
             title: Text(
-              'privacy_policy'.tr,
+              AppLocalizations.of(context)!.privacyPolicy,
               style: const TextStyle(color: Colors.black87),
             ),
             onTap: () {
@@ -760,7 +757,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           ListTile(
             leading: Icon(Icons.mail_outline, color: Colors.grey[700]),
             title: Text(
-              'contact_us'.tr,
+              AppLocalizations.of(context)!.contactUs,
               style: const TextStyle(color: Colors.black87),
             ),
             onTap: () {
@@ -777,7 +774,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.redAccent),
             title: Text(
-              'logout'.tr,
+              AppLocalizations.of(context)!.logout,
               style: const TextStyle(color: Colors.redAccent),
             ),
             onTap: () async {
@@ -798,7 +795,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           Icon(Icons.group_off_outlined, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'No Committees Yet',
+            AppLocalizations.of(context)!.noCommitteesYet,
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -807,7 +804,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'Create your first committee to get started',
+            AppLocalizations.of(context)!.createFirstCommittee,
             style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500]),
           ),
         ],
@@ -816,7 +813,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
   }
 
   Widget _buildCommitteeCard(Committee committee) {
-    final members = _dbService.getMembersByCommittee(committee.id);
+    final members = ref.read(databaseServiceProvider).getMembersByCommittee(committee.id);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

@@ -1,11 +1,11 @@
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/services/biometric_service.dart';
+import 'package:committee_app/services/localization_service.dart';
+import 'package:committee_app/services/toast_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:committee_app/services/biometric_service.dart';
-import 'package:committee_app/services/localization_service.dart';
-import 'package:committee_app/services/toast_service.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -54,7 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _checkForUpdate() async {
     setState(() => _isCheckingUpdate = true);
     try {
-      final AppUpdateInfo info = await InAppUpdate.checkForUpdate();
+      final info = await InAppUpdate.checkForUpdate();
       setState(() => _isCheckingUpdate = false);
 
       if (info.updateAvailability == UpdateAvailability.updateAvailable) {

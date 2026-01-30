@@ -1,17 +1,18 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:csv/csv.dart';
-import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
+
 import 'package:committee_app/core/models/committee.dart';
 // import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/models/payment.dart';
 import 'package:committee_app/services/database_service.dart';
+import 'package:csv/csv.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ExportService {
   final DatabaseService _dbService = DatabaseService();
@@ -149,9 +150,10 @@ class ExportService {
                     ],
                   ),
                   ...members.asMap().entries.map((e) {
-                    int paid = 0;
-                    for (var d in dates)
+                    var paid = 0;
+                    for (var d in dates) {
                       if (_isPaymentMarked(payments, e.value.id, d)) paid++;
+                    }
                     final pct =
                         dates.isNotEmpty
                             ? (paid / dates.length * 100).toInt()
@@ -459,7 +461,7 @@ class ExportService {
             : '0';
     final paidCount = members.where((m) => m.hasReceivedPayout).length;
 
-    List<List<dynamic>> rows = [];
+    final rows = <List<dynamic>>[];
 
     rows.add(['=========================================================']);
     rows.add(['${committee.name.toUpperCase()} - PAYMENT REPORT']);
@@ -483,7 +485,7 @@ class ExportService {
     rows.add([]);
     rows.add(['------------------ PAYOUT SCHEDULE ------------------']);
     rows.add(['Order', 'Member', 'Phone', 'Code', 'Status', 'Date']);
-    for (var m in members)
+    for (var m in members) {
       rows.add([
         m.payoutOrder,
         m.name,
@@ -494,6 +496,7 @@ class ExportService {
             ? DateFormat('dd/MM/yyyy').format(m.payoutDate!)
             : '-',
       ]);
+    }
     rows.add([]);
     rows.add(['------------------ MEMBER PAYMENTS ------------------']);
     rows.add([
@@ -506,8 +509,10 @@ class ExportService {
       'Amount Due',
     ]);
     for (var m in members) {
-      int paid = 0;
-      for (var d in dates) if (_isPaymentMarked(payments, m.id, d)) paid++;
+      var paid = 0;
+      for (var d in dates) {
+        if (_isPaymentMarked(payments, m.id, d)) paid++;
+      }
       final missed = dates.length - paid;
       final pct = dates.isNotEmpty ? (paid / dates.length * 100).toInt() : 0;
       rows.add([
@@ -534,7 +539,7 @@ class ExportService {
     rows.add(['=========================================================']);
     rows.add(['END OF REPORT']);
 
-    String csv = const ListToCsvConverter().convert(rows);
+    final csv = const ListToCsvConverter().convert(rows);
     if (kIsWeb) {
       await Printing.sharePdf(
         bytes: Uint8List.fromList(csv.codeUnits),
@@ -555,8 +560,8 @@ class ExportService {
     DateTime? startDate,
     DateTime? endDate,
   }) {
-    List<DateTime> dates = [];
-    DateTime cur = DateTime(
+    final dates = <DateTime>[];
+    var cur = DateTime(
       (startDate ?? c.startDate).year,
       (startDate ?? c.startDate).month,
       (startDate ?? c.startDate).day,

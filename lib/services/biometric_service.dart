@@ -1,6 +1,6 @@
+import 'package:committee_app/services/database_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:committee_app/services/database_service.dart';
 
 class BiometricService {
   static final LocalAuthentication _auth = LocalAuthentication();
@@ -57,7 +57,7 @@ class BiometricService {
   /// Check if biometric lock is enabled by user
   static Future<bool> isBiometricLockEnabled() async {
     final dbService = DatabaseService();
-    return await dbService.isBiometricEnabled();
+    return dbService.isBiometricEnabled();
   }
   
   /// Enable/disable biometric lock

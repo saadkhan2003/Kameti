@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
-import 'package:home_widget/home_widget.dart';
-import 'package:intl/intl.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/services/database_service.dart';
+import 'package:flutter/foundation.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:intl/intl.dart';
 
 /// Service to update the Android home screen widget with payout info
 class WidgetService {

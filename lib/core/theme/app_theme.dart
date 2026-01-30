@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:committee_app/core/theme/app_colors.dart';
 import 'package:committee_app/core/theme/app_decorations.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Unified app theme - combines colors, typography, and decorations
 ///
@@ -248,11 +248,11 @@ class AppTheme {
         fillColor: AppColors.lightSurface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          borderSide: BorderSide(color: AppColors.lightBorder),
+          borderSide: const BorderSide(color: AppColors.lightBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          borderSide: BorderSide(color: AppColors.lightBorder),
+          borderSide: const BorderSide(color: AppColors.lightBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
@@ -266,7 +266,7 @@ class AppTheme {
           horizontal: 16,
           vertical: 16,
         ),
-        hintStyle: TextStyle(color: AppColors.textLight),
+        hintStyle: const TextStyle(color: AppColors.textLight),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
@@ -276,12 +276,12 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppDecorations.radiusLg),
         ),
       ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.lightBg,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textLight,
       ),
-      dividerTheme: DividerThemeData(
+      dividerTheme: const DividerThemeData(
         color: AppColors.lightBorder,
         thickness: 1,
       ),

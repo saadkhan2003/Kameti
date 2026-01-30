@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-import 'package:committee_app/services/database_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class MemberViewScreen extends StatefulWidget {
   final Committee committee;
@@ -42,10 +42,10 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
     final now = DateTime.now();
     final startDate = widget.committee.startDate;
 
-    int daysToGenerate = 30;
+    final daysToGenerate = 30;
     switch (widget.committee.frequency) {
       case 'daily':
-        for (int i = 0; i < daysToGenerate; i++) {
+        for (var i = 0; i < daysToGenerate; i++) {
           final date = now.subtract(Duration(days: i));
           if (date.isAfter(startDate.subtract(const Duration(days: 1)))) {
             _dates.add(DateTime(date.year, date.month, date.day));
@@ -53,7 +53,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
         }
         break;
       case 'weekly':
-        for (int i = 0; i < daysToGenerate ~/ 7; i++) {
+        for (var i = 0; i < daysToGenerate ~/ 7; i++) {
           final date = now.subtract(Duration(days: i * 7));
           if (date.isAfter(startDate.subtract(const Duration(days: 1)))) {
             _dates.add(DateTime(date.year, date.month, date.day));
@@ -61,7 +61,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
         }
         break;
       case 'monthly':
-        for (int i = 0; i < 12; i++) {
+        for (var i = 0; i < 12; i++) {
           final date = DateTime(now.year, now.month - i, now.day);
           if (date.isAfter(startDate.subtract(const Duration(days: 1)))) {
             _dates.add(DateTime(date.year, date.month, 1));

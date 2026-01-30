@@ -1,6 +1,6 @@
+import 'package:committee_app/services/database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:committee_app/services/database_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -72,7 +72,7 @@ class AuthService {
       // final isWeb = identical(1.0, 1); // Always true check for conditional
 
       // Use Firebase's built-in Google provider for web
-      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      final googleProvider = GoogleAuthProvider();
 
       // Try popup sign-in (works on web)
       try {
@@ -80,13 +80,13 @@ class AuthService {
       } catch (e) {
         // If popup fails, try redirect (fallback) or mobile approach
         // For mobile, use GoogleSignIn package
-        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+        final googleUser = await GoogleSignIn().signIn();
 
         if (googleUser == null) {
           return null;
         }
 
-        final GoogleSignInAuthentication googleAuth =
+        final googleAuth =
             await googleUser.authentication;
 
         final credential = GoogleAuthProvider.credential(

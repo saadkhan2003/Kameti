@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/sync_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:flutter/material.dart';
 // import 'package:committee_app/core/models/payment.dart';
 
 /// Controller for payment sheet business logic
@@ -149,8 +149,8 @@ class PaymentController extends ChangeNotifier {
 
   Map<String, dynamic> calculateMemberDebt(String memberId) {
     final now = DateTime.now();
-    int paidCount = 0;
-    int duePeriods = 0;
+    var paidCount = 0;
+    var duePeriods = 0;
 
     for (var date in _dates) {
       if (!date.isAfter(now)) {
@@ -192,10 +192,10 @@ class PaymentController extends ChangeNotifier {
     final currentPayoutCycle =
         payoutInterval > 0 ? (daysElapsed ~/ payoutInterval) : 0;
 
-    int currentCyclePaid = 0;
-    int currentCycleDue = 0;
-    int totalPaid = 0;
-    int totalDue = 0;
+    var currentCyclePaid = 0;
+    var currentCycleDue = 0;
+    var totalPaid = 0;
+    var totalDue = 0;
 
     for (var member in _members) {
       for (var date in _dates) {
@@ -244,7 +244,7 @@ class PaymentController extends ChangeNotifier {
 
   Map<String, dynamic> calculateMemberAdvance(String memberId) {
     final now = DateTime.now();
-    int advancePaymentCount = 0;
+    var advancePaymentCount = 0;
     for (var date in _dates) {
       if (date.isAfter(now) && isPaymentMarked(memberId, date)) {
         advancePaymentCount++;
@@ -267,7 +267,7 @@ class PaymentController extends ChangeNotifier {
     final committeeStartDate = committee.startDate;
     final payoutIntervalDays = committee.paymentIntervalDays;
 
-    int collectionInterval = 30;
+    var collectionInterval = 30;
     if (committee.frequency == 'daily') collectionInterval = 1;
     if (committee.frequency == 'weekly') collectionInterval = 7;
     if (committee.frequency == 'monthly') collectionInterval = 30;
@@ -304,8 +304,8 @@ class PaymentController extends ChangeNotifier {
               ? _filterStartDate!
               : cycleStartDate;
 
-      DateTime current = effectiveStartDate;
-      for (int i = 0; i < periodsPerPayout; i++) {
+      var current = effectiveStartDate;
+      for (var i = 0; i < periodsPerPayout; i++) {
         _dates.add(current);
         if (committee.frequency == 'monthly') {
           current = _addMonths(current, 1);

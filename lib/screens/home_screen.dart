@@ -1,11 +1,10 @@
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/features/auth/presentation/login_screen.dart';
+import 'package:committee_app/screens/viewer/join_committee_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/features/auth/presentation/login_screen.dart';
-import 'package:committee_app/screens/viewer/join_committee_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,13 +25,13 @@ class _HomeScreenState extends State<HomeScreen> {
       await Future.delayed(const Duration(seconds: 4));
 
       final prefs = await SharedPreferences.getInstance();
-      int? lastAsked = prefs.getInt('last_review_time');
+      final lastAsked = prefs.getInt('last_review_time');
 
-      const int cooldown = 604800000;
-      final int now = DateTime.now().millisecondsSinceEpoch;
+      const cooldown = 604800000;
+      final now = DateTime.now().millisecondsSinceEpoch;
 
       if (lastAsked == null || (now - lastAsked) > cooldown) {
-        final InAppReview inAppReview = InAppReview.instance;
+        final inAppReview = InAppReview.instance;
 
         if (await inAppReview.isAvailable()) {
           inAppReview.requestReview();

@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/services/biometric_service.dart';
 import 'package:committee_app/screens/home_screen.dart';
 import 'package:committee_app/screens/host/host_dashboard_screen.dart';
+import 'package:committee_app/services/biometric_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 
 class LockScreen extends StatefulWidget {

@@ -1,10 +1,11 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/models/payment.dart';
 import 'package:committee_app/services/database_service.dart';
+import 'package:flutter/foundation.dart';
 
 /// Helper to parse dates that can be Timestamp or String
 DateTime? _parseDate(dynamic value) {
@@ -17,12 +18,14 @@ DateTime? _parseDate(dynamic value) {
 /// Real-time sync service that listens to Firestore changes
 /// and updates local database automatically
 class RealtimeSyncService {
-  static final RealtimeSyncService _instance = RealtimeSyncService._internal();
-  factory RealtimeSyncService() => _instance;
-  RealtimeSyncService._internal();
+  final FirebaseFirestore _firestore;
+  final DatabaseService _dbService;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final DatabaseService _dbService = DatabaseService();
+  RealtimeSyncService({
+    FirebaseFirestore? firestore,
+    DatabaseService? dbService,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _dbService = dbService ?? DatabaseService();
 
   // Stream subscriptions
   StreamSubscription<QuerySnapshot>? _committeesSubscription;
@@ -104,7 +107,7 @@ class RealtimeSyncService {
   }
 
   /// Handle committee changes from Firestore
-  void _handleCommitteesChange(QuerySnapshot snapshot, String hostId) async {
+  Future<void> _handleCommitteesChange(QuerySnapshot snapshot, String hostId) async {
     debugPrint('📥 Received ${snapshot.docChanges.length} committee changes');
 
     for (final change in snapshot.docChanges) {
@@ -181,7 +184,7 @@ class RealtimeSyncService {
   }
 
   /// Handle member changes
-  void _handleMembersChange(QuerySnapshot snapshot, String committeeId) async {
+  Future<void> _handleMembersChange(QuerySnapshot snapshot, String committeeId) async {
     for (final change in snapshot.docChanges) {
       final data = change.doc.data() as Map<String, dynamic>?;
       if (data == null) continue;
@@ -220,7 +223,7 @@ class RealtimeSyncService {
   }
 
   /// Handle payment changes
-  void _handlePaymentsChange(QuerySnapshot snapshot, String committeeId) async {
+  Future<void> _handlePaymentsChange(QuerySnapshot snapshot, String committeeId) async {
     for (final change in snapshot.docChanges) {
       final data = change.doc.data() as Map<String, dynamic>?;
       if (data == null) continue;

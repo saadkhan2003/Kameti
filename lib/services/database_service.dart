@@ -1,7 +1,7 @@
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/models/payment.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class DatabaseService {
   static const String committeesBox = 'committees';

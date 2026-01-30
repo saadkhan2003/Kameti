@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:package_info_plus/package_info_plus.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/toast_service.dart';
-import 'package:committee_app/services/localization_service.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
 import 'package:committee_app/screens/home_screen.dart';
 import 'package:committee_app/screens/settings_screen.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/localization_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/services/toast_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -38,7 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final authService = AuthService();
     final user = authService.currentUser;
-    String displayName = user?.displayName ?? user?.email?.split('@')[0] ?? '';
+    var displayName = user?.displayName ?? user?.email?.split('@')[0] ?? '';
     if (displayName.isEmpty) displayName = 'Guest';
     final email = user?.email ?? 'Anonymous User';
     final createdAt = user?.metadata.creationTime;
@@ -555,7 +555,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   } catch (e) {
                     if (context.mounted) {
                       Navigator.pop(context);
-                      String errorMsg = 'Failed to delete account';
+                      var errorMsg = 'Failed to delete account';
                       final errorStr = e.toString().toLowerCase();
                       if (errorStr.contains('wrong-password') ||
                           errorStr.contains('invalid-credential') ||

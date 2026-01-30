@@ -1,20 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-// import 'package:flutter/foundation.dart' show kIsWeb;
-
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/export_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/analytics_service.dart';
-import 'package:committee_app/services/toast_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+// import 'package:flutter/foundation.dart' show kIsWeb;
+
+import 'package:committee_app/features/auth/data/auth_service.dart';
 import 'package:committee_app/screens/host/member_management_screen.dart';
 import 'package:committee_app/screens/viewer/member_dashboard_screen.dart';
+import 'package:committee_app/services/analytics_service.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/export_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/services/toast_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class PaymentSheetScreen extends StatefulWidget {
   final Committee committee;
@@ -47,7 +47,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   DateTime? _filterStartDate;
   DateTime? _filterEndDate;
 
-  int _extraPeriods = 1;
+  final int _extraPeriods = 1;
 
   @override
   void initState() {
@@ -115,7 +115,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     final committeeStartDate = widget.committee.startDate;
     final payoutIntervalDays = widget.committee.paymentIntervalDays;
 
-    int collectionInterval = 30;
+    var collectionInterval = 30;
     if (widget.committee.frequency == 'daily') collectionInterval = 1;
     if (widget.committee.frequency == 'weekly') collectionInterval = 7;
     if (widget.committee.frequency == 'monthly') collectionInterval = 30;
@@ -154,8 +154,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
               ? _filterStartDate!
               : cycleStartDate;
 
-      DateTime current = effectiveStartDate;
-      for (int i = 0; i < periodsPerPayout; i++) {
+      var current = effectiveStartDate;
+      for (var i = 0; i < periodsPerPayout; i++) {
         _dates.add(current);
         if (widget.committee.frequency == 'monthly') {
           current = _addMonths(current, 1);
@@ -165,7 +165,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       }
     } else {
       final startDate = _filterStartDate ?? committeeStartDate;
-      DateTime baseEndDate = _filterEndDate ?? DateTime.now();
+      final baseEndDate = _filterEndDate ?? DateTime.now();
 
       DateTime endDate;
       if (widget.committee.frequency == 'monthly') {
@@ -176,13 +176,13 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         );
       }
 
-      DateTime current = DateTime(
+      var current = DateTime(
         startDate.year,
         startDate.month,
         startDate.day,
       );
 
-      int safetyCounter = 0;
+      var safetyCounter = 0;
 
       while (!current.isAfter(endDate) && safetyCounter < 500) {
         _dates.add(current);
@@ -224,7 +224,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     if (widget.committee.frequency == 'monthly') {
       return (date.year - start.year) * 12 + (date.month - start.month) + 1;
     } else {
-      int interval = 30;
+      var interval = 30;
       if (widget.committee.frequency == 'daily') interval = 1;
       if (widget.committee.frequency == 'weekly') interval = 7;
       final daysDiff = date.difference(start).inDays;
@@ -237,7 +237,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       return _members.length;
     }
 
-    DateTime farDate =
+    var farDate =
         _dates.isNotEmpty ? _dates.last : widget.committee.startDate;
     for (final p in payments) {
       if (p.date.isAfter(farDate)) farDate = p.date;
@@ -253,8 +253,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
 
   Map<String, dynamic> _calculateMemberDebt(String memberId) {
     final now = DateTime.now();
-    int paidCount = 0;
-    int duePeriods = 0;
+    var paidCount = 0;
+    var duePeriods = 0;
 
     for (var date in _dates) {
       if (!date.isAfter(now)) {
@@ -296,10 +296,10 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     final currentPayoutCycle =
         payoutInterval > 0 ? (daysElapsed ~/ payoutInterval) : 0;
 
-    int currentCyclePaid = 0;
-    int currentCycleDue = 0;
-    int totalPaid = 0;
-    int totalDue = 0;
+    var currentCyclePaid = 0;
+    var currentCycleDue = 0;
+    var totalPaid = 0;
+    var totalDue = 0;
 
     for (var member in _members) {
       for (var date in _dates) {
@@ -352,7 +352,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
 
   Map<String, dynamic> _calculateMemberAdvance(String memberId) {
     final now = DateTime.now();
-    int advancePaymentCount = 0;
+    var advancePaymentCount = 0;
     for (var date in _dates) {
       if (date.isAfter(now) && _isPaymentMarked(memberId, date)) {
         advancePaymentCount++;
@@ -1162,7 +1162,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                           ),
                         ),
                       ] else ...[
-                        Text(
+                        const Text(
                           '✓',
                           style: TextStyle(
                             fontSize: 12,
@@ -1248,7 +1248,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.black87,
             fontWeight: FontWeight.bold,
             fontSize: 16,
@@ -1376,8 +1376,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   Widget _buildMemberPersonalView() {
     final member = widget.viewAsMember!;
 
-    int paidCount = 0;
-    int advanceCount = 0;
+    var paidCount = 0;
+    var advanceCount = 0;
     final now = DateTime.now();
 
     for (var date in _dates) {
@@ -1449,19 +1449,19 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
     final firstDay = DateTime(month.year, month.month, 1);
     final lastDay = DateTime(month.year, month.month + 1, 0);
 
-    List<DateTime> days = [];
-    int startingWeekday = firstDay.weekday % 7;
+    final days = <DateTime>[];
+    final startingWeekday = firstDay.weekday % 7;
 
-    for (int i = 0; i < startingWeekday; i++) {
+    for (var i = 0; i < startingWeekday; i++) {
       days.add(DateTime(month.year, month.month, 1 - (startingWeekday - i)));
     }
 
-    for (int i = 1; i <= lastDay.day; i++) {
+    for (var i = 1; i <= lastDay.day; i++) {
       days.add(DateTime(month.year, month.month, i));
     }
 
-    int remainingDays = 42 - days.length;
-    for (int i = 1; i <= remainingDays; i++) {
+    final remainingDays = 42 - days.length;
+    for (var i = 1; i <= remainingDays; i++) {
       days.add(DateTime(month.year, month.month + 1, i));
     }
 

@@ -1,15 +1,15 @@
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/screens/home_screen.dart';
+import 'package:committee_app/screens/host/host_dashboard_screen.dart';
+import 'package:committee_app/screens/lock_screen.dart';
+import 'package:committee_app/screens/onboarding_screen.dart';
+import 'package:committee_app/services/biometric_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:lottie/lottie.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/biometric_service.dart';
-import 'package:committee_app/screens/home_screen.dart';
-import 'package:committee_app/screens/host/host_dashboard_screen.dart';
-import 'package:committee_app/screens/onboarding_screen.dart';
-import 'package:committee_app/screens/lock_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -53,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen>
     try {
       setState(() => _status = 'Checking for updates...');
       try {
-        final AppUpdateInfo updateInfo = await InAppUpdate.checkForUpdate();
+        final updateInfo = await InAppUpdate.checkForUpdate();
         if (updateInfo.updateAvailability ==
                 UpdateAvailability.updateAvailable &&
             updateInfo.immediateUpdateAllowed) {

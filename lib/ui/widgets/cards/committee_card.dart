@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:committee_app/core/theme/app_colors.dart';
 import 'package:committee_app/core/theme/app_decorations.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Reusable committee card widget
 /// 
@@ -120,8 +120,9 @@ class CommitteeCard extends StatelessWidget {
                       PopupMenuButton<String>(
                         icon: Icon(Icons.more_vert, color: Colors.grey[400]),
                         onSelected: (value) {
-                          if (value == 'archive') onArchive?.call();
-                          else if (value == 'delete') onDelete?.call();
+                          if (value == 'archive') {
+                            onArchive?.call();
+                          } else if (value == 'delete') onDelete?.call();
                         },
                         itemBuilder: (context) => [
                           if (onArchive != null)
