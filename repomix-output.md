@@ -188,6 +188,8 @@ lib/
         auth_service.dart
       presentation/
         login_screen.dart
+  l10n/
+    app_en.arb
   screens/
     host/
       about_screen.dart
@@ -311,6 +313,13 @@ test/
   features/
     auth/
       login_screen_test.dart
+  screens/
+    host/
+      host_dashboard_test.dart
+      host_dashboard_test.mocks.dart
+  services/
+    sync_service_test.dart
+    sync_service_test.mocks.dart
   widget_test.dart
 web/
   icons/
@@ -348,9 +357,11 @@ windows/
 analysis_options.yaml
 devtools_options.yaml
 firebase.json
+l10n.yaml
 pubspec.lock
 pubspec.yaml
 README.md
+test_output.txt
 ```
 
 # Files
@@ -893,25 +904,6 @@ class PaymentAdapter extends TypeAdapter<Payment> {
 }
 ````
 
-## File: lib/core/providers/service_providers.dart
-````dart
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-
-final databaseServiceProvider = Provider<DatabaseService>((ref) {
-  return DatabaseService();
-});
-
-final authServiceProvider = Provider<AuthService>((ref) {
-  return AuthService();
-});
-
-final authStateProvider = StreamProvider((ref) {
-  return ref.watch(authServiceProvider).authStateChanges;
-});
-````
-
 ## File: lib/core/theme/app_colors.dart
 ````dart
 import 'package:flutter/material.dart';
@@ -963,295 +955,6 @@ class AppColors {
     end: Alignment.bottomCenter,
   );
 }
-````
-
-## File: lib/core/theme/app_decorations.dart
-````dart
-import 'package:flutter/material.dart';
-import 'package:committee_app/core/theme/app_colors.dart';
-
-/// App decorations (shadows, borders, radius) - CHANGE THESE TO UPDATE STYLING APP-WIDE
-class AppDecorations {
-  AppDecorations._();
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // BORDER RADIUS
-  // ═══════════════════════════════════════════════════════════════════════════
-  static const double radiusXs = 4.0;
-  static const double radiusSm = 8.0;
-  static const double radiusMd = 12.0;
-  static const double radiusLg = 16.0;
-  static const double radiusXl = 20.0;
-  static const double radiusXxl = 28.0;
-  static const double radiusRound = 50.0;
-
-  static BorderRadius get borderRadiusSm => BorderRadius.circular(radiusSm);
-  static BorderRadius get borderRadiusMd => BorderRadius.circular(radiusMd);
-  static BorderRadius get borderRadiusLg => BorderRadius.circular(radiusLg);
-  static BorderRadius get borderRadiusXl => BorderRadius.circular(radiusXl);
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SHADOWS
-  // ═══════════════════════════════════════════════════════════════════════════
-  static List<BoxShadow> get shadowNone => [];
-
-  static List<BoxShadow> get shadowSm => [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.05),
-      blurRadius: 4,
-      offset: const Offset(0, 2),
-    ),
-  ];
-
-  static List<BoxShadow> get shadowMd => [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.1),
-      blurRadius: 10,
-      offset: const Offset(0, 4),
-    ),
-  ];
-
-  static List<BoxShadow> get shadowLg => [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.15),
-      blurRadius: 20,
-      offset: const Offset(0, 8),
-    ),
-  ];
-
-  static List<BoxShadow> shadowPrimary([double opacity = 0.3]) => [
-    BoxShadow(
-      color: AppColors.primary.withOpacity(opacity),
-      blurRadius: 20,
-      offset: const Offset(0, 8),
-    ),
-  ];
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // CARD DECORATIONS
-  // ═══════════════════════════════════════════════════════════════════════════
-  static BoxDecoration get cardDark => BoxDecoration(
-    color: AppColors.darkCard,
-    borderRadius: borderRadiusLg,
-  );
-
-  static BoxDecoration get cardLight => BoxDecoration(
-    color: AppColors.lightCard,
-    borderRadius: borderRadiusLg,
-    boxShadow: shadowMd,
-  );
-
-  static BoxDecoration get cardWithBorder => BoxDecoration(
-    color: AppColors.lightCard,
-    borderRadius: borderRadiusLg,
-    border: Border.all(color: AppColors.lightBorder),
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // ICON CONTAINER DECORATIONS
-  // ═══════════════════════════════════════════════════════════════════════════
-  static BoxDecoration iconContainerPrimary([double opacity = 0.1]) => BoxDecoration(
-    color: AppColors.primary.withOpacity(opacity),
-    borderRadius: borderRadiusMd,
-  );
-
-  static BoxDecoration iconContainerCircle(Color color) => BoxDecoration(
-    color: color.withOpacity(0.1),
-    shape: BoxShape.circle,
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // INPUT DECORATIONS
-  // ═══════════════════════════════════════════════════════════════════════════
-  static InputDecoration inputDark({
-    String? labelText,
-    String? hintText,
-    Widget? prefixIcon,
-    Widget? suffixIcon,
-  }) => InputDecoration(
-    labelText: labelText,
-    hintText: hintText,
-    prefixIcon: prefixIcon,
-    suffixIcon: suffixIcon,
-    filled: true,
-    fillColor: AppColors.darkCard,
-    border: OutlineInputBorder(
-      borderRadius: borderRadiusMd,
-      borderSide: BorderSide.none,
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: borderRadiusMd,
-      borderSide: BorderSide.none,
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: borderRadiusMd,
-      borderSide: const BorderSide(color: AppColors.primary, width: 2),
-    ),
-    errorBorder: OutlineInputBorder(
-      borderRadius: borderRadiusMd,
-      borderSide: const BorderSide(color: AppColors.error, width: 2),
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    hintStyle: TextStyle(color: Colors.grey[500]),
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SPACING
-  // ═══════════════════════════════════════════════════════════════════════════
-  static const double spacingXs = 4.0;
-  static const double spacingSm = 8.0;
-  static const double spacingMd = 16.0;
-  static const double spacingLg = 24.0;
-  static const double spacingXl = 32.0;
-  static const double spacingXxl = 48.0;
-}
-````
-
-## File: lib/core/theme/app_typography.dart
-````dart
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:committee_app/core/theme/app_colors.dart';
-
-/// App typography styles - CHANGE THESE TO UPDATE TEXT STYLES APP-WIDE
-class AppTypography {
-  AppTypography._();
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // FONT FAMILY
-  // ═══════════════════════════════════════════════════════════════════════════
-  static String get fontFamily => GoogleFonts.inter().fontFamily!;
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // DISPLAY / HEADINGS
-  // ═══════════════════════════════════════════════════════════════════════════
-  static TextStyle displayLarge = GoogleFonts.inter(
-    fontSize: 36,
-    fontWeight: FontWeight.bold,
-    color: Colors.white,
-    letterSpacing: -0.5,
-  );
-
-  static TextStyle displayMedium = GoogleFonts.inter(
-    fontSize: 28,
-    fontWeight: FontWeight.bold,
-    color: Colors.white,
-  );
-
-  static TextStyle headlineLarge = GoogleFonts.inter(
-    fontSize: 24,
-    fontWeight: FontWeight.bold,
-    color: Colors.white,
-  );
-
-  static TextStyle headlineMedium = GoogleFonts.inter(
-    fontSize: 20,
-    fontWeight: FontWeight.w600,
-    color: Colors.white,
-  );
-
-  static TextStyle headlineSmall = GoogleFonts.inter(
-    fontSize: 18,
-    fontWeight: FontWeight.w600,
-    color: Colors.white,
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // BODY TEXT
-  // ═══════════════════════════════════════════════════════════════════════════
-  static TextStyle bodyLarge = GoogleFonts.inter(
-    fontSize: 16,
-    fontWeight: FontWeight.normal,
-    color: Colors.white,
-  );
-
-  static TextStyle bodyMedium = GoogleFonts.inter(
-    fontSize: 14,
-    fontWeight: FontWeight.normal,
-    color: Colors.grey,
-  );
-
-  static TextStyle bodySmall = GoogleFonts.inter(
-    fontSize: 12,
-    fontWeight: FontWeight.normal,
-    color: Colors.grey,
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // LABELS / BUTTONS
-  // ═══════════════════════════════════════════════════════════════════════════
-  static TextStyle labelLarge = GoogleFonts.inter(
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    color: Colors.white,
-  );
-
-  static TextStyle labelMedium = GoogleFonts.inter(
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-    color: Colors.white,
-  );
-
-  static TextStyle labelSmall = GoogleFonts.inter(
-    fontSize: 12,
-    fontWeight: FontWeight.w500,
-    color: Colors.grey,
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SPECIAL STYLES
-  // ═══════════════════════════════════════════════════════════════════════════
-  static TextStyle appBarTitle = GoogleFonts.inter(
-    fontSize: 18,
-    fontWeight: FontWeight.w600,
-    color: Colors.white,
-  );
-
-  static TextStyle cardTitle = GoogleFonts.inter(
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    color: Colors.white,
-  );
-
-  static TextStyle cardSubtitle = GoogleFonts.inter(
-    fontSize: 13,
-    color: Colors.grey[400],
-  );
-
-  static TextStyle statValue = GoogleFonts.inter(
-    fontSize: 24,
-    fontWeight: FontWeight.bold,
-    color: Colors.white,
-  );
-
-  static TextStyle statLabel = GoogleFonts.inter(
-    fontSize: 12,
-    color: Colors.grey[400],
-  );
-
-  static TextStyle buttonText = GoogleFonts.inter(
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    color: Colors.white,
-  );
-
-  static TextStyle linkText = GoogleFonts.inter(
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    color: AppColors.primary,
-  );
-}
-````
-
-## File: lib/core/theme/theme.dart
-````dart
-/// Theme exports - import this file to get all theme components
-library theme;
-
-export 'app_colors.dart';
-export 'app_typography.dart';
-export 'app_decorations.dart';
-export 'app_theme.dart';
 ````
 
 ## File: lib/core/utils/app_theme.dart
@@ -1504,250 +1207,107 @@ class CodeGenerator {
 }
 ````
 
-## File: lib/features/auth/data/auth_service.dart
-````dart
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:committee_app/services/database_service.dart';
-
-class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  // Get current user
-  User? get currentUser => _auth.currentUser;
-
-  // Check if user is logged in
-  bool get isLoggedIn => currentUser != null;
-
-  // Auth state stream
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
-
-  // Sign up with email and password
-  Future<UserCredential?> signUp({
-    required String email,
-    required String password,
-    String? displayName,
-  }) async {
-    try {
-      final credential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      if (displayName != null && credential.user != null) {
-        await credential.user!.updateDisplayName(displayName);
-      }
-
-      return credential;
-    } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
-    }
-  }
-
-  // Sign in with email and password
-  Future<UserCredential?> signIn({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      return await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-    } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
-    }
-  }
-
-  // Sign in anonymously
-  Future<UserCredential?> signInAnonymously() async {
-    try {
-      return await _auth.signInAnonymously();
-    } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
-    }
-  }
-
-  // Sign in with Google
-  Future<UserCredential?> signInWithGoogle() async {
-    try {
-      // For web, use signInWithPopup
-      if (identical(0, 0.0)) {
-        // This check is never true, but we use kIsWeb approach
-      }
-
-      // Check if running on web
-      // final isWeb = identical(1.0, 1); // Always true check for conditional
-
-      // Use Firebase's built-in Google provider for web
-      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-
-      // Try popup sign-in (works on web)
-      try {
-        return await _auth.signInWithPopup(googleProvider);
-      } catch (e) {
-        // If popup fails, try redirect (fallback) or mobile approach
-        // For mobile, use GoogleSignIn package
-        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-
-        if (googleUser == null) {
-          return null;
-        }
-
-        final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
-
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-
-        return await _auth.signInWithCredential(credential);
-      }
-    } catch (e) {
-      throw 'Google sign-in failed. Please try again.';
-    }
-  }
-
-  // Sign out
-  Future<void> signOut() async {
-    // Clear local data to ensure user separation
-    await DatabaseService.clearAllData();
-    await _auth.signOut();
-  }
-
-  // Delete account and all data
-  Future<void> deleteAccount() async {
-    final user = currentUser;
-    if (user == null) return;
-
-    // Clear local data
-    await DatabaseService.clearAllData();
-
-    // Delete Firebase user account
-    await user.delete();
-  }
-
-  // Reset password
-  Future<void> resetPassword(String email) async {
-    try {
-      await _auth.sendPasswordResetEmail(email: email);
-    } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
-    }
-  }
-
-  // Check if email is verified
-  bool get isEmailVerified => currentUser?.emailVerified ?? false;
-
-  // Send email verification
-  Future<void> sendEmailVerification() async {
-    final user = currentUser;
-    if (user != null && !user.emailVerified) {
-      await user.sendEmailVerification();
-    }
-  }
-
-  // Reload user to check verification status
-  Future<void> reloadUser() async {
-    await currentUser?.reload();
-  }
-
-  // Handle Firebase Auth exceptions
-  String _handleAuthException(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'weak-password':
-        return 'The password provided is too weak.';
-      case 'email-already-in-use':
-        return 'An account already exists for that email.';
-      case 'user-not-found':
-        return 'No account found with this email.';
-      case 'wrong-password':
-        return 'Incorrect password. Please try again.';
-      case 'invalid-credential':
-        return 'Incorrect email or password. Please try again.';
-      case 'invalid-email':
-        return 'The email address is invalid.';
-      case 'user-disabled':
-        return 'This account has been disabled.';
-      case 'too-many-requests':
-        return 'Too many attempts. Please try again later.';
-      default:
-        return e.message ?? 'An error occurred. Please try again.';
-    }
-  }
-}
+## File: lib/l10n/app_en.arb
 ````
-
-## File: lib/app.dart
-````dart
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/screens/splash_screen.dart';
-import 'package:committee_app/screens/lock_screen.dart';
-import 'package:committee_app/services/biometric_service.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-
-final navigatorKey = GlobalKey<NavigatorState>();
-
-class CommitteeApp extends ConsumerStatefulWidget {
-  const CommitteeApp({super.key});
-
-  @override
-  ConsumerState<CommitteeApp> createState() => _CommitteeAppState();
-}
-
-class _CommitteeAppState extends ConsumerState<CommitteeApp> with WidgetsBindingObserver {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _checkBiometricLock();
+{
+  "appTitle": "Committee App",
+  "myKametis": "My Kametis",
+  "joinedAKameti": "Joined a Kameti?",
+  "viewKametiPayments": "View Kameti Payments",
+  "yourHostedKametis": "Your Hosted Kametis",
+  "archivedSection": "Archived",
+  "archivedKametis": "Archived Kametis",
+  "newCommittee": "New Committee",
+  "noArchivedKametis": "No archived kametis",
+  "verifyEmail": "Verify your email",
+  "checkInbox": "Check your inbox for verification link",
+  "resend": "Resend",
+  "verificationEmailSent": "Verification email sent!",
+  "emailVerifiedSuccess": "Email verified successfully! ✓",
+  "archive": "Archive",
+  "undo": "Undo",
+  "delete": "Delete",
+  "cancel": "Cancel",
+  "restore": "Restore",
+  "kametiArchived": "{name} archived",
+  "@kametiArchived": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
     }
-  }
-
-  Future<void> _checkBiometricLock() async {
-    // Check if lock is enabled
-    final isEnabled = await BiometricService.isBiometricLockEnabled();
-    // Only lock if enabled and not already showing lock screen
-    if (isEnabled && !LockScreen.isShown) {
-      // Note: In later steps, we will use ref.read(authServiceProvider)
-      final user = AuthService().currentUser;
-      final isRealHost = user != null && !user.isAnonymous && user.email != null;
-      
-      navigatorKey.currentState?.pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => LockScreen(isHost: isRealHost),
-          transitionDuration: Duration.zero,
-        ),
-      );
+  },
+  "kametiDeleted": "{name} deleted",
+  "@kametiDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: 'Kameti',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark,
-      home: const SplashScreen(),
-    );
-  }
+  },
+  "archiveKametiTitle": "Archive Kameti?",
+  "archiveKametiContent": "This will move \"{name}\" to the archived section. You can restore it later.",
+  "@archiveKametiContent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteKametiTitle": "Delete Kameti?",
+  "deleteKametiContent": "This will permanently delete \"{name}\" and all its data. This cannot be undone.",
+  "@deleteKametiContent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profile": "Profile",
+  "about": "About",
+  "settings": "Settings",
+  "termsConditions": "Terms & Conditions",
+  "privacyPolicy": "Privacy Policy",
+  "contactUs": "Contact Us",
+  "logout": "Logout",
+  "activeKametis": "active kametis",
+  "noCommitteesYet": "No Committees Yet",
+  "createFirstCommittee": "Create your first committee to get started",
+  "hostLogin": "Host Login",
+  "createAccount": "Create Account",
+  "welcomeBack": "Welcome Back!",
+  "createYourAccount": "Create Your Account",
+  "signInToManage": "Sign in to manage your committees",
+  "startHosting": "Start hosting your own committees",
+  "fullName": "Full Name",
+  "pleaseEnterName": "Please enter your name",
+  "email": "Email",
+  "pleaseEnterEmail": "Please enter your email",
+  "enterValidEmail": "Please enter a valid email",
+  "password": "Password",
+  "pleaseEnterPassword": "Please enter your password",
+  "passwordMinLength": "Password must be at least 6 characters",
+  "signIn": "Sign In",
+  "forgotPassword": "Forgot Password?",
+  "dontHaveAccount": "Don't have an account? ",
+  "alreadyHaveAccount": "Already have an account? ",
+  "signUp": "Sign Up",
+  "or": "OR",
+  "signingIn": "Signing in...",
+  "continueWithGoogle": "Continue with Google",
+  "verificationSent": "Verification email sent! Please check your inbox.",
+  "resetPassword": "Reset Password",
+  "resetPasswordDesc": "Enter your email address and we'll send you a link to reset your password.",
+  "sendResetLink": "Send Reset Link",
+  "passwordResetSent": "Password reset email sent to {email}",
+  "@passwordResetSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "enterEmail": "Please enter your email"
 }
 ````
 
@@ -1866,105 +1426,443 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
 }
 ````
 
-## File: test/core/code_generator_test.dart
+## File: test/services/sync_service_test.dart
 ````dart
+import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:committee_app/core/utils/code_generator.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+
+@GenerateMocks([DatabaseService])
+import 'sync_service_test.mocks.dart';
 
 void main() {
-  group('CodeGenerator', () {
-    test('generateCommitteeCode returns a 6-digit string', () {
-      final code = CodeGenerator.generateCommitteeCode();
-      expect(code, isA<String>());
-      expect(code.length, 6);
-      expect(int.tryParse(code), isNotNull);
+  late SyncService syncService;
+  late FakeFirebaseFirestore fakeFirestore;
+  late MockDatabaseService mockDbService;
+
+  setUp(() {
+    fakeFirestore = FakeFirebaseFirestore();
+    mockDbService = MockDatabaseService();
+    syncService = SyncService(
+      firestore: fakeFirestore,
+      dbService: mockDbService,
+    );
+  });
+
+  group('SyncService - Committees', () {
+    test('syncCommittees uploads local committees to Firestore', () async {
+      // Arrange
+      final committee = Committee(
+        id: '1',
+        code: '123456',
+        name: 'Test Kameti',
+        hostId: 'host1',
+        contributionAmount: 1000,
+        frequency: 'monthly',
+        startDate: DateTime(2023, 1, 1),
+        totalMembers: 10,
+        createdAt: DateTime(2023, 1, 1),
+      );
+
+      when(mockDbService.getHostedCommittees('host1')).thenReturn([committee]);
+      when(mockDbService.getCommitteeById('1')).thenReturn(committee);
+
+      // Act
+      await syncService.syncCommittees('host1');
+
+      // Assert
+      final snapshot = await fakeFirestore.collection('committees').doc('1').get();
+      expect(snapshot.exists, true);
+      expect(snapshot.data()?['name'], 'Test Kameti');
     });
 
-    test('generateMemberCode returns formatted string (NAME-DIGITS)', () {
-      final code = CodeGenerator.generateMemberCode('Farhan');
-      // Should be FAR-XXXX
-      expect(code, startsWith('FAR-'));
-      expect(code.length, 8); // FAR (3) + '-' (1) + 4 digits (4) = 8
-    });
+    test('syncCommittees downloads newer committees from Firestore', () async {
+      // Arrange
+      final cloudCommittee = Committee(
+        id: '2',
+        code: '654321',
+        name: 'Cloud Kameti',
+        hostId: 'host1',
+        contributionAmount: 2000,
+        frequency: 'monthly',
+        startDate: DateTime(2023, 2, 1),
+        totalMembers: 5,
+        createdAt: DateTime(2023, 2, 1),
+      );
 
-    test('generateMemberCode handles short names', () {
-      final code = CodeGenerator.generateMemberCode('Jo');
-      expect(code, startsWith('JO-'));
-      expect(code.length, 7); // JO (2) + '-' (1) + 4 digits (4) = 7
-    });
+      // Add to fake firestore
+      await fakeFirestore
+          .collection('committees')
+          .doc('2')
+          .set(cloudCommittee.toJson());
 
-    test('generateMemberCode cleans name from special characters', () {
-      final code = CodeGenerator.generateMemberCode('J. Doe');
-      // "J. Doe" -> "JDOE" -> "JDO-XXXX"
-      expect(code, startsWith('JDO-'));
+      // Local db returns empty or old
+      when(mockDbService.getHostedCommittees('host1')).thenReturn([]);
+      when(mockDbService.getCommitteeById('2')).thenReturn(null);
+
+      // Act
+      final result = await syncService.syncCommittees('host1');
+
+      // Assert
+      verify(mockDbService.saveCommittee(any)).called(1);
+      expect(result.downloaded, 1);
     });
   });
 }
 ````
 
-## File: test/features/auth/login_screen_test.dart
+## File: test/services/sync_service_test.mocks.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:committee_app/features/auth/presentation/login_screen.dart';
+// Mocks generated by Mockito 5.4.5 from annotations
+// in committee_app/test/services/sync_service_test.dart.
+// Do not manually edit this file.
 
-void main() {
-  testWidgets('LoginScreen renders all necessary fields', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: LoginScreen(),
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:async' as _i3;
+
+import 'package:committee_app/core/models/committee.dart' as _i4;
+import 'package:committee_app/core/models/member.dart' as _i5;
+import 'package:committee_app/core/models/payment.dart' as _i6;
+import 'package:committee_app/services/database_service.dart' as _i2;
+import 'package:mockito/mockito.dart' as _i1;
+import 'package:mockito/src/dummies.dart' as _i7;
+
+// ignore_for_file: type=lint
+// ignore_for_file: avoid_redundant_argument_values
+// ignore_for_file: avoid_setters_without_getters
+// ignore_for_file: comment_references
+// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use_from_same_package
+// ignore_for_file: implementation_imports
+// ignore_for_file: invalid_use_of_visible_for_testing_member
+// ignore_for_file: must_be_immutable
+// ignore_for_file: prefer_const_constructors
+// ignore_for_file: unnecessary_parenthesis
+// ignore_for_file: camel_case_types
+// ignore_for_file: subtype_of_sealed_class
+
+/// A class which mocks [DatabaseService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockDatabaseService extends _i1.Mock implements _i2.DatabaseService {
+  MockDatabaseService() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i3.Future<void> saveCommittee(_i4.Committee? committee) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveCommittee,
+          [committee],
         ),
-      ),
-    );
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 
-    // Verify presence of title
-    expect(find.text('Host Login'), findsOneWidget);
-    expect(find.text('Welcome Back!'), findsOneWidget);
-
-    // Verify text fields
-    expect(find.byType(TextFormField), findsNWidgets(2)); // Email and Password
-    expect(find.text('Email'), findsOneWidget);
-    expect(find.text('Password'), findsOneWidget);
-
-    // Verify buttons
-    expect(find.byType(ElevatedButton), findsOneWidget); // Sign In button
-    expect(find.text('Sign In'), findsOneWidget);
-    expect(find.text('Continue with Google'), findsOneWidget);
-  });
-
-  testWidgets('LoginScreen toggles to Sign Up mode', (WidgetTester tester) async {
-    // Increase surface height to ensure all elements are reachable
-    tester.view.physicalSize = const Size(800, 1200);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() => tester.view.resetPhysicalSize());
-
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: LoginScreen(),
+  @override
+  List<_i4.Committee> getHostedCommittees(String? hostId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getHostedCommittees,
+          [hostId],
         ),
-      ),
-    );
+        returnValue: <_i4.Committee>[],
+      ) as List<_i4.Committee>);
 
-    // Find and tap "Sign Up" text
-    final signUpText = find.text('Sign Up');
-    expect(signUpText, findsOneWidget);
-    
-    // Ensure the widget is visible before tapping
-    await tester.ensureVisible(signUpText);
-    await tester.pumpAndSettle();
-    
-    await tester.tap(signUpText);
-    await tester.pumpAndSettle();
+  @override
+  _i4.Committee? getCommitteeById(String? id) =>
+      (super.noSuchMethod(Invocation.method(
+        #getCommitteeById,
+        [id],
+      )) as _i4.Committee?);
 
-    // Verify mode changed
-    expect(find.text('Create Account'), findsAtLeastNWidgets(1));
-    expect(find.text('Full Name'), findsOneWidget);
-    expect(find.byType(TextFormField), findsNWidgets(3)); // Name, Email, Password
-  });
+  @override
+  _i4.Committee? getCommitteeByCode(String? code) =>
+      (super.noSuchMethod(Invocation.method(
+        #getCommitteeByCode,
+        [code],
+      )) as _i4.Committee?);
+
+  @override
+  _i3.Future<void> deleteCommittee(String? id) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteCommittee,
+          [id],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> saveMember(_i5.Member? member) => (super.noSuchMethod(
+        Invocation.method(
+          #saveMember,
+          [member],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  List<_i5.Member> getMembersByCommittee(String? committeeId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getMembersByCommittee,
+          [committeeId],
+        ),
+        returnValue: <_i5.Member>[],
+      ) as List<_i5.Member>);
+
+  @override
+  _i5.Member? getMemberById(String? id) =>
+      (super.noSuchMethod(Invocation.method(
+        #getMemberById,
+        [id],
+      )) as _i5.Member?);
+
+  @override
+  _i5.Member? getMemberByCode(
+    String? committeeId,
+    String? memberCode,
+  ) =>
+      (super.noSuchMethod(Invocation.method(
+        #getMemberByCode,
+        [
+          committeeId,
+          memberCode,
+        ],
+      )) as _i5.Member?);
+
+  @override
+  _i3.Future<void> deleteMember(String? id) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteMember,
+          [id],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> updateMemberPayoutOrder(
+    String? memberId,
+    int? order,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateMemberPayoutOrder,
+          [
+            memberId,
+            order,
+          ],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> savePayment(_i6.Payment? payment) => (super.noSuchMethod(
+        Invocation.method(
+          #savePayment,
+          [payment],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  List<_i6.Payment> getPaymentsByCommittee(String? committeeId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getPaymentsByCommittee,
+          [committeeId],
+        ),
+        returnValue: <_i6.Payment>[],
+      ) as List<_i6.Payment>);
+
+  @override
+  List<_i6.Payment> getPaymentsByMember(String? memberId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getPaymentsByMember,
+          [memberId],
+        ),
+        returnValue: <_i6.Payment>[],
+      ) as List<_i6.Payment>);
+
+  @override
+  _i6.Payment? getPayment(
+    String? memberId,
+    DateTime? date,
+  ) =>
+      (super.noSuchMethod(Invocation.method(
+        #getPayment,
+        [
+          memberId,
+          date,
+        ],
+      )) as _i6.Payment?);
+
+  @override
+  _i3.Future<void> deletePayment(String? id) => (super.noSuchMethod(
+        Invocation.method(
+          #deletePayment,
+          [id],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> togglePayment(
+    String? memberId,
+    String? committeeId,
+    DateTime? date,
+    String? hostId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #togglePayment,
+          [
+            memberId,
+            committeeId,
+            date,
+            hostId,
+          ],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> saveJoinedCommittee(
+    String? committeeCode,
+    String? memberCode,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveJoinedCommittee,
+          [
+            committeeCode,
+            memberCode,
+          ],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  List<Map<dynamic, dynamic>> getJoinedCommittees() => (super.noSuchMethod(
+        Invocation.method(
+          #getJoinedCommittees,
+          [],
+        ),
+        returnValue: <Map<dynamic, dynamic>>[],
+      ) as List<Map<dynamic, dynamic>>);
+
+  @override
+  _i3.Future<void> removeJoinedCommittee(String? committeeCode) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #removeJoinedCommittee,
+          [committeeCode],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  void setSelectedCycle(
+    String? committeeId,
+    int? cycle,
+  ) =>
+      super.noSuchMethod(
+        Invocation.method(
+          #setSelectedCycle,
+          [
+            committeeId,
+            cycle,
+          ],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  int getSelectedCycle(String? committeeId) => (super.noSuchMethod(
+        Invocation.method(
+          #getSelectedCycle,
+          [committeeId],
+        ),
+        returnValue: 0,
+      ) as int);
+
+  @override
+  _i3.Future<bool> isFirstLaunch() => (super.noSuchMethod(
+        Invocation.method(
+          #isFirstLaunch,
+          [],
+        ),
+        returnValue: _i3.Future<bool>.value(false),
+      ) as _i3.Future<bool>);
+
+  @override
+  _i3.Future<void> setFirstLaunchComplete() => (super.noSuchMethod(
+        Invocation.method(
+          #setFirstLaunchComplete,
+          [],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<bool> isBiometricEnabled() => (super.noSuchMethod(
+        Invocation.method(
+          #isBiometricEnabled,
+          [],
+        ),
+        returnValue: _i3.Future<bool>.value(false),
+      ) as _i3.Future<bool>);
+
+  @override
+  _i3.Future<void> setBiometricEnabled(bool? enabled) => (super.noSuchMethod(
+        Invocation.method(
+          #setBiometricEnabled,
+          [enabled],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<String> getLanguage() => (super.noSuchMethod(
+        Invocation.method(
+          #getLanguage,
+          [],
+        ),
+        returnValue: _i3.Future<String>.value(_i7.dummyValue<String>(
+          this,
+          Invocation.method(
+            #getLanguage,
+            [],
+          ),
+        )),
+      ) as _i3.Future<String>);
+
+  @override
+  _i3.Future<void> setLanguage(String? languageCode) => (super.noSuchMethod(
+        Invocation.method(
+          #setLanguage,
+          [languageCode],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
 }
 ````
 
@@ -2064,6 +1962,765 @@ endforeach(ffi_plugin)
 ## File: firebase.json
 ````json
 {"flutter":{"platforms":{"android":{"default":{"projectId":"commiteeapp-7cd16","appId":"1:216531343276:android:4904ebd09b93956d490c09","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"commiteeapp-7cd16","configurations":{"android":"1:216531343276:android:4904ebd09b93956d490c09","ios":"1:216531343276:ios:f93e66543b44de8c490c09","macos":"1:216531343276:ios:f93e66543b44de8c490c09","web":"1:216531343276:web:48400f50b5f7960e490c09","windows":"1:216531343276:web:50644caa8f32d173490c09"}}}}}}
+````
+
+## File: l10n.yaml
+````yaml
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-class: AppLocalizations
+````
+
+## File: test_output.txt
+````
+Synthetic package output (package:flutter_gen) is deprecated: https://flutter.dev/to/flutter-gen-deprecation. In a future release, synthetic-package will default to `false` and will later be removed entirely.
+00:00 +0: loading /mnt/data/farhan/Committee_App/test/screens/host/host_dashboard_test.dart                                                                                                            00:01 +0: loading /mnt/data/farhan/Committee_App/test/screens/host/host_dashboard_test.dart                                                                                                            00:02 +0: loading /mnt/data/farhan/Committee_App/test/screens/host/host_dashboard_test.dart                                                                                                            00:02 +0: HostDashboard displays empty state when no committees exist                                                                                                                                  00:03 +0: HostDashboard displays empty state when no committees exist                                                                                                                                  00:03 +0: HostDashboard displays empty state when no committees exist                                                                                                                                  
+══╡ EXCEPTION CAUGHT BY WIDGETS LIBRARY ╞═══════════════════════════════════════════════════════════
+The following StateError was thrown while finalizing the widget tree:
+Bad state: Cannot use "ref" after the widget was disposed.
+
+When the exception was thrown, this was the stack:
+#0      ConsumerStatefulElement._assertNotDisposed (package:flutter_riverpod/src/consumer.dart:550:7)
+#1      ConsumerStatefulElement.read (package:flutter_riverpod/src/consumer.dart:619:5)
+#2      _HostDashboardScreenState.dispose (package:committee_app/screens/host/host_dashboard_screen.dart:83:9)
+#3      StatefulElement.unmount (package:flutter/src/widgets/framework.dart:5940:11)
+#4      ConsumerStatefulElement.unmount (package:flutter_riverpod/src/consumer.dart:575:11)
+#5      _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2085:13)
+#6      _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#7      SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#8      _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#9      _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#10     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#11     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#12     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#13     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#14     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#15     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#16     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#17     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#18     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#19     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#20     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#21     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#22     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#23     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#24     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#25     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#26     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#27     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#28     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#29     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#30     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#31     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#32     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#33     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#34     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#35     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#36     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#37     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#38     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#39     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#40     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#41     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#42     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#43     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#44     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#45     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#46     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#47     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#48     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#49     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#50     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#51     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#52     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#53     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#54     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#55     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#56     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#57     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#58     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#59     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#60     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#61     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#62     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#63     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#64     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#65     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#66     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#67     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#68     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#69     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#70     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#71     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#72     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#73     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#74     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#75     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#76     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#77     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#78     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#79     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#80     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#81     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#82     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#83     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#84     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#85     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#86     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#87     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#88     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#89     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#90     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#91     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#92     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#93     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#94     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#95     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#96     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#97     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#98     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#99     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#100    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#101    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#102    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#103    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#104    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#105    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#106    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#107    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#108    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#109    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#110    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#111    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#112    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#113    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#114    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#115    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#116    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#117    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#118    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#119    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#120    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#121    MultiChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7137:16)
+#122    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#123    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#124    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#125    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#126    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#127    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#128    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#129    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#130    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#131    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#132    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#133    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#134    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#135    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#136    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#137    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#138    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#139    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#140    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#141    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#142    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#143    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#144    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#145    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#146    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#147    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#148    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#149    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#150    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#151    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#152    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#153    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#154    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#155    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#156    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#157    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#158    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#159    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#160    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#161    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#162    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#163    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#164    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#165    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#166    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#167    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#168    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#169    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#170    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#171    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#172    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#173    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#174    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#175    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#176    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#177    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#178    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#179    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#180    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#181    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#182    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#183    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#184    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#185    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#186    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#187    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#188    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#189    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#190    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#191    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#192    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#193    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#194    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#195    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#196    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#197    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#198    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#199    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#200    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#201    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#202    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#203    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#204    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#205    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#206    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#207    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#208    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#209    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#210    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#211    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#212    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#213    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#214    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#215    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#216    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#217    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#218    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#219    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#220    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#221    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#222    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#223    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#224    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#225    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#226    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#227    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#228    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#229    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#230    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#231    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#232    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#233    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#234    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#235    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#236    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#237    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#238    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#239    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#240    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#241    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#242    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#243    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#244    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#245    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#246    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#247    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#248    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#249    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#250    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#251    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#252    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#253    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#254    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#255    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#256    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#257    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#258    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#259    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#260    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#261    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#262    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#263    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#264    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#265    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#266    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#267    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#268    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#269    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#270    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#271    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#272    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#273    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#274    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#275    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#276    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#277    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#278    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#279    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#280    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#281    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#282    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#283    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#284    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#285    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#286    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#287    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#288    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#289    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#290    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#291    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#292    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#293    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#294    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#295    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#296    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#297    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#298    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#299    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#300    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#301    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#302    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#303    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#304    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#305    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#306    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#307    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#308    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#309    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#310    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#311    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#312    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#313    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#314    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#315    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#316    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#317    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#318    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#319    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#320    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#321    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#322    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#323    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#324    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#325    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#326    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#327    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#328    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#329    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#330    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#331    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#332    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#333    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#334    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#335    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#336    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#337    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#338    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#339    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#340    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#341    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#342    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#343    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#344    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#345    ListIterable.forEach (dart:_internal/iterable.dart:49:13)
+#346    _InactiveElements._unmountAll (package:flutter/src/widgets/framework.dart:2094:25)
+#347    BuildOwner.lockState (package:flutter/src/widgets/framework.dart:2975:15)
+#348    BuildOwner.finalizeTree (package:flutter/src/widgets/framework.dart:3298:7)
+#349    AutomatedTestWidgetsFlutterBinding.drawFrame (package:flutter_test/src/binding.dart:1517:19)
+#350    RendererBinding._handlePersistentFrameCallback (package:flutter/src/rendering/binding.dart:482:5)
+#351    SchedulerBinding._invokeFrameCallback (package:flutter/src/scheduler/binding.dart:1442:15)
+#352    SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1355:9)
+#353    AutomatedTestWidgetsFlutterBinding.scheduleWarmUpFrame (package:flutter_test/src/binding.dart:1441:5)
+#354    _runWidget (package:flutter/src/widgets/binding.dart:1547:7)
+#355    runApp (package:flutter/src/widgets/binding.dart:1480:3)
+#356    TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1071:7)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:03 +0 -1: HostDashboard displays empty state when no committees exist [E]                                                                                                                           
+  Test failed. See exception logs above.
+  The test description was: HostDashboard displays empty state when no committees exist
+  
+
+To run this test again: /home/saadkhan/develop/flutter/bin/cache/dart-sdk/bin/dart test /mnt/data/farhan/Committee_App/test/screens/host/host_dashboard_test.dart -p vm --plain-name 'HostDashboard displays empty state when no committees exist'
+00:03 +0 -1: HostDashboard displays committees when data exists                                                                                                                                        00:03 +0 -1: HostDashboard displays committees when data exists                                                                                                                                        
+══╡ EXCEPTION CAUGHT BY WIDGETS LIBRARY ╞═══════════════════════════════════════════════════════════
+The following StateError was thrown while finalizing the widget tree:
+Bad state: Cannot use "ref" after the widget was disposed.
+
+When the exception was thrown, this was the stack:
+#0      ConsumerStatefulElement._assertNotDisposed (package:flutter_riverpod/src/consumer.dart:550:7)
+#1      ConsumerStatefulElement.read (package:flutter_riverpod/src/consumer.dart:619:5)
+#2      _HostDashboardScreenState.dispose (package:committee_app/screens/host/host_dashboard_screen.dart:83:9)
+#3      StatefulElement.unmount (package:flutter/src/widgets/framework.dart:5940:11)
+#4      ConsumerStatefulElement.unmount (package:flutter_riverpod/src/consumer.dart:575:11)
+#5      _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2085:13)
+#6      _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#7      SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#8      _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#9      _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#10     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#11     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#12     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#13     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#14     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#15     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#16     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#17     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#18     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#19     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#20     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#21     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#22     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#23     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#24     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#25     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#26     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#27     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#28     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#29     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#30     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#31     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#32     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#33     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#34     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#35     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#36     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#37     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#38     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#39     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#40     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#41     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#42     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#43     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#44     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#45     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#46     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#47     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#48     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#49     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#50     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#51     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#52     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#53     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#54     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#55     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#56     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#57     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#58     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#59     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#60     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#61     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#62     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#63     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#64     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#65     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#66     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#67     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#68     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#69     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#70     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#71     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#72     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#73     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#74     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#75     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#76     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#77     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#78     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#79     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#80     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#81     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#82     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#83     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#84     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#85     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#86     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#87     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#88     SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#89     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#90     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#91     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#92     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#93     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#94     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#95     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#96     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#97     ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#98     _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#99     _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#100    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#101    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#102    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#103    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#104    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#105    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#106    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#107    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#108    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#109    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#110    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#111    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#112    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#113    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#114    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#115    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#116    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#117    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#118    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#119    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#120    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#121    MultiChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7137:16)
+#122    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#123    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#124    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#125    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#126    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#127    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#128    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#129    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#130    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#131    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#132    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#133    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#134    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#135    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#136    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#137    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#138    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#139    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#140    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#141    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#142    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#143    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#144    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#145    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#146    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#147    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#148    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#149    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#150    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#151    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#152    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#153    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#154    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#155    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#156    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#157    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#158    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#159    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#160    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#161    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#162    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#163    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#164    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#165    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#166    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#167    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#168    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#169    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#170    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#171    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#172    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#173    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#174    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#175    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#176    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#177    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#178    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#179    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#180    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#181    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#182    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#183    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#184    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#185    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#186    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#187    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#188    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#189    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#190    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#191    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#192    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#193    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#194    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#195    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#196    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#197    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#198    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#199    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#200    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#201    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#202    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#203    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#204    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#205    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#206    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#207    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#208    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#209    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#210    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#211    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#212    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#213    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#214    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#215    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#216    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#217    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#218    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#219    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#220    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#221    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#222    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#223    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#224    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#225    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#226    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#227    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#228    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#229    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#230    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#231    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#232    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#233    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#234    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#235    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#236    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#237    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#238    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#239    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#240    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#241    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#242    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#243    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#244    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#245    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#246    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#247    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#248    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#249    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#250    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#251    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#252    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#253    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#254    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#255    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#256    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#257    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#258    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#259    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#260    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#261    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#262    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#263    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#264    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#265    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#266    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#267    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#268    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#269    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#270    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#271    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#272    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#273    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#274    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#275    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#276    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#277    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#278    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#279    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#280    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#281    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#282    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#283    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#284    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#285    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#286    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#287    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#288    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#289    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#290    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#291    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#292    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#293    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#294    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#295    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#296    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#297    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#298    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#299    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#300    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#301    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#302    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#303    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#304    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#305    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#306    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#307    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#308    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#309    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#310    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#311    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#312    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#313    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#314    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#315    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#316    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#317    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#318    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#319    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#320    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#321    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#322    SingleChildRenderObjectElement.visitChildren (package:flutter/src/widgets/framework.dart:7013:14)
+#323    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#324    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#325    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#326    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#327    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#328    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#329    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#330    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#331    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#332    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#333    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#334    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#335    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#336    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#337    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#338    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#339    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#340    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#341    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#342    _InactiveElements._unmount.<anonymous closure> (package:flutter/src/widgets/framework.dart:2083:7)
+#343    ComponentElement.visitChildren (package:flutter/src/widgets/framework.dart:5781:14)
+#344    _InactiveElements._unmount (package:flutter/src/widgets/framework.dart:2081:13)
+#345    ListIterable.forEach (dart:_internal/iterable.dart:49:13)
+#346    _InactiveElements._unmountAll (package:flutter/src/widgets/framework.dart:2094:25)
+#347    BuildOwner.lockState (package:flutter/src/widgets/framework.dart:2975:15)
+#348    BuildOwner.finalizeTree (package:flutter/src/widgets/framework.dart:3298:7)
+#349    AutomatedTestWidgetsFlutterBinding.drawFrame (package:flutter_test/src/binding.dart:1517:19)
+#350    RendererBinding._handlePersistentFrameCallback (package:flutter/src/rendering/binding.dart:482:5)
+#351    SchedulerBinding._invokeFrameCallback (package:flutter/src/scheduler/binding.dart:1442:15)
+#352    SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1355:9)
+#353    AutomatedTestWidgetsFlutterBinding.scheduleWarmUpFrame (package:flutter_test/src/binding.dart:1441:5)
+#354    _runWidget (package:flutter/src/widgets/binding.dart:1547:7)
+#355    runApp (package:flutter/src/widgets/binding.dart:1480:3)
+#356    TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1071:7)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:03 +0 -2: HostDashboard displays committees when data exists [E]                                                                                                                                    
+  Test failed. See exception logs above.
+  The test description was: HostDashboard displays committees when data exists
+  
+
+To run this test again: /home/saadkhan/develop/flutter/bin/cache/dart-sdk/bin/dart test /mnt/data/farhan/Committee_App/test/screens/host/host_dashboard_test.dart -p vm --plain-name 'HostDashboard displays committees when data exists'
+00:03 +0 -2: Some tests failed.
 ````
 
 ## File: android/app/src/debug/AndroidManifest.xml
@@ -3784,295 +4441,587 @@ Runner/GeneratedPluginRegistrant.*
 !default.perspectivev3
 ````
 
-## File: lib/core/theme/app_theme.dart
+## File: lib/core/providers/service_providers.dart
 ````dart
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/realtime_sync_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final databaseServiceProvider = Provider<DatabaseService>((ref) {
+  return DatabaseService();
+});
+
+final authServiceProvider = Provider<AuthService>((ref) {
+  return AuthService();
+});
+
+final authStateProvider = StreamProvider((ref) {
+  return ref.watch(authServiceProvider).authStateChanges;
+});
+
+final syncServiceProvider = Provider<SyncService>((ref) {
+  return SyncService(
+    dbService: ref.watch(databaseServiceProvider),
+  );
+});
+
+final realtimeSyncServiceProvider = Provider<RealtimeSyncService>((ref) {
+  return RealtimeSyncService(
+    dbService: ref.watch(databaseServiceProvider),
+  );
+});
+
+final autoSyncServiceProvider = Provider<AutoSyncService>((ref) {
+  return AutoSyncService(
+    syncService: ref.watch(syncServiceProvider),
+    dbService: ref.watch(databaseServiceProvider),
+    realtimeSyncService: ref.watch(realtimeSyncServiceProvider),
+  );
+});
+````
+
+## File: lib/core/theme/app_decorations.dart
+````dart
+import 'package:committee_app/core/theme/app_colors.dart';
+import 'package:flutter/material.dart';
+
+/// App decorations (shadows, borders, radius) - CHANGE THESE TO UPDATE STYLING APP-WIDE
+class AppDecorations {
+  AppDecorations._();
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BORDER RADIUS
+  // ═══════════════════════════════════════════════════════════════════════════
+  static const double radiusXs = 4.0;
+  static const double radiusSm = 8.0;
+  static const double radiusMd = 12.0;
+  static const double radiusLg = 16.0;
+  static const double radiusXl = 20.0;
+  static const double radiusXxl = 28.0;
+  static const double radiusRound = 50.0;
+
+  static BorderRadius get borderRadiusSm => BorderRadius.circular(radiusSm);
+  static BorderRadius get borderRadiusMd => BorderRadius.circular(radiusMd);
+  static BorderRadius get borderRadiusLg => BorderRadius.circular(radiusLg);
+  static BorderRadius get borderRadiusXl => BorderRadius.circular(radiusXl);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SHADOWS
+  // ═══════════════════════════════════════════════════════════════════════════
+  static List<BoxShadow> get shadowNone => [];
+
+  static List<BoxShadow> get shadowSm => [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.05),
+      blurRadius: 4,
+      offset: const Offset(0, 2),
+    ),
+  ];
+
+  static List<BoxShadow> get shadowMd => [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.1),
+      blurRadius: 10,
+      offset: const Offset(0, 4),
+    ),
+  ];
+
+  static List<BoxShadow> get shadowLg => [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.15),
+      blurRadius: 20,
+      offset: const Offset(0, 8),
+    ),
+  ];
+
+  static List<BoxShadow> shadowPrimary([double opacity = 0.3]) => [
+    BoxShadow(
+      color: AppColors.primary.withOpacity(opacity),
+      blurRadius: 20,
+      offset: const Offset(0, 8),
+    ),
+  ];
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CARD DECORATIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+  static BoxDecoration get cardDark => BoxDecoration(
+    color: AppColors.darkCard,
+    borderRadius: borderRadiusLg,
+  );
+
+  static BoxDecoration get cardLight => BoxDecoration(
+    color: AppColors.lightCard,
+    borderRadius: borderRadiusLg,
+    boxShadow: shadowMd,
+  );
+
+  static BoxDecoration get cardWithBorder => BoxDecoration(
+    color: AppColors.lightCard,
+    borderRadius: borderRadiusLg,
+    border: Border.all(color: AppColors.lightBorder),
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ICON CONTAINER DECORATIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+  static BoxDecoration iconContainerPrimary([double opacity = 0.1]) => BoxDecoration(
+    color: AppColors.primary.withOpacity(opacity),
+    borderRadius: borderRadiusMd,
+  );
+
+  static BoxDecoration iconContainerCircle(Color color) => BoxDecoration(
+    color: color.withOpacity(0.1),
+    shape: BoxShape.circle,
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INPUT DECORATIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+  static InputDecoration inputDark({
+    String? labelText,
+    String? hintText,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+  }) => InputDecoration(
+    labelText: labelText,
+    hintText: hintText,
+    prefixIcon: prefixIcon,
+    suffixIcon: suffixIcon,
+    filled: true,
+    fillColor: AppColors.darkCard,
+    border: OutlineInputBorder(
+      borderRadius: borderRadiusMd,
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: borderRadiusMd,
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: borderRadiusMd,
+      borderSide: const BorderSide(color: AppColors.primary, width: 2),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: borderRadiusMd,
+      borderSide: const BorderSide(color: AppColors.error, width: 2),
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    hintStyle: TextStyle(color: Colors.grey[500]),
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SPACING
+  // ═══════════════════════════════════════════════════════════════════════════
+  static const double spacingXs = 4.0;
+  static const double spacingSm = 8.0;
+  static const double spacingMd = 16.0;
+  static const double spacingLg = 24.0;
+  static const double spacingXl = 32.0;
+  static const double spacingXxl = 48.0;
+}
+````
+
+## File: lib/core/theme/app_typography.dart
+````dart
+import 'package:committee_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:committee_app/core/theme/app_colors.dart';
-import 'package:committee_app/core/theme/app_decorations.dart';
 
-/// Unified app theme - combines colors, typography, and decorations
-///
-/// This file creates the Flutter ThemeData using our custom design tokens.
-/// For quick changes, edit:
-/// - Colors → app_colors.dart
-/// - Text styles → app_typography.dart
-/// - Shadows/borders → app_decorations.dart
-class AppTheme {
-  AppTheme._();
+/// App typography styles - CHANGE THESE TO UPDATE TEXT STYLES APP-WIDE
+class AppTypography {
+  AppTypography._();
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // RE-EXPORT COMMONLY USED ITEMS FOR BACKWARD COMPATIBILITY
+  // FONT FAMILY
   // ═══════════════════════════════════════════════════════════════════════════
-
-  // Colors (for existing code that uses AppTheme.primaryColor)
-  static const Color primaryColor = AppColors.primary;
-  static const Color primaryDark = AppColors.primaryDark;
-  static const Color secondaryColor = AppColors.secondary;
-  static const Color successColor = AppColors.success;
-  static const Color errorColor = AppColors.error;
-  static const Color warningColor = AppColors.warning;
-  static const Color infoColor = AppColors.info;
-
-  // Dark theme colors
-  static const Color darkBg = AppColors.darkBg;
-  static const Color darkSurface = AppColors.darkSurface;
-  static const Color darkCard = AppColors.darkCard;
-
-  // Light theme colors
-  static const Color lightBg = AppColors.lightBg;
-  static const Color lightSurface = AppColors.lightSurface;
-  static const Color lightCard = AppColors.lightCard;
-  static const Color lightBorder = AppColors.lightBorder;
-
-  // Pastel colors
-  static const Color pastelLavender = AppColors.pastelLavender;
-  static const Color pastelMint = AppColors.pastelMint;
-  static const Color pastelYellow = AppColors.pastelYellow;
-  static const Color pastelPink = AppColors.pastelPink;
-  static const Color pastelBlue = AppColors.pastelBlue;
-
-  // Text colors
-  static const Color textDark = AppColors.textDark;
-  static const Color textMedium = AppColors.textMedium;
-  static const Color textLight = AppColors.textLight;
-
-  // Accent
-  static const Color accentCoral = AppColors.accent;
-
-  // Gradients
-  static LinearGradient get primaryGradient => AppColors.primaryGradient;
-  static LinearGradient get purpleGradient => AppColors.primaryGradient;
-
-  // Shadows
-  static List<BoxShadow> get softShadow => AppDecorations.shadowSm;
-  static List<BoxShadow> get cardShadow => AppDecorations.shadowMd;
-  static List<BoxShadow> primaryShadow([double opacity = 0.3]) =>
-      AppDecorations.shadowPrimary(opacity);
-
-  // Border radius
-  static const double radiusSmall = AppDecorations.radiusSm;
-  static const double radiusMedium = AppDecorations.radiusMd;
-  static const double radiusLarge = AppDecorations.radiusLg;
-  static const double radiusXLarge = AppDecorations.radiusXl;
-  static const double radiusRound = AppDecorations.radiusRound;
+  static String get fontFamily => GoogleFonts.inter().fontFamily!;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // DARK THEME
+  // DISPLAY / HEADINGS
   // ═══════════════════════════════════════════════════════════════════════════
-  static ThemeData get darkTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      primaryColor: AppColors.primary,
-      scaffoldBackgroundColor: AppColors.darkBg,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.primary,
-        secondary: AppColors.secondary,
-        surface: AppColors.darkSurface,
-        error: AppColors.error,
-      ),
-      textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme).apply(
-        bodyColor: AppColors.textDark, // Black text for input fields
-        displayColor: AppColors.textDark,
-      ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.darkSurface,
-        elevation: 0,
-        centerTitle: true,
-        titleTextStyle: GoogleFonts.inter(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textDark,
-        ),
-        iconTheme: const IconThemeData(color: AppColors.textDark),
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.darkCard,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDecorations.radiusLg),
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          elevation: 2,
-          shadowColor: AppColors.primary.withOpacity(0.3),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          ),
-          textStyle: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          ),
-          side: const BorderSide(color: AppColors.primary, width: 2),
-          textStyle: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.darkCard,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          borderSide: const BorderSide(color: AppColors.error, width: 2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-        hintStyle: TextStyle(color: Colors.grey[500]),
-        labelStyle: const TextStyle(color: AppColors.textMedium),
-        floatingLabelStyle: const TextStyle(color: AppColors.primary),
-        iconColor: AppColors.textMedium, // Make icons visible
-        prefixIconColor: AppColors.textMedium, // Make prefix icons visible
-        suffixIconColor: AppColors.textMedium, // Make suffix icons visible
-      ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-      ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.darkSurface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.grey,
-      ),
-      dividerTheme: DividerThemeData(color: Colors.grey[800], thickness: 1),
-    );
+  static TextStyle displayLarge = GoogleFonts.inter(
+    fontSize: 36,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+    letterSpacing: -0.5,
+  );
+
+  static TextStyle displayMedium = GoogleFonts.inter(
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  );
+
+  static TextStyle headlineLarge = GoogleFonts.inter(
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  );
+
+  static TextStyle headlineMedium = GoogleFonts.inter(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+  );
+
+  static TextStyle headlineSmall = GoogleFonts.inter(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BODY TEXT
+  // ═══════════════════════════════════════════════════════════════════════════
+  static TextStyle bodyLarge = GoogleFonts.inter(
+    fontSize: 16,
+    fontWeight: FontWeight.normal,
+    color: Colors.white,
+  );
+
+  static TextStyle bodyMedium = GoogleFonts.inter(
+    fontSize: 14,
+    fontWeight: FontWeight.normal,
+    color: Colors.grey,
+  );
+
+  static TextStyle bodySmall = GoogleFonts.inter(
+    fontSize: 12,
+    fontWeight: FontWeight.normal,
+    color: Colors.grey,
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LABELS / BUTTONS
+  // ═══════════════════════════════════════════════════════════════════════════
+  static TextStyle labelLarge = GoogleFonts.inter(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+  );
+
+  static TextStyle labelMedium = GoogleFonts.inter(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: Colors.white,
+  );
+
+  static TextStyle labelSmall = GoogleFonts.inter(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: Colors.grey,
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SPECIAL STYLES
+  // ═══════════════════════════════════════════════════════════════════════════
+  static TextStyle appBarTitle = GoogleFonts.inter(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+  );
+
+  static TextStyle cardTitle = GoogleFonts.inter(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+  );
+
+  static TextStyle cardSubtitle = GoogleFonts.inter(
+    fontSize: 13,
+    color: Colors.grey[400],
+  );
+
+  static TextStyle statValue = GoogleFonts.inter(
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  );
+
+  static TextStyle statLabel = GoogleFonts.inter(
+    fontSize: 12,
+    color: Colors.grey[400],
+  );
+
+  static TextStyle buttonText = GoogleFonts.inter(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+  );
+
+  static TextStyle linkText = GoogleFonts.inter(
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: AppColors.primary,
+  );
+}
+````
+
+## File: lib/core/theme/theme.dart
+````dart
+/// Theme exports - import this file to get all theme components
+library;
+
+export 'app_colors.dart';
+export 'app_decorations.dart';
+export 'app_theme.dart';
+export 'app_typography.dart';
+````
+
+## File: lib/features/auth/data/auth_service.dart
+````dart
+import 'package:committee_app/services/database_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+class AuthService {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Get current user
+  User? get currentUser => _auth.currentUser;
+
+  // Check if user is logged in
+  bool get isLoggedIn => currentUser != null;
+
+  // Auth state stream
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
+
+  // Sign up with email and password
+  Future<UserCredential?> signUp({
+    required String email,
+    required String password,
+    String? displayName,
+  }) async {
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (displayName != null && credential.user != null) {
+        await credential.user!.updateDisplayName(displayName);
+      }
+
+      return credential;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // LIGHT THEME
-  // ═══════════════════════════════════════════════════════════════════════════
-  static ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      primaryColor: AppColors.primary,
-      scaffoldBackgroundColor: AppColors.lightBg,
-      colorScheme: const ColorScheme.light(
-        primary: AppColors.primary,
-        secondary: AppColors.secondary,
-        surface: AppColors.lightSurface,
-        error: AppColors.error,
-      ),
-      textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.lightBg,
-        elevation: 0,
-        centerTitle: true,
-        titleTextStyle: GoogleFonts.inter(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textDark,
+  // Sign in with email and password
+  Future<UserCredential?> signIn({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      return await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Sign in anonymously
+  Future<UserCredential?> signInAnonymously() async {
+    try {
+      return await _auth.signInAnonymously();
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Sign in with Google
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      // For web, use signInWithPopup
+      if (identical(0, 0.0)) {
+        // This check is never true, but we use kIsWeb approach
+      }
+
+      // Check if running on web
+      // final isWeb = identical(1.0, 1); // Always true check for conditional
+
+      // Use Firebase's built-in Google provider for web
+      final googleProvider = GoogleAuthProvider();
+
+      // Try popup sign-in (works on web)
+      try {
+        return await _auth.signInWithPopup(googleProvider);
+      } catch (e) {
+        // If popup fails, try redirect (fallback) or mobile approach
+        // For mobile, use GoogleSignIn package
+        final googleUser = await GoogleSignIn().signIn();
+
+        if (googleUser == null) {
+          return null;
+        }
+
+        final googleAuth =
+            await googleUser.authentication;
+
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        return await _auth.signInWithCredential(credential);
+      }
+    } catch (e) {
+      throw 'Google sign-in failed. Please try again.';
+    }
+  }
+
+  // Sign out
+  Future<void> signOut() async {
+    // Clear local data to ensure user separation
+    await DatabaseService.clearAllData();
+    await _auth.signOut();
+  }
+
+  // Delete account and all data
+  Future<void> deleteAccount() async {
+    final user = currentUser;
+    if (user == null) return;
+
+    // Clear local data
+    await DatabaseService.clearAllData();
+
+    // Delete Firebase user account
+    await user.delete();
+  }
+
+  // Reset password
+  Future<void> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Check if email is verified
+  bool get isEmailVerified => currentUser?.emailVerified ?? false;
+
+  // Send email verification
+  Future<void> sendEmailVerification() async {
+    final user = currentUser;
+    if (user != null && !user.emailVerified) {
+      await user.sendEmailVerification();
+    }
+  }
+
+  // Reload user to check verification status
+  Future<void> reloadUser() async {
+    await currentUser?.reload();
+  }
+
+  // Handle Firebase Auth exceptions
+  String _handleAuthException(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'weak-password':
+        return 'The password provided is too weak.';
+      case 'email-already-in-use':
+        return 'An account already exists for that email.';
+      case 'user-not-found':
+        return 'No account found with this email.';
+      case 'wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'invalid-credential':
+        return 'Incorrect email or password. Please try again.';
+      case 'invalid-email':
+        return 'The email address is invalid.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      default:
+        return e.message ?? 'An error occurred. Please try again.';
+    }
+  }
+}
+````
+
+## File: lib/app.dart
+````dart
+import 'package:committee_app/core/providers/service_providers.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/screens/lock_screen.dart';
+import 'package:committee_app/screens/splash_screen.dart';
+import 'package:committee_app/services/biometric_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final navigatorKey = GlobalKey<NavigatorState>();
+
+class CommitteeApp extends ConsumerStatefulWidget {
+  const CommitteeApp({super.key});
+
+  @override
+  ConsumerState<CommitteeApp> createState() => _CommitteeAppState();
+}
+
+class _CommitteeAppState extends ConsumerState<CommitteeApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkBiometricLock();
+    }
+  }
+
+  Future<void> _checkBiometricLock() async {
+    // Check if lock is enabled
+    final isEnabled = await BiometricService.isBiometricLockEnabled();
+    // Only lock if enabled and not already showing lock screen
+    if (isEnabled && !LockScreen.isShown) {
+      final user = ref.read(authServiceProvider).currentUser;
+      final isRealHost = user != null && !user.isAnonymous && user.email != null;
+      
+      navigatorKey.currentState?.pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => LockScreen(isHost: isRealHost),
+          transitionDuration: Duration.zero,
         ),
-        iconTheme: const IconThemeData(color: AppColors.textDark),
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.lightCard,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDecorations.radiusLg),
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          ),
-          textStyle: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          ),
-          side: const BorderSide(color: AppColors.primary, width: 2),
-          textStyle: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.lightSurface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          borderSide: BorderSide(color: AppColors.lightBorder),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          borderSide: BorderSide(color: AppColors.lightBorder),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
-          borderSide: const BorderSide(color: AppColors.error, width: 2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-        hintStyle: TextStyle(color: AppColors.textLight),
-      ),
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDecorations.radiusLg),
-        ),
-      ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.lightBg,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textLight,
-      ),
-      dividerTheme: DividerThemeData(
-        color: AppColors.lightBorder,
-        thickness: 1,
-      ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      navigatorKey: navigatorKey,
+      title: 'Kameti',
+      debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.dark,
+      home: const SplashScreen(),
     );
   }
 }
@@ -6480,6 +7429,1501 @@ footer a:hover {
 }
 ````
 
+## File: test/core/code_generator_test.dart
+````dart
+import 'package:committee_app/core/utils/code_generator.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('CodeGenerator', () {
+    test('generateCommitteeCode returns a 6-digit string', () {
+      final code = CodeGenerator.generateCommitteeCode();
+      expect(code, isA<String>());
+      expect(code.length, 6);
+      expect(int.tryParse(code), isNotNull);
+    });
+
+    test('generateMemberCode returns formatted string (NAME-DIGITS)', () {
+      final code = CodeGenerator.generateMemberCode('Farhan');
+      // Should be FAR-XXXX
+      expect(code, startsWith('FAR-'));
+      expect(code.length, 8); // FAR (3) + '-' (1) + 4 digits (4) = 8
+    });
+
+    test('generateMemberCode handles short names', () {
+      final code = CodeGenerator.generateMemberCode('Jo');
+      expect(code, startsWith('JO-'));
+      expect(code.length, 7); // JO (2) + '-' (1) + 4 digits (4) = 7
+    });
+
+    test('generateMemberCode cleans name from special characters', () {
+      final code = CodeGenerator.generateMemberCode('J. Doe');
+      // "J. Doe" -> "JDOE" -> "JDO-XXXX"
+      expect(code, startsWith('JDO-'));
+    });
+  });
+}
+````
+
+## File: test/features/auth/login_screen_test.dart
+````dart
+import 'package:committee_app/features/auth/presentation/login_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+void main() {
+  testWidgets('LoginScreen renders all necessary fields', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: LoginScreen(),
+        ),
+      ),
+    );
+
+    // Verify presence of title
+    expect(find.text('Host Login'), findsOneWidget);
+    expect(find.text('Welcome Back!'), findsOneWidget);
+
+    // Verify text fields
+    expect(find.byType(TextFormField), findsNWidgets(2)); // Email and Password
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
+
+    // Verify buttons
+    expect(find.byType(ElevatedButton), findsOneWidget); // Sign In button
+    expect(find.text('Sign In'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
+  });
+
+  testWidgets('LoginScreen toggles to Sign Up mode', (WidgetTester tester) async {
+    // Increase surface height to ensure all elements are reachable
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: LoginScreen(),
+        ),
+      ),
+    );
+
+    // Find and tap "Sign Up" text
+    final signUpText = find.text('Sign Up');
+    expect(signUpText, findsOneWidget);
+    
+    // Ensure the widget is visible before tapping
+    await tester.ensureVisible(signUpText);
+    await tester.pumpAndSettle();
+    
+    await tester.tap(signUpText);
+    await tester.pumpAndSettle();
+
+    // Verify mode changed
+    expect(find.text('Create Account'), findsAtLeastNWidgets(1));
+    expect(find.text('Full Name'), findsOneWidget);
+    expect(find.byType(TextFormField), findsNWidgets(3)); // Name, Email, Password
+  });
+}
+````
+
+## File: test/screens/host/host_dashboard_test.dart
+````dart
+import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/core/providers/service_providers.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/screens/host/host_dashboard_screen.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/realtime_sync_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+
+// Generate mocks
+@GenerateMocks([
+  AuthService,
+  DatabaseService,
+  SyncService,
+  AutoSyncService,
+  RealtimeSyncService,
+  User,
+])
+import 'host_dashboard_test.mocks.dart';
+
+void main() {
+  late MockAuthService mockAuthService;
+  late MockDatabaseService mockDatabaseService;
+  late MockSyncService mockSyncService;
+  late MockAutoSyncService mockAutoSyncService;
+  late MockRealtimeSyncService mockRealtimeSyncService;
+  late MockUser mockUser;
+
+  setUp(() {
+    mockAuthService = MockAuthService();
+    mockDatabaseService = MockDatabaseService();
+    mockSyncService = MockSyncService();
+    mockAutoSyncService = MockAutoSyncService();
+    mockRealtimeSyncService = MockRealtimeSyncService();
+    mockUser = MockUser();
+
+    // Default setups
+    when(mockAuthService.currentUser).thenReturn(mockUser);
+    when(mockUser.uid).thenReturn('test_host_id');
+    when(mockUser.emailVerified).thenReturn(true);
+    when(mockUser.email).thenReturn('host@test.com');
+    when(mockUser.displayName).thenReturn('Test Host');
+    
+    when(mockDatabaseService.getHostedCommittees(any)).thenReturn([]);
+    when(mockSyncService.syncAll(any)).thenAnswer((_) async => SyncResult(success: true, message: 'Synced'));
+    
+    when(mockRealtimeSyncService.addListener(any)).thenReturn(null);
+    when(mockRealtimeSyncService.removeListener(any)).thenReturn(null);
+    when(mockRealtimeSyncService.startListening(any)).thenReturn(null);
+    when(mockRealtimeSyncService.stopListening()).thenReturn(null);
+  });
+
+  Widget createSubject() {
+    return ProviderScope(
+      overrides: [
+        authServiceProvider.overrideWithValue(mockAuthService),
+        databaseServiceProvider.overrideWithValue(mockDatabaseService),
+        syncServiceProvider.overrideWithValue(mockSyncService),
+        autoSyncServiceProvider.overrideWithValue(mockAutoSyncService),
+        realtimeSyncServiceProvider.overrideWithValue(mockRealtimeSyncService),
+      ],
+      child: const MaterialApp(
+        localizationsDelegates: [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: HostDashboardScreen(),
+      ),
+    );
+  }
+
+  testWidgets('HostDashboard displays empty state when no committees exist', (tester) async {
+    await tester.pumpWidget(createSubject());
+    await tester.pumpAndSettle(); // Wait for animations and sync
+
+    expect(find.text('No Committees Yet'), findsOneWidget);
+    expect(find.text('Create your first committee to get started'), findsOneWidget);
+    expect(find.text('New Committee'), findsOneWidget);
+  });
+
+  testWidgets('HostDashboard displays committees when data exists', (tester) async {
+    final committee = Committee(
+      id: '1',
+      code: '123456',
+      name: 'Test Kameti',
+      hostId: 'test_host_id',
+      contributionAmount: 1000.0,
+      frequency: 'monthly',
+      startDate: DateTime.now(),
+      totalMembers: 10,
+      createdAt: DateTime.now(),
+    );
+    when(mockDatabaseService.getHostedCommittees('test_host_id')).thenReturn([committee]);
+    when(mockDatabaseService.getMembersByCommittee('1')).thenReturn([]);
+
+    await tester.pumpWidget(createSubject());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Test Kameti'), findsOneWidget);
+    expect(find.text('No Committees Yet'), findsNothing);
+  });
+}
+````
+
+## File: test/screens/host/host_dashboard_test.mocks.dart
+````dart
+// Mocks generated by Mockito 5.4.5 from annotations
+// in committee_app/test/screens/host/host_dashboard_test.dart.
+// Do not manually edit this file.
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'dart:async' as _i5;
+import 'dart:ui' as _i13;
+
+import 'package:committee_app/core/models/committee.dart' as _i7;
+import 'package:committee_app/core/models/member.dart' as _i8;
+import 'package:committee_app/core/models/payment.dart' as _i9;
+import 'package:committee_app/features/auth/data/auth_service.dart' as _i4;
+import 'package:committee_app/services/auto_sync_service.dart' as _i11;
+import 'package:committee_app/services/database_service.dart' as _i6;
+import 'package:committee_app/services/realtime_sync_service.dart' as _i12;
+import 'package:committee_app/services/sync_service.dart' as _i2;
+import 'package:firebase_auth/firebase_auth.dart' as _i3;
+import 'package:mockito/mockito.dart' as _i1;
+import 'package:mockito/src/dummies.dart' as _i10;
+
+// ignore_for_file: type=lint
+// ignore_for_file: avoid_redundant_argument_values
+// ignore_for_file: avoid_setters_without_getters
+// ignore_for_file: comment_references
+// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use_from_same_package
+// ignore_for_file: implementation_imports
+// ignore_for_file: invalid_use_of_visible_for_testing_member
+// ignore_for_file: must_be_immutable
+// ignore_for_file: prefer_const_constructors
+// ignore_for_file: unnecessary_parenthesis
+// ignore_for_file: camel_case_types
+// ignore_for_file: subtype_of_sealed_class
+
+class _FakeSyncResult_0 extends _i1.SmartFake implements _i2.SyncResult {
+  _FakeSyncResult_0(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeSyncCounts_1 extends _i1.SmartFake implements _i2.SyncCounts {
+  _FakeSyncCounts_1(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeUserMetadata_2 extends _i1.SmartFake implements _i3.UserMetadata {
+  _FakeUserMetadata_2(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeMultiFactor_3 extends _i1.SmartFake implements _i3.MultiFactor {
+  _FakeMultiFactor_3(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeIdTokenResult_4 extends _i1.SmartFake implements _i3.IdTokenResult {
+  _FakeIdTokenResult_4(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeUserCredential_5 extends _i1.SmartFake
+    implements _i3.UserCredential {
+  _FakeUserCredential_5(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeConfirmationResult_6 extends _i1.SmartFake
+    implements _i3.ConfirmationResult {
+  _FakeConfirmationResult_6(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeUser_7 extends _i1.SmartFake implements _i3.User {
+  _FakeUser_7(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+/// A class which mocks [AuthService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockAuthService extends _i1.Mock implements _i4.AuthService {
+  MockAuthService() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  bool get isLoggedIn => (super.noSuchMethod(
+        Invocation.getter(#isLoggedIn),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  _i5.Stream<_i3.User?> get authStateChanges => (super.noSuchMethod(
+        Invocation.getter(#authStateChanges),
+        returnValue: _i5.Stream<_i3.User?>.empty(),
+      ) as _i5.Stream<_i3.User?>);
+
+  @override
+  bool get isEmailVerified => (super.noSuchMethod(
+        Invocation.getter(#isEmailVerified),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  _i5.Future<_i3.UserCredential?> signUp({
+    required String? email,
+    required String? password,
+    String? displayName,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #signUp,
+          [],
+          {
+            #email: email,
+            #password: password,
+            #displayName: displayName,
+          },
+        ),
+        returnValue: _i5.Future<_i3.UserCredential?>.value(),
+      ) as _i5.Future<_i3.UserCredential?>);
+
+  @override
+  _i5.Future<_i3.UserCredential?> signIn({
+    required String? email,
+    required String? password,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #signIn,
+          [],
+          {
+            #email: email,
+            #password: password,
+          },
+        ),
+        returnValue: _i5.Future<_i3.UserCredential?>.value(),
+      ) as _i5.Future<_i3.UserCredential?>);
+
+  @override
+  _i5.Future<_i3.UserCredential?> signInAnonymously() => (super.noSuchMethod(
+        Invocation.method(
+          #signInAnonymously,
+          [],
+        ),
+        returnValue: _i5.Future<_i3.UserCredential?>.value(),
+      ) as _i5.Future<_i3.UserCredential?>);
+
+  @override
+  _i5.Future<_i3.UserCredential?> signInWithGoogle() => (super.noSuchMethod(
+        Invocation.method(
+          #signInWithGoogle,
+          [],
+        ),
+        returnValue: _i5.Future<_i3.UserCredential?>.value(),
+      ) as _i5.Future<_i3.UserCredential?>);
+
+  @override
+  _i5.Future<void> signOut() => (super.noSuchMethod(
+        Invocation.method(
+          #signOut,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> deleteAccount() => (super.noSuchMethod(
+        Invocation.method(
+          #deleteAccount,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> resetPassword(String? email) => (super.noSuchMethod(
+        Invocation.method(
+          #resetPassword,
+          [email],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> sendEmailVerification() => (super.noSuchMethod(
+        Invocation.method(
+          #sendEmailVerification,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> reloadUser() => (super.noSuchMethod(
+        Invocation.method(
+          #reloadUser,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+}
+
+/// A class which mocks [DatabaseService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockDatabaseService extends _i1.Mock implements _i6.DatabaseService {
+  MockDatabaseService() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i5.Future<void> saveCommittee(_i7.Committee? committee) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveCommittee,
+          [committee],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  List<_i7.Committee> getHostedCommittees(String? hostId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getHostedCommittees,
+          [hostId],
+        ),
+        returnValue: <_i7.Committee>[],
+      ) as List<_i7.Committee>);
+
+  @override
+  _i7.Committee? getCommitteeById(String? id) =>
+      (super.noSuchMethod(Invocation.method(
+        #getCommitteeById,
+        [id],
+      )) as _i7.Committee?);
+
+  @override
+  _i7.Committee? getCommitteeByCode(String? code) =>
+      (super.noSuchMethod(Invocation.method(
+        #getCommitteeByCode,
+        [code],
+      )) as _i7.Committee?);
+
+  @override
+  _i5.Future<void> deleteCommittee(String? id) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteCommittee,
+          [id],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> saveMember(_i8.Member? member) => (super.noSuchMethod(
+        Invocation.method(
+          #saveMember,
+          [member],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  List<_i8.Member> getMembersByCommittee(String? committeeId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getMembersByCommittee,
+          [committeeId],
+        ),
+        returnValue: <_i8.Member>[],
+      ) as List<_i8.Member>);
+
+  @override
+  _i8.Member? getMemberById(String? id) =>
+      (super.noSuchMethod(Invocation.method(
+        #getMemberById,
+        [id],
+      )) as _i8.Member?);
+
+  @override
+  _i8.Member? getMemberByCode(
+    String? committeeId,
+    String? memberCode,
+  ) =>
+      (super.noSuchMethod(Invocation.method(
+        #getMemberByCode,
+        [
+          committeeId,
+          memberCode,
+        ],
+      )) as _i8.Member?);
+
+  @override
+  _i5.Future<void> deleteMember(String? id) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteMember,
+          [id],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updateMemberPayoutOrder(
+    String? memberId,
+    int? order,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateMemberPayoutOrder,
+          [
+            memberId,
+            order,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> savePayment(_i9.Payment? payment) => (super.noSuchMethod(
+        Invocation.method(
+          #savePayment,
+          [payment],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  List<_i9.Payment> getPaymentsByCommittee(String? committeeId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getPaymentsByCommittee,
+          [committeeId],
+        ),
+        returnValue: <_i9.Payment>[],
+      ) as List<_i9.Payment>);
+
+  @override
+  List<_i9.Payment> getPaymentsByMember(String? memberId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getPaymentsByMember,
+          [memberId],
+        ),
+        returnValue: <_i9.Payment>[],
+      ) as List<_i9.Payment>);
+
+  @override
+  _i9.Payment? getPayment(
+    String? memberId,
+    DateTime? date,
+  ) =>
+      (super.noSuchMethod(Invocation.method(
+        #getPayment,
+        [
+          memberId,
+          date,
+        ],
+      )) as _i9.Payment?);
+
+  @override
+  _i5.Future<void> deletePayment(String? id) => (super.noSuchMethod(
+        Invocation.method(
+          #deletePayment,
+          [id],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> togglePayment(
+    String? memberId,
+    String? committeeId,
+    DateTime? date,
+    String? hostId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #togglePayment,
+          [
+            memberId,
+            committeeId,
+            date,
+            hostId,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> saveJoinedCommittee(
+    String? committeeCode,
+    String? memberCode,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveJoinedCommittee,
+          [
+            committeeCode,
+            memberCode,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  List<Map<dynamic, dynamic>> getJoinedCommittees() => (super.noSuchMethod(
+        Invocation.method(
+          #getJoinedCommittees,
+          [],
+        ),
+        returnValue: <Map<dynamic, dynamic>>[],
+      ) as List<Map<dynamic, dynamic>>);
+
+  @override
+  _i5.Future<void> removeJoinedCommittee(String? committeeCode) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #removeJoinedCommittee,
+          [committeeCode],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  void setSelectedCycle(
+    String? committeeId,
+    int? cycle,
+  ) =>
+      super.noSuchMethod(
+        Invocation.method(
+          #setSelectedCycle,
+          [
+            committeeId,
+            cycle,
+          ],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  int getSelectedCycle(String? committeeId) => (super.noSuchMethod(
+        Invocation.method(
+          #getSelectedCycle,
+          [committeeId],
+        ),
+        returnValue: 0,
+      ) as int);
+
+  @override
+  _i5.Future<bool> isFirstLaunch() => (super.noSuchMethod(
+        Invocation.method(
+          #isFirstLaunch,
+          [],
+        ),
+        returnValue: _i5.Future<bool>.value(false),
+      ) as _i5.Future<bool>);
+
+  @override
+  _i5.Future<void> setFirstLaunchComplete() => (super.noSuchMethod(
+        Invocation.method(
+          #setFirstLaunchComplete,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<bool> isBiometricEnabled() => (super.noSuchMethod(
+        Invocation.method(
+          #isBiometricEnabled,
+          [],
+        ),
+        returnValue: _i5.Future<bool>.value(false),
+      ) as _i5.Future<bool>);
+
+  @override
+  _i5.Future<void> setBiometricEnabled(bool? enabled) => (super.noSuchMethod(
+        Invocation.method(
+          #setBiometricEnabled,
+          [enabled],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<String> getLanguage() => (super.noSuchMethod(
+        Invocation.method(
+          #getLanguage,
+          [],
+        ),
+        returnValue: _i5.Future<String>.value(_i10.dummyValue<String>(
+          this,
+          Invocation.method(
+            #getLanguage,
+            [],
+          ),
+        )),
+      ) as _i5.Future<String>);
+
+  @override
+  _i5.Future<void> setLanguage(String? languageCode) => (super.noSuchMethod(
+        Invocation.method(
+          #setLanguage,
+          [languageCode],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+}
+
+/// A class which mocks [SyncService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockSyncService extends _i1.Mock implements _i2.SyncService {
+  MockSyncService() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i5.Future<bool> isOnline() => (super.noSuchMethod(
+        Invocation.method(
+          #isOnline,
+          [],
+        ),
+        returnValue: _i5.Future<bool>.value(false),
+      ) as _i5.Future<bool>);
+
+  @override
+  _i5.Future<_i2.SyncResult> syncAll(String? hostId) => (super.noSuchMethod(
+        Invocation.method(
+          #syncAll,
+          [hostId],
+        ),
+        returnValue: _i5.Future<_i2.SyncResult>.value(_FakeSyncResult_0(
+          this,
+          Invocation.method(
+            #syncAll,
+            [hostId],
+          ),
+        )),
+      ) as _i5.Future<_i2.SyncResult>);
+
+  @override
+  _i5.Future<_i2.SyncCounts> syncCommittees(String? hostId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #syncCommittees,
+          [hostId],
+        ),
+        returnValue: _i5.Future<_i2.SyncCounts>.value(_FakeSyncCounts_1(
+          this,
+          Invocation.method(
+            #syncCommittees,
+            [hostId],
+          ),
+        )),
+      ) as _i5.Future<_i2.SyncCounts>);
+
+  @override
+  _i5.Future<_i2.SyncCounts> syncMembers(String? committeeId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #syncMembers,
+          [committeeId],
+        ),
+        returnValue: _i5.Future<_i2.SyncCounts>.value(_FakeSyncCounts_1(
+          this,
+          Invocation.method(
+            #syncMembers,
+            [committeeId],
+          ),
+        )),
+      ) as _i5.Future<_i2.SyncCounts>);
+
+  @override
+  _i5.Future<_i2.SyncCounts> syncPayments(String? committeeId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #syncPayments,
+          [committeeId],
+        ),
+        returnValue: _i5.Future<_i2.SyncCounts>.value(_FakeSyncCounts_1(
+          this,
+          Invocation.method(
+            #syncPayments,
+            [committeeId],
+          ),
+        )),
+      ) as _i5.Future<_i2.SyncCounts>);
+
+  @override
+  _i5.Future<bool> deleteCommitteeFromCloud(String? committeeId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteCommitteeFromCloud,
+          [committeeId],
+        ),
+        returnValue: _i5.Future<bool>.value(false),
+      ) as _i5.Future<bool>);
+
+  @override
+  _i5.Future<bool> deleteMemberFromCloud(String? memberId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteMemberFromCloud,
+          [memberId],
+        ),
+        returnValue: _i5.Future<bool>.value(false),
+      ) as _i5.Future<bool>);
+
+  @override
+  _i5.Future<_i7.Committee?> syncCommitteeByCode(String? code) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #syncCommitteeByCode,
+          [code],
+        ),
+        returnValue: _i5.Future<_i7.Committee?>.value(),
+      ) as _i5.Future<_i7.Committee?>);
+}
+
+/// A class which mocks [AutoSyncService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockAutoSyncService extends _i1.Mock implements _i11.AutoSyncService {
+  MockAutoSyncService() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i5.Future<void> saveCommittee(_i7.Committee? committee) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #saveCommittee,
+          [committee],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<bool> deleteCommittee(
+    String? committeeId,
+    String? hostId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteCommittee,
+          [
+            committeeId,
+            hostId,
+          ],
+        ),
+        returnValue: _i5.Future<bool>.value(false),
+      ) as _i5.Future<bool>);
+
+  @override
+  _i5.Future<void> archiveCommittee(_i7.Committee? committee) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #archiveCommittee,
+          [committee],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> unarchiveCommittee(_i7.Committee? committee) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #unarchiveCommittee,
+          [committee],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> saveMember(_i8.Member? member) => (super.noSuchMethod(
+        Invocation.method(
+          #saveMember,
+          [member],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> deleteMember(
+    String? memberId,
+    String? committeeId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteMember,
+          [
+            memberId,
+            committeeId,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updateMemberPayoutOrder(
+    String? memberId,
+    int? order,
+    String? committeeId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateMemberPayoutOrder,
+          [
+            memberId,
+            order,
+            committeeId,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> savePayment(_i9.Payment? payment) => (super.noSuchMethod(
+        Invocation.method(
+          #savePayment,
+          [payment],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> togglePayment(
+    String? memberId,
+    String? committeeId,
+    DateTime? date,
+    String? hostId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #togglePayment,
+          [
+            memberId,
+            committeeId,
+            date,
+            hostId,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+}
+
+/// A class which mocks [RealtimeSyncService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockRealtimeSyncService extends _i1.Mock
+    implements _i12.RealtimeSyncService {
+  MockRealtimeSyncService() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  void markCommitteeForDelete(String? committeeId) => super.noSuchMethod(
+        Invocation.method(
+          #markCommitteeForDelete,
+          [committeeId],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void markMemberForDelete(String? memberId) => super.noSuchMethod(
+        Invocation.method(
+          #markMemberForDelete,
+          [memberId],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void markMemberForUpdate(String? memberId) => super.noSuchMethod(
+        Invocation.method(
+          #markMemberForUpdate,
+          [memberId],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void markPaymentForUpdate(String? paymentId) => super.noSuchMethod(
+        Invocation.method(
+          #markPaymentForUpdate,
+          [paymentId],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  bool isPaymentPendingUpdate(String? paymentId) => (super.noSuchMethod(
+        Invocation.method(
+          #isPaymentPendingUpdate,
+          [paymentId],
+        ),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  void startListening(String? hostId) => super.noSuchMethod(
+        Invocation.method(
+          #startListening,
+          [hostId],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void stopListening() => super.noSuchMethod(
+        Invocation.method(
+          #stopListening,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void addListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #addListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void removeListener(_i13.VoidCallback? listener) => super.noSuchMethod(
+        Invocation.method(
+          #removeListener,
+          [listener],
+        ),
+        returnValueForMissingStub: null,
+      );
+}
+
+/// A class which mocks [User].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockUser extends _i1.Mock implements _i3.User {
+  MockUser() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  bool get emailVerified => (super.noSuchMethod(
+        Invocation.getter(#emailVerified),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  bool get isAnonymous => (super.noSuchMethod(
+        Invocation.getter(#isAnonymous),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  _i3.UserMetadata get metadata => (super.noSuchMethod(
+        Invocation.getter(#metadata),
+        returnValue: _FakeUserMetadata_2(
+          this,
+          Invocation.getter(#metadata),
+        ),
+      ) as _i3.UserMetadata);
+
+  @override
+  List<_i3.UserInfo> get providerData => (super.noSuchMethod(
+        Invocation.getter(#providerData),
+        returnValue: <_i3.UserInfo>[],
+      ) as List<_i3.UserInfo>);
+
+  @override
+  String get uid => (super.noSuchMethod(
+        Invocation.getter(#uid),
+        returnValue: _i10.dummyValue<String>(
+          this,
+          Invocation.getter(#uid),
+        ),
+      ) as String);
+
+  @override
+  _i3.MultiFactor get multiFactor => (super.noSuchMethod(
+        Invocation.getter(#multiFactor),
+        returnValue: _FakeMultiFactor_3(
+          this,
+          Invocation.getter(#multiFactor),
+        ),
+      ) as _i3.MultiFactor);
+
+  @override
+  _i5.Future<void> delete() => (super.noSuchMethod(
+        Invocation.method(
+          #delete,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<String?> getIdToken([bool? forceRefresh = false]) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getIdToken,
+          [forceRefresh],
+        ),
+        returnValue: _i5.Future<String?>.value(),
+      ) as _i5.Future<String?>);
+
+  @override
+  _i5.Future<_i3.IdTokenResult> getIdTokenResult(
+          [bool? forceRefresh = false]) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getIdTokenResult,
+          [forceRefresh],
+        ),
+        returnValue: _i5.Future<_i3.IdTokenResult>.value(_FakeIdTokenResult_4(
+          this,
+          Invocation.method(
+            #getIdTokenResult,
+            [forceRefresh],
+          ),
+        )),
+      ) as _i5.Future<_i3.IdTokenResult>);
+
+  @override
+  _i5.Future<_i3.UserCredential> linkWithCredential(
+          _i3.AuthCredential? credential) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #linkWithCredential,
+          [credential],
+        ),
+        returnValue: _i5.Future<_i3.UserCredential>.value(_FakeUserCredential_5(
+          this,
+          Invocation.method(
+            #linkWithCredential,
+            [credential],
+          ),
+        )),
+      ) as _i5.Future<_i3.UserCredential>);
+
+  @override
+  _i5.Future<_i3.UserCredential> linkWithProvider(_i3.AuthProvider? provider) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #linkWithProvider,
+          [provider],
+        ),
+        returnValue: _i5.Future<_i3.UserCredential>.value(_FakeUserCredential_5(
+          this,
+          Invocation.method(
+            #linkWithProvider,
+            [provider],
+          ),
+        )),
+      ) as _i5.Future<_i3.UserCredential>);
+
+  @override
+  _i5.Future<_i3.UserCredential> reauthenticateWithProvider(
+          _i3.AuthProvider? provider) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #reauthenticateWithProvider,
+          [provider],
+        ),
+        returnValue: _i5.Future<_i3.UserCredential>.value(_FakeUserCredential_5(
+          this,
+          Invocation.method(
+            #reauthenticateWithProvider,
+            [provider],
+          ),
+        )),
+      ) as _i5.Future<_i3.UserCredential>);
+
+  @override
+  _i5.Future<_i3.UserCredential> reauthenticateWithPopup(
+          _i3.AuthProvider? provider) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #reauthenticateWithPopup,
+          [provider],
+        ),
+        returnValue: _i5.Future<_i3.UserCredential>.value(_FakeUserCredential_5(
+          this,
+          Invocation.method(
+            #reauthenticateWithPopup,
+            [provider],
+          ),
+        )),
+      ) as _i5.Future<_i3.UserCredential>);
+
+  @override
+  _i5.Future<void> reauthenticateWithRedirect(_i3.AuthProvider? provider) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #reauthenticateWithRedirect,
+          [provider],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<_i3.UserCredential> linkWithPopup(_i3.AuthProvider? provider) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #linkWithPopup,
+          [provider],
+        ),
+        returnValue: _i5.Future<_i3.UserCredential>.value(_FakeUserCredential_5(
+          this,
+          Invocation.method(
+            #linkWithPopup,
+            [provider],
+          ),
+        )),
+      ) as _i5.Future<_i3.UserCredential>);
+
+  @override
+  _i5.Future<void> linkWithRedirect(_i3.AuthProvider? provider) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #linkWithRedirect,
+          [provider],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<_i3.ConfirmationResult> linkWithPhoneNumber(
+    String? phoneNumber, [
+    _i3.RecaptchaVerifier? verifier,
+  ]) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #linkWithPhoneNumber,
+          [
+            phoneNumber,
+            verifier,
+          ],
+        ),
+        returnValue:
+            _i5.Future<_i3.ConfirmationResult>.value(_FakeConfirmationResult_6(
+          this,
+          Invocation.method(
+            #linkWithPhoneNumber,
+            [
+              phoneNumber,
+              verifier,
+            ],
+          ),
+        )),
+      ) as _i5.Future<_i3.ConfirmationResult>);
+
+  @override
+  _i5.Future<_i3.UserCredential> reauthenticateWithCredential(
+          _i3.AuthCredential? credential) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #reauthenticateWithCredential,
+          [credential],
+        ),
+        returnValue: _i5.Future<_i3.UserCredential>.value(_FakeUserCredential_5(
+          this,
+          Invocation.method(
+            #reauthenticateWithCredential,
+            [credential],
+          ),
+        )),
+      ) as _i5.Future<_i3.UserCredential>);
+
+  @override
+  _i5.Future<void> reload() => (super.noSuchMethod(
+        Invocation.method(
+          #reload,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> sendEmailVerification(
+          [_i3.ActionCodeSettings? actionCodeSettings]) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #sendEmailVerification,
+          [actionCodeSettings],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<_i3.User> unlink(String? providerId) => (super.noSuchMethod(
+        Invocation.method(
+          #unlink,
+          [providerId],
+        ),
+        returnValue: _i5.Future<_i3.User>.value(_FakeUser_7(
+          this,
+          Invocation.method(
+            #unlink,
+            [providerId],
+          ),
+        )),
+      ) as _i5.Future<_i3.User>);
+
+  @override
+  _i5.Future<void> updateEmail(String? newEmail) => (super.noSuchMethod(
+        Invocation.method(
+          #updateEmail,
+          [newEmail],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updatePassword(String? newPassword) => (super.noSuchMethod(
+        Invocation.method(
+          #updatePassword,
+          [newPassword],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updatePhoneNumber(
+          _i3.PhoneAuthCredential? phoneCredential) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updatePhoneNumber,
+          [phoneCredential],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updateDisplayName(String? displayName) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateDisplayName,
+          [displayName],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updatePhotoURL(String? photoURL) => (super.noSuchMethod(
+        Invocation.method(
+          #updatePhotoURL,
+          [photoURL],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updateProfile({
+    String? displayName,
+    String? photoURL,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateProfile,
+          [],
+          {
+            #displayName: displayName,
+            #photoURL: photoURL,
+          },
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> verifyBeforeUpdateEmail(
+    String? newEmail, [
+    _i3.ActionCodeSettings? actionCodeSettings,
+  ]) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #verifyBeforeUpdateEmail,
+          [
+            newEmail,
+            actionCodeSettings,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+}
+````
+
 ## File: test/widget_test.dart
 ````dart
 // This is a basic Flutter widget test.
@@ -7927,10 +10371,546 @@ lib/
 This project is private.
 ````
 
+## File: lib/core/theme/app_theme.dart
+````dart
+import 'package:committee_app/core/theme/app_colors.dart';
+import 'package:committee_app/core/theme/app_decorations.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+/// Unified app theme - combines colors, typography, and decorations
+///
+/// This file creates the Flutter ThemeData using our custom design tokens.
+/// For quick changes, edit:
+/// - Colors → app_colors.dart
+/// - Text styles → app_typography.dart
+/// - Shadows/borders → app_decorations.dart
+class AppTheme {
+  AppTheme._();
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RE-EXPORT COMMONLY USED ITEMS FOR BACKWARD COMPATIBILITY
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Colors (for existing code that uses AppTheme.primaryColor)
+  static const Color primaryColor = AppColors.primary;
+  static const Color primaryDark = AppColors.primaryDark;
+  static const Color secondaryColor = AppColors.secondary;
+  static const Color successColor = AppColors.success;
+  static const Color errorColor = AppColors.error;
+  static const Color warningColor = AppColors.warning;
+  static const Color infoColor = AppColors.info;
+
+  // Dark theme colors
+  static const Color darkBg = AppColors.darkBg;
+  static const Color darkSurface = AppColors.darkSurface;
+  static const Color darkCard = AppColors.darkCard;
+
+  // Light theme colors
+  static const Color lightBg = AppColors.lightBg;
+  static const Color lightSurface = AppColors.lightSurface;
+  static const Color lightCard = AppColors.lightCard;
+  static const Color lightBorder = AppColors.lightBorder;
+
+  // Pastel colors
+  static const Color pastelLavender = AppColors.pastelLavender;
+  static const Color pastelMint = AppColors.pastelMint;
+  static const Color pastelYellow = AppColors.pastelYellow;
+  static const Color pastelPink = AppColors.pastelPink;
+  static const Color pastelBlue = AppColors.pastelBlue;
+
+  // Text colors
+  static const Color textDark = AppColors.textDark;
+  static const Color textMedium = AppColors.textMedium;
+  static const Color textLight = AppColors.textLight;
+
+  // Accent
+  static const Color accentCoral = AppColors.accent;
+
+  // Gradients
+  static LinearGradient get primaryGradient => AppColors.primaryGradient;
+  static LinearGradient get purpleGradient => AppColors.primaryGradient;
+
+  // Shadows
+  static List<BoxShadow> get softShadow => AppDecorations.shadowSm;
+  static List<BoxShadow> get cardShadow => AppDecorations.shadowMd;
+  static List<BoxShadow> primaryShadow([double opacity = 0.3]) =>
+      AppDecorations.shadowPrimary(opacity);
+
+  // Border radius
+  static const double radiusSmall = AppDecorations.radiusSm;
+  static const double radiusMedium = AppDecorations.radiusMd;
+  static const double radiusLarge = AppDecorations.radiusLg;
+  static const double radiusXLarge = AppDecorations.radiusXl;
+  static const double radiusRound = AppDecorations.radiusRound;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DARK THEME
+  // ═══════════════════════════════════════════════════════════════════════════
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      primaryColor: AppColors.primary,
+      scaffoldBackgroundColor: AppColors.darkBg,
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
+        surface: AppColors.darkSurface,
+        error: AppColors.error,
+      ),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme).apply(
+        bodyColor: AppColors.textDark, // Black text for input fields
+        displayColor: AppColors.textDark,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.darkSurface,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textDark,
+        ),
+        iconTheme: const IconThemeData(color: AppColors.textDark),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.darkCard,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDecorations.radiusLg),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          shadowColor: AppColors.primary.withOpacity(0.3),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+          ),
+          side: const BorderSide(color: AppColors.primary, width: 2),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.darkCard,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+          borderSide: const BorderSide(color: AppColors.error, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        hintStyle: TextStyle(color: Colors.grey[500]),
+        labelStyle: const TextStyle(color: AppColors.textMedium),
+        floatingLabelStyle: const TextStyle(color: AppColors.primary),
+        iconColor: AppColors.textMedium, // Make icons visible
+        prefixIconColor: AppColors.textMedium, // Make prefix icons visible
+        suffixIconColor: AppColors.textMedium, // Make suffix icons visible
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 4,
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.darkSurface,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: Colors.grey,
+      ),
+      dividerTheme: DividerThemeData(color: Colors.grey[800], thickness: 1),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LIGHT THEME
+  // ═══════════════════════════════════════════════════════════════════════════
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      primaryColor: AppColors.primary,
+      scaffoldBackgroundColor: AppColors.lightBg,
+      colorScheme: const ColorScheme.light(
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
+        surface: AppColors.lightSurface,
+        error: AppColors.error,
+      ),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.lightBg,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textDark,
+        ),
+        iconTheme: const IconThemeData(color: AppColors.textDark),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.lightCard,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDecorations.radiusLg),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+          ),
+          side: const BorderSide(color: AppColors.primary, width: 2),
+          textStyle: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.lightSurface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+          borderSide: const BorderSide(color: AppColors.lightBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+          borderSide: const BorderSide(color: AppColors.lightBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDecorations.radiusMd),
+          borderSide: const BorderSide(color: AppColors.error, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        hintStyle: const TextStyle(color: AppColors.textLight),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDecorations.radiusLg),
+        ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.lightBg,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textLight,
+      ),
+      dividerTheme: const DividerThemeData(
+        color: AppColors.lightBorder,
+        thickness: 1,
+      ),
+    );
+  }
+}
+````
+
+## File: lib/services/analytics_service.dart
+````dart
+import 'package:firebase_analytics/firebase_analytics.dart';
+
+class AnalyticsService {
+  static final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  
+  // Get analytics observer for navigation
+  static FirebaseAnalyticsObserver get observer => 
+      FirebaseAnalyticsObserver(analytics: _analytics);
+
+  // Screen Views
+  static Future<void> logScreenView(String screenName) async {
+    await _analytics.logScreenView(screenName: screenName);
+  }
+
+  // User Events
+  static Future<void> logLogin() async {
+    await _analytics.logLogin(loginMethod: 'email');
+  }
+
+  static Future<void> logSignUp() async {
+    await _analytics.logSignUp(signUpMethod: 'email');
+  }
+
+  static Future<void> logLogout() async {
+    await _analytics.logEvent(name: 'logout');
+  }
+
+  // Committee Events
+  static Future<void> logCommitteeCreated({
+    required String committeeName,
+    required int memberCount,
+    required double contributionAmount,
+  }) async {
+    await _analytics.logEvent(
+      name: 'committee_created',
+      parameters: {
+        'name': committeeName,
+        'member_count': memberCount,
+        'contribution_amount': contributionAmount,
+      },
+    );
+  }
+
+  static Future<void> logCommitteeDeleted() async {
+    await _analytics.logEvent(name: 'committee_deleted');
+  }
+
+  // Member Events
+  static Future<void> logMemberAdded() async {
+    await _analytics.logEvent(name: 'member_added');
+  }
+
+  static Future<void> logMemberDeleted() async {
+    await _analytics.logEvent(name: 'member_deleted');
+  }
+
+  // Payment Events
+  static Future<void> logPaymentMarked({
+    required double amount,
+    required bool isPaid,
+  }) async {
+    await _analytics.logEvent(
+      name: 'payment_marked',
+      parameters: {
+        'amount': amount,
+        'status': isPaid ? 'paid' : 'unpaid',
+      },
+    );
+  }
+
+  static Future<void> logPayoutReceived({required double amount}) async {
+    await _analytics.logEvent(
+      name: 'payout_received',
+      parameters: {'amount': amount},
+    );
+  }
+
+  // Share Events
+  static Future<void> logShare({required String contentType}) async {
+    await _analytics.logShare(
+      contentType: contentType,
+      itemId: 'committee_info',
+      method: 'native_share',
+    );
+  }
+
+  // Viewer Events
+  static Future<void> logViewerJoined() async {
+    await _analytics.logEvent(name: 'viewer_joined_committee');
+  }
+
+  // Password Events
+  static Future<void> logPasswordReset() async {
+    await _analytics.logEvent(name: 'password_reset_requested');
+  }
+}
+````
+
+## File: lib/firebase_options.dart
+````dart
+// File generated by FlutterFire CLI.
+// ignore_for_file: type=lint
+import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+
+/// Default [FirebaseOptions] for use with your Firebase apps.
+///
+/// Example:
+/// ```dart
+/// import 'package:committee_app/firebase_options.dart';
+/// // ...
+/// await Firebase.initializeApp(
+///   options: DefaultFirebaseOptions.currentPlatform,
+/// );
+/// ```
+class DefaultFirebaseOptions {
+  static FirebaseOptions get currentPlatform {
+    if (kIsWeb) {
+      return web;
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return android;
+      case TargetPlatform.iOS:
+        return ios;
+      case TargetPlatform.macOS:
+        return macos;
+      case TargetPlatform.windows:
+        return windows;
+      case TargetPlatform.linux:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for linux - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
+      default:
+        throw UnsupportedError(
+          'DefaultFirebaseOptions are not supported for this platform.',
+        );
+    }
+  }
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyANO9qmhToM_kfp85YLWZdmsPtt7n98ZNs',
+    appId: '1:216531343276:web:48400f50b5f7960e490c09',
+    messagingSenderId: '216531343276',
+    projectId: 'commiteeapp-7cd16',
+    authDomain: 'commiteeapp-7cd16.firebaseapp.com',
+    storageBucket: 'commiteeapp-7cd16.firebasestorage.app',
+    measurementId: 'G-2JH34PTCBQ',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyCyuYVFnF-enUcSfOge_7M40EenOwQKFqQ',
+    appId: '1:216531343276:android:4904ebd09b93956d490c09',
+    messagingSenderId: '216531343276',
+    projectId: 'commiteeapp-7cd16',
+    storageBucket: 'commiteeapp-7cd16.firebasestorage.app',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyC0FmFLCeYDiGPE6dNvAPUK-pEwMXBOY58',
+    appId: '1:216531343276:ios:f93e66543b44de8c490c09',
+    messagingSenderId: '216531343276',
+    projectId: 'commiteeapp-7cd16',
+    storageBucket: 'commiteeapp-7cd16.firebasestorage.app',
+    iosBundleId: 'com.committee.committeeApp',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyC0FmFLCeYDiGPE6dNvAPUK-pEwMXBOY58',
+    appId: '1:216531343276:ios:f93e66543b44de8c490c09',
+    messagingSenderId: '216531343276',
+    projectId: 'commiteeapp-7cd16',
+    storageBucket: 'commiteeapp-7cd16.firebasestorage.app',
+    iosBundleId: 'com.committee.committeeApp',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyANO9qmhToM_kfp85YLWZdmsPtt7n98ZNs',
+    appId: '1:216531343276:web:50644caa8f32d173490c09',
+    messagingSenderId: '216531343276',
+    projectId: 'commiteeapp-7cd16',
+    authDomain: 'commiteeapp-7cd16.firebaseapp.com',
+    storageBucket: 'commiteeapp-7cd16.firebasestorage.app',
+    measurementId: 'G-920YQ18LN4',
+  );
+
+}
+````
+
+## File: analysis_options.yaml
+````yaml
+# This file configures the analyzer, which statically analyzes Dart code to
+# check for errors, warnings, and lints.
+#
+# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
+# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
+# invoked from the command line by running `flutter analyze`.
+
+# The following line activates a set of recommended lints for Flutter apps,
+# packages, and plugins designed to encourage good coding practices.
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  # The lint rules applied to this project can be customized in the
+  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
+  # included above or to enable additional rules. A list of all available lints
+  # and their documentation is published at https://dart.dev/lints.
+  #
+  # Instead of disabling a lint rule for the entire project in the
+  # section below, it can also be suppressed for a single line of code
+  # or a specific dart file by using the `// ignore: name_of_lint` and
+  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
+  # producing the lint.
+  rules:
+    always_use_package_imports: true
+    avoid_void_async: true
+    prefer_final_locals: true
+    prefer_final_in_forEach: true
+    unnecessary_await_in_return: true
+    unawaited_futures: true
+    camel_case_types: true
+    library_names: true
+    file_names: true
+    library_prefixes: true
+    non_constant_identifier_names: true
+    constant_identifier_names: true
+    directives_ordering: true
+    lines_longer_than_80_chars: false
+    omit_local_variable_types: true
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    unused_import: true
+    unused_local_variable: true
+
+# Additional information about this file can be found at
+# https://dart.dev/guides/language/analysis-options
+````
+
 ## File: lib/core/controllers/auth_controller.dart
 ````dart
-import 'package:flutter/material.dart';
 import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:flutter/material.dart';
 
 /// Controller for authentication business logic
 class AuthController extends ChangeNotifier {
@@ -8073,13 +11053,13 @@ class AuthController extends ChangeNotifier {
 
 ## File: lib/core/controllers/committee_controller.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/sync_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:flutter/material.dart';
 
 /// Controller for committee detail business logic
 /// 
@@ -8215,14 +11195,14 @@ class CommitteeController extends ChangeNotifier {
   /// Get total collected amount
   double getTotalCollected() {
     final payments = _dbService.getPaymentsByCommittee(committeeId);
-    int paidCount = payments.where((p) => p.isPaid).length;
+    final paidCount = payments.where((p) => p.isPaid).length;
     return paidCount * (_committee?.contributionAmount ?? 0);
   }
 
   /// Get pending amount
   double getPendingAmount() {
     final payments = _dbService.getPaymentsByCommittee(committeeId);
-    int unpaidCount = payments.where((p) => !p.isPaid).length;
+    final unpaidCount = payments.where((p) => !p.isPaid).length;
     return unpaidCount * (_committee?.contributionAmount ?? 0);
   }
 
@@ -8237,24 +11217,25 @@ class CommitteeController extends ChangeNotifier {
 ## File: lib/core/controllers/controllers.dart
 ````dart
 /// Controllers exports - import this file to get all controllers
-library controllers;
+library;
 
+export 'auth_controller.dart';
+export 'committee_controller.dart';
 export 'dashboard_controller.dart';
 export 'payment_controller.dart';
-export 'committee_controller.dart';
-export 'auth_controller.dart';
 ````
 
 ## File: lib/core/controllers/dashboard_controller.dart
 ````dart
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/realtime_sync_service.dart';
+
 import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/realtime_sync_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:flutter/material.dart';
 
 /// Controller for dashboard business logic
 /// 
@@ -8399,7 +11380,7 @@ class DashboardController extends ChangeNotifier {
 
   /// Get total members across all active committees
   int getTotalMembers() {
-    int total = 0;
+    var total = 0;
     for (var committee in _activeCommittees) {
       total += _dbService.getMembersByCommittee(committee.id).length;
     }
@@ -8424,13 +11405,13 @@ class DashboardController extends ChangeNotifier {
 
 ## File: lib/core/controllers/payment_controller.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/sync_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:flutter/material.dart';
 // import 'package:committee_app/core/models/payment.dart';
 
 /// Controller for payment sheet business logic
@@ -8575,8 +11556,8 @@ class PaymentController extends ChangeNotifier {
 
   Map<String, dynamic> calculateMemberDebt(String memberId) {
     final now = DateTime.now();
-    int paidCount = 0;
-    int duePeriods = 0;
+    var paidCount = 0;
+    var duePeriods = 0;
 
     for (var date in _dates) {
       if (!date.isAfter(now)) {
@@ -8618,10 +11599,10 @@ class PaymentController extends ChangeNotifier {
     final currentPayoutCycle =
         payoutInterval > 0 ? (daysElapsed ~/ payoutInterval) : 0;
 
-    int currentCyclePaid = 0;
-    int currentCycleDue = 0;
-    int totalPaid = 0;
-    int totalDue = 0;
+    var currentCyclePaid = 0;
+    var currentCycleDue = 0;
+    var totalPaid = 0;
+    var totalDue = 0;
 
     for (var member in _members) {
       for (var date in _dates) {
@@ -8670,7 +11651,7 @@ class PaymentController extends ChangeNotifier {
 
   Map<String, dynamic> calculateMemberAdvance(String memberId) {
     final now = DateTime.now();
-    int advancePaymentCount = 0;
+    var advancePaymentCount = 0;
     for (var date in _dates) {
       if (date.isAfter(now) && isPaymentMarked(memberId, date)) {
         advancePaymentCount++;
@@ -8693,7 +11674,7 @@ class PaymentController extends ChangeNotifier {
     final committeeStartDate = committee.startDate;
     final payoutIntervalDays = committee.paymentIntervalDays;
 
-    int collectionInterval = 30;
+    var collectionInterval = 30;
     if (committee.frequency == 'daily') collectionInterval = 1;
     if (committee.frequency == 'weekly') collectionInterval = 7;
     if (committee.frequency == 'monthly') collectionInterval = 30;
@@ -8730,8 +11711,8 @@ class PaymentController extends ChangeNotifier {
               ? _filterStartDate!
               : cycleStartDate;
 
-      DateTime current = effectiveStartDate;
-      for (int i = 0; i < periodsPerPayout; i++) {
+      var current = effectiveStartDate;
+      for (var i = 0; i < periodsPerPayout; i++) {
         _dates.add(current);
         if (committee.frequency == 'monthly') {
           current = _addMonths(current, 1);
@@ -8779,7 +11760,7 @@ class PaymentController extends ChangeNotifier {
 ## File: lib/core/core.dart
 ````dart
 /// Core exports - import this file to get all core components
-library core;
+library;
 
 export 'controllers/controllers.dart';
 ````
@@ -8788,6 +11769,7 @@ export 'controllers/controllers.dart';
 ````dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:committee_app/core/providers/service_providers.dart';
 import 'package:committee_app/services/analytics_service.dart';
@@ -8861,7 +11843,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (mounted) {
           ToastService.success(
             context,
-            'Verification email sent! Please check your inbox.',
+            AppLocalizations.of(context)!.verificationSent,
           );
         }
       }
@@ -8928,12 +11910,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       builder:
           (context) => AlertDialog(
             backgroundColor: AppTheme.darkCard,
-            title: const Text('Reset Password'),
+            title: Text(AppLocalizations.of(context)!.resetPassword),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Enter your email address and we\'ll send you a link to reset your password.',
+                  AppLocalizations.of(context)!.resetPasswordDesc,
                   style: TextStyle(color: Colors.grey[400]),
                 ),
                 const SizedBox(height: 16),
@@ -8941,7 +11923,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: resetEmailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    labelText: 'Email',
+                    labelText: AppLocalizations.of(context)!.email,
                     prefixIcon: const Icon(Icons.email_outlined),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -8963,13 +11945,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
               ElevatedButton(
                 onPressed: () async {
                   final email = resetEmailController.text.trim();
                   if (email.isEmpty) {
-                    ToastService.warning(context, 'Please enter your email');
+                    ToastService.warning(context, AppLocalizations.of(context)!.enterEmail);
                     return;
                   }
 
@@ -8979,14 +11961,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Navigator.pop(context);
                       ToastService.success(
                         context,
-                        'Password reset email sent to $email',
+                        AppLocalizations.of(context)!.passwordResetSent(email),
                       );
                     }
                   } catch (e) {
                     ToastService.error(context, e.toString());
                   }
                 },
-                child: const Text('Send Reset Link'),
+                child: Text(AppLocalizations.of(context)!.sendResetLink),
               ),
             ],
           ),
@@ -8997,11 +11979,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isLogin ? 'Host Login' : 'Create Account'),
+        title: Text(_isLogin ? AppLocalizations.of(context)!.hostLogin : AppLocalizations.of(context)!.createAccount),
         backgroundColor: Colors.transparent,
       ),
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -9033,7 +12015,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   Text(
-                    _isLogin ? 'Welcome Back!' : 'Create Your Account',
+                    _isLogin ? AppLocalizations.of(context)!.welcomeBack : AppLocalizations.of(context)!.createYourAccount,
                     style: GoogleFonts.inter(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -9043,8 +12025,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _isLogin
-                        ? 'Sign in to manage your committees'
-                        : 'Start hosting your own committees',
+                        ? AppLocalizations.of(context)!.signInToManage
+                        : AppLocalizations.of(context)!.startHosting,
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       color: AppTheme.textMedium,
@@ -9087,15 +12069,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Name Field (only for signup)
                   if (!_isLogin) ...[
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Full Name',
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.fullName,
+                          prefixIcon: const Icon(Icons.person_outline),
+                        ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your name';
+                          return AppLocalizations.of(context)!.pleaseEnterName;
                         }
                         return null;
                       },
@@ -9107,16 +12089,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.email,
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
+                        return AppLocalizations.of(context)!.pleaseEnterEmail;
                       }
                       if (!value.contains('@')) {
-                        return 'Please enter a valid email';
+                        return AppLocalizations.of(context)!.enterValidEmail;
                       }
                       return null;
                     },
@@ -9130,7 +12112,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _submit(),
                     decoration: InputDecoration(
-                      labelText: 'Password',
+                      labelText: AppLocalizations.of(context)!.password,
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -9147,10 +12129,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
+                        return AppLocalizations.of(context)!.pleaseEnterPassword;
                       }
                       if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
+                        return AppLocalizations.of(context)!.passwordMinLength;
                       }
                       return null;
                     },
@@ -9173,7 +12155,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 color: Colors.white,
                               ),
                             )
-                            : Text(_isLogin ? 'Sign In' : 'Create Account'),
+                            : Text(_isLogin ? AppLocalizations.of(context)!.signIn : AppLocalizations.of(context)!.createAccount),
                   ),
 
                   // Forgot Password (only in login mode)
@@ -9181,7 +12163,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 16),
                     TextButton(
                       onPressed: () => _showForgotPasswordDialog(),
-                      child: Text(
+                      child: const Text(
                         'Forgot Password?',
                         style: TextStyle(color: AppTheme.textMedium),
                       ),
@@ -9195,9 +12177,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     children: [
                       Text(
                         _isLogin
-                            ? "Don't have an account? "
-                            : 'Already have an account? ',
-                        style: TextStyle(color: AppTheme.textMedium),
+                            ? AppLocalizations.of(context)!.dontHaveAccount
+                            : AppLocalizations.of(context)!.alreadyHaveAccount,
+                        style: const TextStyle(color: AppTheme.textMedium),
                       ),
                       GestureDetector(
                         onTap: () {
@@ -9207,7 +12189,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           });
                         },
                         child: Text(
-                          _isLogin ? 'Sign Up' : 'Sign In',
+                          _isLogin ? AppLocalizations.of(context)!.signUp : AppLocalizations.of(context)!.signIn,
                           style: const TextStyle(
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.w600,
@@ -9225,7 +12207,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          'OR',
+                          AppLocalizations.of(context)!.or,
                           style: TextStyle(color: Colors.grey[600]),
                         ),
                       ),
@@ -9274,9 +12256,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 ),
                               ],
                             )
-                            : const Text(
-                              'Continue with Google',
-                              style: TextStyle(
+                            : Text(
+                              AppLocalizations.of(context)!.continueWithGoogle,
+                              style: const TextStyle(
                                 color: AppTheme.textDark,
                                 fontSize: 16,
                               ),
@@ -9295,9 +12277,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
 ## File: lib/screens/host/about_screen.dart
 ````dart
+import 'package:committee_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -9471,816 +12453,11 @@ class _AboutScreenState extends State<AboutScreen> {
 }
 ````
 
-## File: lib/screens/host/committee_detail_screen.dart
-````dart
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/core/models/committee.dart';
-import 'package:committee_app/core/models/member.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/screens/host/member_management_screen.dart';
-import 'package:committee_app/screens/host/payment_sheet_screen.dart';
-import 'package:committee_app/screens/host/shuffle_members_screen.dart';
-
-class CommitteeDetailScreen extends StatefulWidget {
-  final Committee committee;
-
-  const CommitteeDetailScreen({super.key, required this.committee});
-
-  @override
-  State<CommitteeDetailScreen> createState() => _CommitteeDetailScreenState();
-}
-
-class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
-  final _dbService = DatabaseService();
-  final _syncService = SyncService();
-  final _autoSyncService = AutoSyncService();
-  late Committee _committee;
-  List<Member> _members = [];
-  bool _showCollectionDetails = false;
-  bool _isRefreshing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _committee = widget.committee;
-    _loadMembers();
-  }
-
-  void _loadMembers() {
-    if (!mounted) return;
-    setState(() {
-      _members = _dbService.getMembersByCommittee(_committee.id);
-    });
-  }
-
-  Future<void> _refreshCommittee() async {
-    if (_isRefreshing) return;
-    setState(() => _isRefreshing = true);
-
-    try {
-      await _syncService.syncMembers(_committee.id);
-      await _syncService.syncPayments(_committee.id);
-
-      _loadMembers();
-
-      final updatedCommittee = _dbService.getCommitteeById(_committee.id);
-      if (updatedCommittee != null && mounted) {
-        setState(() => _committee = updatedCommittee);
-      }
-    } catch (e) {
-      debugPrint('Refresh error: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isRefreshing = false);
-      }
-    }
-  }
-
-  void _showShareOptions() {
-    String message =
-        '📋 *${_committee.name}*\n\n'
-        '*Committee Code:* ${_committee.code}\n'
-        '*Contribution:* Rs. ${_committee.contributionAmount.toInt()}\n'
-        '*Duration:* ${_members.length} months\n\n'
-        '_Download Committee App to view payments!_';
-    Share.share(message, subject: '${_committee.name} - Committee Details');
-  }
-
-  void _showEditDialog() {
-    final nameController = TextEditingController(text: _committee.name);
-    final amountController = TextEditingController(
-      text: _committee.contributionAmount.toInt().toString(),
-    );
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            24,
-            24,
-            24,
-            MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Edit Committee',
-                style: GoogleFonts.inter(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'Kameti Name',
-                  prefixIcon: const Icon(Icons.group_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Contribution Amount',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  prefixIcon: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    alignment: Alignment.center,
-                    width: 60,
-                    child: Text(
-                      'Rs.',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () async {
-                  final name = nameController.text.trim();
-                  final amount =
-                      double.tryParse(amountController.text.trim()) ?? 0;
-
-                  if (name.isEmpty || amount <= 0) return;
-
-                  final updated = _committee.copyWith(
-                    name: name,
-                    contributionAmount: amount,
-                  );
-                  await _autoSyncService.saveCommittee(updated);
-                  setState(() {
-                    _committee = updated;
-                  });
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Save Changes'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showDeleteConfirmation() {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
-
-    showDialog(
-      context: context,
-      builder:
-          (dialogContext) => AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: const Text(
-              'Delete Committee?',
-              style: TextStyle(color: Colors.black87),
-            ),
-            content: Text(
-              'This will permanently delete "${_committee.name}" and all its members and payment records. This action cannot be undone.',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.pop(dialogContext);
-
-                  await _autoSyncService.deleteCommittee(
-                    _committee.id,
-                    _committee.hostId,
-                  );
-
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: const Text('Kameti deleted'),
-                      backgroundColor: AppTheme.secondaryColor,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
-
-                  navigator.pop();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.errorColor,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final paidMembers = _members.where((m) => m.hasReceivedPayout).length;
-    final totalAmount = _committee.contributionAmount * _members.length;
-
-    final payments = _dbService.getPaymentsByCommittee(_committee.id);
-    final paidPayments = payments.where((p) => p.isPaid).length;
-    final totalCollected = paidPayments * _committee.contributionAmount;
-
-    final collectionInterval =
-        _committee.frequency == 'daily'
-            ? 1
-            : _committee.frequency == 'weekly'
-            ? 7
-            : 30;
-    final collectionsPerPayout =
-        _committee.paymentIntervalDays ~/ collectionInterval;
-
-    final now = DateTime.now();
-    final payoutInterval = _committee.paymentIntervalDays;
-    final startDate = _committee.startDate;
-    final daysElapsed = now.difference(startDate).inDays;
-    final currentPayoutCycle = daysElapsed ~/ payoutInterval;
-    double currentCycleCollected = 0;
-    final isMonthlyMonthly =
-        _committee.frequency == 'monthly' && payoutInterval == 30;
-    for (var member in _members) {
-      for (var payment in payments.where(
-        (p) => p.memberId == member.id && p.isPaid,
-      )) {
-        final dateDaysElapsed = payment.date.difference(startDate).inDays;
-        final datePayoutCycle = dateDaysElapsed ~/ payoutInterval;
-        if (datePayoutCycle == currentPayoutCycle) {
-          if (isMonthlyMonthly) {
-            if (payment.date.month == now.month &&
-                payment.date.year == now.year) {
-              currentCycleCollected += _committee.contributionAmount;
-            }
-          } else {
-            currentCycleCollected += _committee.contributionAmount;
-          }
-        }
-      }
-    }
-
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: Text(_committee.name),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        titleTextStyle: GoogleFonts.inter(
-          color: Colors.black87,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share_rounded),
-            onPressed: _showShareOptions,
-            tooltip: 'Share Code',
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            color: Colors.white,
-            onSelected: (value) {
-              if (value == 'edit') {
-                _showEditDialog();
-              } else if (value == 'delete') {
-                _showDeleteConfirmation();
-              }
-            },
-            itemBuilder:
-                (context) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          'Edit Committee',
-                          style: TextStyle(color: Colors.black87),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.delete,
-                          size: 18,
-                          color: AppTheme.errorColor,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Delete Committee',
-                          style: TextStyle(color: AppTheme.errorColor),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refreshCommittee,
-        color: AppTheme.primaryColor,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Kameti Code',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              GestureDetector(
-                                onTap: _showShareOptions,
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      _committee.code,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        letterSpacing: 3,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Icon(
-                                      Icons.copy_rounded,
-                                      color: Colors.white70,
-                                      size: 18,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            _committee.frequency.toUpperCase(),
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        _buildStatItem(
-                          'Members',
-                          '${_members.length}',
-                          Icons.people_outline,
-                        ),
-                        const SizedBox(width: 16),
-                        _buildStatItem(
-                          'Amount',
-                          'Rs. ${_committee.contributionAmount.toInt()}',
-                          Icons.payments_outlined,
-                        ),
-                        const SizedBox(width: 16),
-                        _buildStatItem(
-                          'Per Cycle',
-                          'Rs. ${totalAmount.toInt()}',
-                          Icons.account_balance_wallet_outlined,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[200]!),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Payout Progress',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    LinearProgressIndicator(
-                      value:
-                          _members.isEmpty ? 0 : paidMembers / _members.length,
-                      backgroundColor: Colors.grey[100],
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppTheme.secondaryColor,
-                      ),
-                      minHeight: 8,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '$paidMembers of ${_members.length} members received payout',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[200]!),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _showCollectionDetails = !_showCollectionDetails;
-                        });
-                      },
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.secondaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.account_balance_wallet_rounded,
-                              color: AppTheme.secondaryColor,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      'Per Payout Collection',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Icon(
-                                      _showCollectionDetails
-                                          ? Icons.keyboard_arrow_up
-                                          : Icons.keyboard_arrow_down,
-                                      size: 16,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ],
-                                ),
-                                Text(
-                                  'Rs. ${currentCycleCollected.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.secondaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (_showCollectionDetails) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Total Collected (All Time):',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                Text(
-                                  'Rs. ${totalCollected.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    const Divider(color: Colors.grey),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '${_members.length * collectionsPerPayout} payments per payout',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        Text(
-                          '${_members.length} × $collectionsPerPayout collections',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              _buildActionCard(
-                icon: Icons.people_rounded,
-                title: 'Manage Members',
-                subtitle: 'Add, edit or remove members',
-                color: AppTheme.primaryColor,
-                onTap: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) =>
-                              MemberManagementScreen(committee: _committee),
-                    ),
-                  );
-                  _loadMembers();
-                },
-              ),
-              const SizedBox(height: 12),
-
-              _buildActionCard(
-                icon: Icons.grid_on_rounded,
-                title: 'Payment Sheet',
-                subtitle: 'Mark daily payments',
-                color: AppTheme.secondaryColor,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) =>
-                              PaymentSheetScreen(committee: _committee),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-
-              _buildActionCard(
-                icon: Icons.shuffle_rounded,
-                title: 'Shuffle & Assign',
-                subtitle: 'Randomly assign payout order',
-                color: AppTheme.warningColor,
-                onTap: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) =>
-                              ShuffleMembersScreen(committee: _committee),
-                    ),
-                  );
-                  _loadMembers();
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: Colors.white70, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            Text(
-              label,
-              style: GoogleFonts.inter(fontSize: 10, color: Colors.white70),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      margin: EdgeInsets.zero,
-      color: Colors.white,
-      elevation: 2,
-      shadowColor: Colors.black12,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: Colors.grey[400]),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-````
-
 ## File: lib/screens/host/contact_screen.dart
 ````dart
+import 'package:committee_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
 
 class ContactScreen extends StatelessWidget {
   const ContactScreen({super.key});
@@ -10534,16 +12711,16 @@ class ContactScreen extends StatelessWidget {
 
 ## File: lib/screens/host/create_committee_screen.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:uuid/uuid.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/analytics_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
 import 'package:committee_app/core/utils/code_generator.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/services/analytics_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:uuid/uuid.dart';
 
 class CreateCommitteeScreen extends StatefulWidget {
   const CreateCommitteeScreen({super.key});
@@ -10598,8 +12775,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
               onPrimary: Colors.white,
               surface: Colors.white,
               onSurface: Colors.black,
-            ),
-            dialogBackgroundColor: Colors.white,
+            ), dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -10620,7 +12796,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
     });
 
     try {
-      int intervalDays = 30;
+      var intervalDays = 30;
       if (_payoutFrequency == 'daily') {
         intervalDays = 1;
       } else if (_payoutFrequency == 'weekly') {
@@ -10943,10 +13119,12 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                           setState(() {
                             _payoutFrequency = freq;
                             if (freq == 'daily') _intervalController.text = '1';
-                            if (freq == 'weekly')
+                            if (freq == 'weekly') {
                               _intervalController.text = '7';
-                            if (freq == 'monthly')
+                            }
+                            if (freq == 'monthly') {
                               _intervalController.text = '30';
+                            }
                           });
                         },
                         child: Container(
@@ -11124,969 +13302,16 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
 }
 ````
 
-## File: lib/screens/host/host_dashboard_screen.dart
-````dart
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-// import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/realtime_sync_service.dart';
-import 'package:committee_app/services/localization_service.dart';
-import 'package:committee_app/services/toast_service.dart';
-import 'package:committee_app/core/models/committee.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/screens/home_screen.dart';
-import 'package:committee_app/screens/host/create_committee_screen.dart';
-import 'package:committee_app/screens/host/committee_detail_screen.dart';
-import 'package:committee_app/screens/viewer/join_committee_screen.dart';
-import 'package:committee_app/screens/host/profile_screen.dart';
-import 'package:committee_app/screens/host/contact_screen.dart';
-import 'package:committee_app/screens/host/about_screen.dart';
-import 'package:committee_app/screens/host/privacy_policy_screen.dart';
-import 'package:committee_app/screens/host/terms_screen.dart';
-import 'package:committee_app/screens/settings_screen.dart';
-
-class HostDashboardScreen extends StatefulWidget {
-  const HostDashboardScreen({super.key});
-
-  @override
-  State<HostDashboardScreen> createState() => _HostDashboardScreenState();
-}
-
-class _HostDashboardScreenState extends State<HostDashboardScreen>
-    with SingleTickerProviderStateMixin {
-  final _authService = AuthService();
-  final _dbService = DatabaseService();
-  final _syncService = SyncService();
-  final _autoSyncService = AutoSyncService();
-  final _realtimeSyncService = RealtimeSyncService();
-  List<Committee> _activeCommittees = [];
-  List<Committee> _archivedCommittees = [];
-  bool _isSyncing = false;
-  late TabController _tabController;
-  Timer? _emailVerificationTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _loadCommittees();
-
-    final userId = _authService.currentUser?.uid ?? '';
-    if (userId.isNotEmpty) {
-      _realtimeSyncService.onDataChanged = _loadCommittees;
-      _realtimeSyncService.startListening(userId);
-    }
-
-    _syncDataSilent();
-
-    _startEmailVerificationCheck();
-  }
-
-  void _startEmailVerificationCheck() {
-    final user = _authService.currentUser;
-    if (user != null && !user.emailVerified) {
-      _emailVerificationTimer = Timer.periodic(const Duration(seconds: 3), (
-        timer,
-      ) async {
-        await _authService.reloadUser();
-        if (_authService.isEmailVerified) {
-          timer.cancel();
-          if (mounted) {
-            setState(() {});
-            ToastService.success(context, 'Email verified successfully! ✓');
-          }
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _emailVerificationTimer?.cancel();
-    _realtimeSyncService.stopListening();
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  void _loadCommittees() {
-    if (!mounted) return;
-    final userId = _authService.currentUser?.uid ?? '';
-    final all = _dbService.getHostedCommittees(userId);
-    setState(() {
-      _activeCommittees = all.where((c) => !c.isArchived).toList();
-      _archivedCommittees = all.where((c) => c.isArchived).toList();
-    });
-  }
-
-  Future<void> _syncDataSilent() async {
-    if (_isSyncing) return;
-
-    setState(() {
-      _isSyncing = true;
-    });
-
-    final hostId = _authService.currentUser?.uid ?? '';
-    final result = await _syncService.syncAll(hostId);
-
-    if (mounted) {
-      setState(() {
-        _isSyncing = false;
-      });
-
-      if (result.success) {
-        _loadCommittees();
-      }
-    }
-  }
-
-  Future<void> _syncData() async {
-    if (_isSyncing) return;
-
-    setState(() {
-      _isSyncing = true;
-    });
-
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-    final hostId = _authService.currentUser?.uid ?? '';
-    final result = await _syncService.syncAll(hostId);
-
-    if (mounted) {
-      setState(() {
-        _isSyncing = false;
-      });
-
-      if (!result.success) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.cloud_off, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Text(result.message),
-              ],
-            ),
-            backgroundColor: AppTheme.errorColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
-
-      if (result.success) {
-        _loadCommittees();
-      }
-    }
-  }
-
-  Future<void> _logout() async {
-    await _authService.signOut();
-    if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-        (route) => false,
-      );
-    }
-  }
-
-  void _showArchivedSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder:
-          (context) => Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.archive, color: AppTheme.primaryColor),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Archived Kametis',
-                      style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (_archivedCommittees.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Center(
-                      child: Text(
-                        'No archived kametis',
-                        style: TextStyle(color: Colors.grey[500]),
-                      ),
-                    ),
-                  )
-                else
-                  ...(_archivedCommittees
-                      .map(
-                        (committee) => ListTile(
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(Icons.group, color: Colors.grey[600]),
-                          ),
-                          title: Text(
-                            committee.name,
-                            style: const TextStyle(color: Colors.black87),
-                          ),
-                          subtitle: Text(
-                            'Archived on ${committee.archivedAt != null ? "${committee.archivedAt!.day}/${committee.archivedAt!.month}/${committee.archivedAt!.year}" : "Unknown"}',
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
-                            ),
-                          ),
-                          trailing: TextButton(
-                            onPressed: () async {
-                              await _autoSyncService.unarchiveCommittee(
-                                committee,
-                              );
-                              _loadCommittees();
-                              if (mounted) Navigator.pop(context);
-                            },
-                            child: const Text('Restore'),
-                          ),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => CommitteeDetailScreen(
-                                      committee: committee,
-                                    ),
-                              ),
-                            );
-                          },
-                        ),
-                      )
-                      .toList()),
-              ],
-            ),
-          ),
-    );
-  }
-
-  Future<void> _archiveCommittee(Committee committee) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: Colors.white,
-            title: const Text('Archive Kameti?'),
-            content: Text(
-              'This will move "${committee.name}" to the archived section. You can restore it later.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                ),
-                child: const Text('Archive'),
-              ),
-            ],
-          ),
-    );
-
-    if (confirm == true) {
-      await _autoSyncService.archiveCommittee(committee);
-      _loadCommittees();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${committee.name} archived'),
-            action: SnackBarAction(
-              label: 'Undo',
-              onPressed: () async {
-                await _autoSyncService.unarchiveCommittee(committee);
-                _loadCommittees();
-              },
-            ),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _deleteCommittee(Committee committee) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: Colors.white,
-            title: const Text('Delete Kameti?'),
-            content: Text(
-              'This will permanently delete "${committee.name}" and all its data. This cannot be undone.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.errorColor,
-                ),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-    );
-
-    if (confirm == true) {
-      final hostId = _authService.currentUser?.uid ?? '';
-      await _autoSyncService.deleteCommittee(committee.id, hostId);
-      _loadCommittees();
-      if (mounted) {
-        ToastService.error(context, '${committee.name} deleted');
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final user = _authService.currentUser;
-    final displayName =
-        user?.displayName ?? user?.email?.split('@')[0] ?? 'Host';
-
-    return PopScope(
-      canPop: false,
-      child: Scaffold(
-        backgroundColor: Colors.grey[50],
-        appBar: AppBar(
-          title: const Text('My Kametis'),
-          automaticallyImplyLeading: false,
-          backgroundColor: Colors.white,
-          elevation: 0,
-          titleTextStyle: GoogleFonts.inter(
-            color: Colors.black87,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-          leading: Builder(
-            builder:
-                (context) => IconButton(
-                  icon: const Icon(Icons.menu, color: Colors.black87),
-                  tooltip: 'Menu',
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
-          ),
-        ),
-        drawer: _buildDrawer(context),
-        body: RefreshIndicator(
-          onRefresh: _syncData,
-          color: AppTheme.primaryColor,
-          backgroundColor: Colors.white,
-          child: ListView(
-            padding: const EdgeInsets.only(bottom: 80),
-            physics: const AlwaysScrollableScrollPhysics(),
-            children: [
-              if (user != null && !user.emailVerified)
-                Container(
-                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.warningColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppTheme.warningColor.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.email_outlined,
-                        color: AppTheme.warningColor,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Verify your email',
-                              style: TextStyle(
-                                color: AppTheme.warningColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'Check your inbox for verification link',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          await _authService.sendEmailVerification();
-                          if (mounted) {
-                            ToastService.success(
-                              context,
-                              'Verification email sent!',
-                            );
-                          }
-                        },
-                        child: const Text(
-                          'Resend',
-                          style: TextStyle(color: AppTheme.warningColor),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$displayName!',
-                      style: GoogleFonts.inter(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_activeCommittees.length} active kametis',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const JoinCommitteeScreen(),
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey[200]!),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppTheme.secondaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.receipt_long_rounded,
-                              color: AppTheme.secondaryColor,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Joined a Kameti?',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'View Kameti Payments',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(
-                            Icons.chevron_right_rounded,
-                            color: Colors.grey,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Your Hosted Kametis',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    if (_archivedCommittees.isNotEmpty)
-                      TextButton.icon(
-                        onPressed: () => _showArchivedSheet(),
-                        icon: const Icon(Icons.archive_outlined, size: 18),
-                        label: Text('Archived (${_archivedCommittees.length})'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.grey[600],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-              if (_activeCommittees.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 40),
-                  child: _buildEmptyState(),
-                )
-              else
-                ..._activeCommittees
-                    .map(
-                      (committee) => Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildCommitteeCard(committee),
-                      ),
-                    )
-                    .toList(),
-            ],
-          ),
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CreateCommitteeScreen(),
-              ),
-            );
-            if (result == true) {
-              _loadCommittees();
-            }
-          },
-          icon: const Icon(Icons.add),
-          label: const Text('New Committee'),
-          backgroundColor: AppTheme.primaryColor,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawer(BuildContext context) {
-    final user = _authService.currentUser;
-    final displayName =
-        user?.displayName ?? user?.email?.split('@')[0] ?? 'Guest';
-    final email = user?.email ?? 'Anonymous User';
-
-    return Drawer(
-      backgroundColor: Colors.white,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppTheme.primaryColor, AppTheme.primaryDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(51),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  displayName,
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  email,
-                  style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-
-          ListTile(
-            leading: Icon(Icons.person_outline, color: Colors.grey[700]),
-            title: Text(
-              'profile'.tr,
-              style: const TextStyle(color: Colors.black87),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
-              );
-            },
-          ),
-
-          const Divider(color: Colors.black12),
-
-          ListTile(
-            leading: Icon(Icons.info_outline, color: Colors.grey[700]),
-            title: Text(
-              'about'.tr,
-              style: const TextStyle(color: Colors.black87),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AboutScreen()),
-              );
-            },
-          ),
-
-          ListTile(
-            leading: Icon(Icons.settings_outlined, color: Colors.grey[700]),
-            title: Text(
-              'settings'.tr,
-              style: const TextStyle(color: Colors.black87),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-            },
-          ),
-
-          ListTile(
-            leading: Icon(Icons.article_outlined, color: Colors.grey[700]),
-            title: Text(
-              'terms_conditions'.tr,
-              style: const TextStyle(color: Colors.black87),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TermsScreen()),
-              );
-            },
-          ),
-
-          ListTile(
-            leading: Icon(Icons.privacy_tip_outlined, color: Colors.grey[700]),
-            title: Text(
-              'privacy_policy'.tr,
-              style: const TextStyle(color: Colors.black87),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PrivacyPolicyScreen(),
-                ),
-              );
-            },
-          ),
-
-          ListTile(
-            leading: Icon(Icons.mail_outline, color: Colors.grey[700]),
-            title: Text(
-              'contact_us'.tr,
-              style: const TextStyle(color: Colors.black87),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ContactScreen()),
-              );
-            },
-          ),
-
-          const Divider(color: Colors.black12),
-
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.redAccent),
-            title: Text(
-              'logout'.tr,
-              style: const TextStyle(color: Colors.redAccent),
-            ),
-            onTap: () async {
-              Navigator.pop(context);
-              await _logout();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.group_off_outlined, size: 80, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            'No Committees Yet',
-            style: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Create your first committee to get started',
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500]),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCommitteeCard(Committee committee) {
-    final members = _dbService.getMembersByCommittee(committee.id);
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shadowColor: Colors.black12,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CommitteeDetailScreen(committee: committee),
-            ),
-          );
-          _loadCommittees();
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.group_rounded,
-                  color: AppTheme.primaryColor,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      committee.name,
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${members.length} members • ${committee.frequency}',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.secondaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'Code: ${committee.code}',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.secondaryColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, color: Colors.grey),
-                color: Colors.white,
-                onSelected: (value) {
-                  if (value == 'archive') {
-                    _archiveCommittee(committee);
-                  } else if (value == 'delete') {
-                    _deleteCommittee(committee);
-                  }
-                },
-                itemBuilder:
-                    (context) => [
-                      const PopupMenuItem(
-                        value: 'archive',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.archive_outlined,
-                              size: 20,
-                              color: Colors.black87,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Archive',
-                              style: TextStyle(color: Colors.black87),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.delete_outline,
-                              size: 20,
-                              color: Colors.red,
-                            ),
-                            SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: Colors.red)),
-                          ],
-                        ),
-                      ),
-                    ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-````
-
 ## File: lib/screens/host/joined_committees_screen.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/toast_service.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/screens/viewer/join_committee_screen.dart';
 // import 'package:committee_app/screens/viewer/member_view_screen.dart';
 import 'package:committee_app/screens/host/payment_sheet_screen.dart';
+import 'package:committee_app/screens/viewer/join_committee_screen.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/toast_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class JoinedCommitteesScreen extends StatefulWidget {
   const JoinedCommitteesScreen({super.key});
@@ -12322,9 +13547,9 @@ class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
 
 ## File: lib/screens/host/legal_info_screen.dart
 ````dart
+import 'package:committee_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
 
 class LegalInfoScreen extends StatefulWidget {
   const LegalInfoScreen({super.key});
@@ -12635,18 +13860,18 @@ We do NOT:
 
 ## File: lib/screens/host/member_management_screen.dart
 ````dart
+import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/core/models/member.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/core/utils/code_generator.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/toast_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/toast_service.dart';
-import 'package:committee_app/core/models/committee.dart';
-import 'package:committee_app/core/models/member.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/core/utils/code_generator.dart';
 
 class MemberManagementScreen extends StatefulWidget {
   final Committee committee;
@@ -12709,7 +13934,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
   }
 
   void _shareMemberCode(Member member) {
-    String message =
+    final message =
         '📋 *${widget.committee.name}*\n\n'
         'Hi ${member.name}! 👋\n\n'
         '*Committee Code:* ${widget.committee.code}\n'
@@ -12798,7 +14023,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                     final existingMembers = _dbService.getMembersByCommittee(
                       widget.committee.id,
                     );
-                    int maxOrder = 0;
+                    var maxOrder = 0;
                     for (final m in existingMembers) {
                       if (m.payoutOrder > maxOrder) {
                         maxOrder = m.payoutOrder;
@@ -13241,23 +14466,23 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
 
 ## File: lib/screens/host/payment_sheet_screen.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-// import 'package:flutter/foundation.dart' show kIsWeb;
-
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/export_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/analytics_service.dart';
-import 'package:committee_app/services/toast_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+// import 'package:flutter/foundation.dart' show kIsWeb;
+
+import 'package:committee_app/features/auth/data/auth_service.dart';
 import 'package:committee_app/screens/host/member_management_screen.dart';
 import 'package:committee_app/screens/viewer/member_dashboard_screen.dart';
+import 'package:committee_app/services/analytics_service.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/export_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/services/toast_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class PaymentSheetScreen extends StatefulWidget {
   final Committee committee;
@@ -13290,7 +14515,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   DateTime? _filterStartDate;
   DateTime? _filterEndDate;
 
-  int _extraPeriods = 1;
+  final int _extraPeriods = 1;
 
   @override
   void initState() {
@@ -13358,7 +14583,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     final committeeStartDate = widget.committee.startDate;
     final payoutIntervalDays = widget.committee.paymentIntervalDays;
 
-    int collectionInterval = 30;
+    var collectionInterval = 30;
     if (widget.committee.frequency == 'daily') collectionInterval = 1;
     if (widget.committee.frequency == 'weekly') collectionInterval = 7;
     if (widget.committee.frequency == 'monthly') collectionInterval = 30;
@@ -13397,8 +14622,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
               ? _filterStartDate!
               : cycleStartDate;
 
-      DateTime current = effectiveStartDate;
-      for (int i = 0; i < periodsPerPayout; i++) {
+      var current = effectiveStartDate;
+      for (var i = 0; i < periodsPerPayout; i++) {
         _dates.add(current);
         if (widget.committee.frequency == 'monthly') {
           current = _addMonths(current, 1);
@@ -13408,7 +14633,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       }
     } else {
       final startDate = _filterStartDate ?? committeeStartDate;
-      DateTime baseEndDate = _filterEndDate ?? DateTime.now();
+      final baseEndDate = _filterEndDate ?? DateTime.now();
 
       DateTime endDate;
       if (widget.committee.frequency == 'monthly') {
@@ -13419,13 +14644,13 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         );
       }
 
-      DateTime current = DateTime(
+      var current = DateTime(
         startDate.year,
         startDate.month,
         startDate.day,
       );
 
-      int safetyCounter = 0;
+      var safetyCounter = 0;
 
       while (!current.isAfter(endDate) && safetyCounter < 500) {
         _dates.add(current);
@@ -13467,7 +14692,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     if (widget.committee.frequency == 'monthly') {
       return (date.year - start.year) * 12 + (date.month - start.month) + 1;
     } else {
-      int interval = 30;
+      var interval = 30;
       if (widget.committee.frequency == 'daily') interval = 1;
       if (widget.committee.frequency == 'weekly') interval = 7;
       final daysDiff = date.difference(start).inDays;
@@ -13480,7 +14705,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       return _members.length;
     }
 
-    DateTime farDate =
+    var farDate =
         _dates.isNotEmpty ? _dates.last : widget.committee.startDate;
     for (final p in payments) {
       if (p.date.isAfter(farDate)) farDate = p.date;
@@ -13496,8 +14721,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
 
   Map<String, dynamic> _calculateMemberDebt(String memberId) {
     final now = DateTime.now();
-    int paidCount = 0;
-    int duePeriods = 0;
+    var paidCount = 0;
+    var duePeriods = 0;
 
     for (var date in _dates) {
       if (!date.isAfter(now)) {
@@ -13539,10 +14764,10 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     final currentPayoutCycle =
         payoutInterval > 0 ? (daysElapsed ~/ payoutInterval) : 0;
 
-    int currentCyclePaid = 0;
-    int currentCycleDue = 0;
-    int totalPaid = 0;
-    int totalDue = 0;
+    var currentCyclePaid = 0;
+    var currentCycleDue = 0;
+    var totalPaid = 0;
+    var totalDue = 0;
 
     for (var member in _members) {
       for (var date in _dates) {
@@ -13595,7 +14820,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
 
   Map<String, dynamic> _calculateMemberAdvance(String memberId) {
     final now = DateTime.now();
-    int advancePaymentCount = 0;
+    var advancePaymentCount = 0;
     for (var date in _dates) {
       if (date.isAfter(now) && _isPaymentMarked(memberId, date)) {
         advancePaymentCount++;
@@ -14405,7 +15630,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                           ),
                         ),
                       ] else ...[
-                        Text(
+                        const Text(
                           '✓',
                           style: TextStyle(
                             fontSize: 12,
@@ -14491,7 +15716,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.black87,
             fontWeight: FontWeight.bold,
             fontSize: 16,
@@ -14619,8 +15844,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   Widget _buildMemberPersonalView() {
     final member = widget.viewAsMember!;
 
-    int paidCount = 0;
-    int advanceCount = 0;
+    var paidCount = 0;
+    var advanceCount = 0;
     final now = DateTime.now();
 
     for (var date in _dates) {
@@ -14692,19 +15917,19 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
     final firstDay = DateTime(month.year, month.month, 1);
     final lastDay = DateTime(month.year, month.month + 1, 0);
 
-    List<DateTime> days = [];
-    int startingWeekday = firstDay.weekday % 7;
+    final days = <DateTime>[];
+    final startingWeekday = firstDay.weekday % 7;
 
-    for (int i = 0; i < startingWeekday; i++) {
+    for (var i = 0; i < startingWeekday; i++) {
       days.add(DateTime(month.year, month.month, 1 - (startingWeekday - i)));
     }
 
-    for (int i = 1; i <= lastDay.day; i++) {
+    for (var i = 1; i <= lastDay.day; i++) {
       days.add(DateTime(month.year, month.month, i));
     }
 
-    int remainingDays = 42 - days.length;
-    for (int i = 1; i <= remainingDays; i++) {
+    final remainingDays = 42 - days.length;
+    for (var i = 1; i <= remainingDays; i++) {
       days.add(DateTime(month.year, month.month + 1, i));
     }
 
@@ -15200,8 +16425,8 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
 
 ## File: lib/screens/host/privacy_policy_screen.dart
 ````dart
-import 'package:flutter/material.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:flutter/material.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -15391,18 +16616,18 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
 ## File: lib/screens/host/profile_screen.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:package_info_plus/package_info_plus.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/toast_service.dart';
-import 'package:committee_app/services/localization_service.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
 import 'package:committee_app/screens/home_screen.dart';
 import 'package:committee_app/screens/settings_screen.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/localization_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/services/toast_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15431,7 +16656,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final authService = AuthService();
     final user = authService.currentUser;
-    String displayName = user?.displayName ?? user?.email?.split('@')[0] ?? '';
+    var displayName = user?.displayName ?? user?.email?.split('@')[0] ?? '';
     if (displayName.isEmpty) displayName = 'Guest';
     final email = user?.email ?? 'Anonymous User';
     final createdAt = user?.metadata.creationTime;
@@ -15948,7 +17173,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   } catch (e) {
                     if (context.mounted) {
                       Navigator.pop(context);
-                      String errorMsg = 'Failed to delete account';
+                      var errorMsg = 'Failed to delete account';
                       final errorStr = e.toString().toLowerCase();
                       if (errorStr.contains('wrong-password') ||
                           errorStr.contains('invalid-credential') ||
@@ -15996,15 +17221,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 ## File: lib/screens/host/shuffle_members_screen.dart
 ````dart
 import 'dart:math';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/auto_sync_service.dart';
-import 'package:committee_app/services/toast_service.dart';
+
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/services/toast_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ShuffleMembersScreen extends StatefulWidget {
   final Committee committee;
@@ -16073,14 +17299,14 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
       _isShuffling = true;
     });
 
-    for (int i = 0; i < 10; i++) {
+    for (var i = 0; i < 10; i++) {
       await Future.delayed(const Duration(milliseconds: 100));
       setState(() {
         _members.shuffle(Random());
       });
     }
 
-    for (int i = 0; i < _members.length; i++) {
+    for (var i = 0; i < _members.length; i++) {
       final member = _members[i];
       await _autoSyncService.updateMemberPayoutOrder(
         member.id,
@@ -16193,7 +17419,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
       _members.insert(newIndex, item);
     });
 
-    for (int i = 0; i < _members.length; i++) {
+    for (var i = 0; i < _members.length; i++) {
       await _autoSyncService.updateMemberPayoutOrder(
         _members[i].id,
         i + 1,
@@ -16455,7 +17681,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
             color: Colors.white,
           ),
         ),
-        Text(label, style: TextStyle(fontSize: 11, color: Colors.white70)),
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.white70)),
       ],
     );
   }
@@ -16607,15 +17833,15 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                   Row(
                     children: [
                       if (hasReceived)
-                        Row(
+                        const Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.check_circle,
                               size: 12,
                               color: AppTheme.secondaryColor,
                             ),
-                            const SizedBox(width: 4),
-                            const Text(
+                            SizedBox(width: 4),
+                            Text(
                               'Received',
                               style: TextStyle(
                                 fontSize: 11,
@@ -16694,8 +17920,8 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
 
 ## File: lib/screens/host/terms_screen.dart
 ````dart
-import 'package:flutter/material.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:flutter/material.dart';
 
 class TermsScreen extends StatelessWidget {
   const TermsScreen({super.key});
@@ -16892,14 +18118,14 @@ class TermsScreen extends StatelessWidget {
 
 ## File: lib/screens/viewer/join_committee_screen.dart
 ````dart
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/screens/host/payment_sheet_screen.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/screens/host/payment_sheet_screen.dart';
 
 class JoinCommitteeScreen extends StatefulWidget {
   const JoinCommitteeScreen({super.key});
@@ -17184,7 +18410,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 24),
               const Divider(color: Colors.grey),
               const SizedBox(height: 24),
@@ -17425,13 +18651,13 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
 
 ## File: lib/screens/viewer/member_dashboard_screen.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-import 'package:committee_app/services/database_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class MemberDashboardScreen extends StatefulWidget {
   final Committee committee;
@@ -17474,7 +18700,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     final intervalDays = widget.committee.paymentIntervalDays;
     final endDate = startDate.add(Duration(days: intervalDays * totalCycles));
     
-    int totalDays = 0;
+    var totalDays = 0;
     if (widget.committee.frequency == 'daily') {
       final actualEndDate = today.isBefore(endDate) ? today : endDate;
       totalDays = actualEndDate.difference(startDate).inDays + 1;
@@ -17534,7 +18760,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   colors: [AppTheme.primaryColor, AppTheme.primaryDark],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -17607,7 +18833,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.bar_chart_rounded, color: Colors.white, size: 24),
+                      const Icon(Icons.bar_chart_rounded, color: Colors.white, size: 24),
                       const SizedBox(width: 12),
                       Text(
                         'Your Payment Status',
@@ -17855,13 +19081,13 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
 
 ## File: lib/screens/viewer/member_view_screen.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-import 'package:committee_app/services/database_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class MemberViewScreen extends StatefulWidget {
   final Committee committee;
@@ -17899,10 +19125,10 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
     final now = DateTime.now();
     final startDate = widget.committee.startDate;
 
-    int daysToGenerate = 30;
+    final daysToGenerate = 30;
     switch (widget.committee.frequency) {
       case 'daily':
-        for (int i = 0; i < daysToGenerate; i++) {
+        for (var i = 0; i < daysToGenerate; i++) {
           final date = now.subtract(Duration(days: i));
           if (date.isAfter(startDate.subtract(const Duration(days: 1)))) {
             _dates.add(DateTime(date.year, date.month, date.day));
@@ -17910,7 +19136,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
         }
         break;
       case 'weekly':
-        for (int i = 0; i < daysToGenerate ~/ 7; i++) {
+        for (var i = 0; i < daysToGenerate ~/ 7; i++) {
           final date = now.subtract(Duration(days: i * 7));
           if (date.isAfter(startDate.subtract(const Duration(days: 1)))) {
             _dates.add(DateTime(date.year, date.month, date.day));
@@ -17918,7 +19144,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
         }
         break;
       case 'monthly':
-        for (int i = 0; i < 12; i++) {
+        for (var i = 0; i < 12; i++) {
           final date = DateTime(now.year, now.month - i, now.day);
           if (date.isAfter(startDate.subtract(const Duration(days: 1)))) {
             _dates.add(DateTime(date.year, date.month, 1));
@@ -18209,14 +19435,13 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
 
 ## File: lib/screens/home_screen.dart
 ````dart
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/features/auth/presentation/login_screen.dart';
+import 'package:committee_app/screens/viewer/join_committee_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/features/auth/presentation/login_screen.dart';
-import 'package:committee_app/screens/viewer/join_committee_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18237,13 +19462,13 @@ class _HomeScreenState extends State<HomeScreen> {
       await Future.delayed(const Duration(seconds: 4));
 
       final prefs = await SharedPreferences.getInstance();
-      int? lastAsked = prefs.getInt('last_review_time');
+      final lastAsked = prefs.getInt('last_review_time');
 
-      const int cooldown = 604800000;
-      final int now = DateTime.now().millisecondsSinceEpoch;
+      const cooldown = 604800000;
+      final now = DateTime.now().millisecondsSinceEpoch;
 
       if (lastAsked == null || (now - lastAsked) > cooldown) {
-        final InAppReview inAppReview = InAppReview.instance;
+        final inAppReview = InAppReview.instance;
 
         if (await inAppReview.isAvailable()) {
           inAppReview.requestReview();
@@ -18461,12 +19686,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
 ## File: lib/screens/lock_screen.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/services/biometric_service.dart';
 import 'package:committee_app/screens/home_screen.dart';
 import 'package:committee_app/screens/host/host_dashboard_screen.dart';
+import 'package:committee_app/services/biometric_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 
 class LockScreen extends StatefulWidget {
@@ -18690,12 +19915,12 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
 
 ## File: lib/screens/onboarding_screen.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:introduction_screen/introduction_screen.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/services/database_service.dart';
 import 'package:committee_app/screens/home_screen.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:introduction_screen/introduction_screen.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -18857,14 +20082,14 @@ class OnboardingScreen extends StatelessWidget {
 
 ## File: lib/screens/settings_screen.dart
 ````dart
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/services/biometric_service.dart';
+import 'package:committee_app/services/localization_service.dart';
+import 'package:committee_app/services/toast_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:committee_app/services/biometric_service.dart';
-import 'package:committee_app/services/localization_service.dart';
-import 'package:committee_app/services/toast_service.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -18913,7 +20138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _checkForUpdate() async {
     setState(() => _isCheckingUpdate = true);
     try {
-      final AppUpdateInfo info = await InAppUpdate.checkForUpdate();
+      final info = await InAppUpdate.checkForUpdate();
       setState(() => _isCheckingUpdate = false);
 
       if (info.updateAvailability == UpdateAvailability.updateAvailable) {
@@ -19169,18 +20394,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
 ## File: lib/screens/splash_screen.dart
 ````dart
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/features/auth/data/auth_service.dart';
+import 'package:committee_app/screens/home_screen.dart';
+import 'package:committee_app/screens/host/host_dashboard_screen.dart';
+import 'package:committee_app/screens/lock_screen.dart';
+import 'package:committee_app/screens/onboarding_screen.dart';
+import 'package:committee_app/services/biometric_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:lottie/lottie.dart';
-import 'package:committee_app/core/theme/app_theme.dart';
-import 'package:committee_app/features/auth/data/auth_service.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/biometric_service.dart';
-import 'package:committee_app/screens/home_screen.dart';
-import 'package:committee_app/screens/host/host_dashboard_screen.dart';
-import 'package:committee_app/screens/onboarding_screen.dart';
-import 'package:committee_app/screens/lock_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19224,7 +20449,7 @@ class _SplashScreenState extends State<SplashScreen>
     try {
       setState(() => _status = 'Checking for updates...');
       try {
-        final AppUpdateInfo updateInfo = await InAppUpdate.checkForUpdate();
+        final updateInfo = await InAppUpdate.checkForUpdate();
         if (updateInfo.updateAvailability ==
                 UpdateAvailability.updateAvailable &&
             updateInfo.immediateUpdateAllowed) {
@@ -19438,122 +20663,30 @@ class _SplashScreenState extends State<SplashScreen>
 }
 ````
 
-## File: lib/services/analytics_service.dart
-````dart
-import 'package:firebase_analytics/firebase_analytics.dart';
-
-class AnalyticsService {
-  static final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
-  
-  // Get analytics observer for navigation
-  static FirebaseAnalyticsObserver get observer => 
-      FirebaseAnalyticsObserver(analytics: _analytics);
-
-  // Screen Views
-  static Future<void> logScreenView(String screenName) async {
-    await _analytics.logScreenView(screenName: screenName);
-  }
-
-  // User Events
-  static Future<void> logLogin() async {
-    await _analytics.logLogin(loginMethod: 'email');
-  }
-
-  static Future<void> logSignUp() async {
-    await _analytics.logSignUp(signUpMethod: 'email');
-  }
-
-  static Future<void> logLogout() async {
-    await _analytics.logEvent(name: 'logout');
-  }
-
-  // Committee Events
-  static Future<void> logCommitteeCreated({
-    required String committeeName,
-    required int memberCount,
-    required double contributionAmount,
-  }) async {
-    await _analytics.logEvent(
-      name: 'committee_created',
-      parameters: {
-        'name': committeeName,
-        'member_count': memberCount,
-        'contribution_amount': contributionAmount,
-      },
-    );
-  }
-
-  static Future<void> logCommitteeDeleted() async {
-    await _analytics.logEvent(name: 'committee_deleted');
-  }
-
-  // Member Events
-  static Future<void> logMemberAdded() async {
-    await _analytics.logEvent(name: 'member_added');
-  }
-
-  static Future<void> logMemberDeleted() async {
-    await _analytics.logEvent(name: 'member_deleted');
-  }
-
-  // Payment Events
-  static Future<void> logPaymentMarked({
-    required double amount,
-    required bool isPaid,
-  }) async {
-    await _analytics.logEvent(
-      name: 'payment_marked',
-      parameters: {
-        'amount': amount,
-        'status': isPaid ? 'paid' : 'unpaid',
-      },
-    );
-  }
-
-  static Future<void> logPayoutReceived({required double amount}) async {
-    await _analytics.logEvent(
-      name: 'payout_received',
-      parameters: {'amount': amount},
-    );
-  }
-
-  // Share Events
-  static Future<void> logShare({required String contentType}) async {
-    await _analytics.logShare(
-      contentType: contentType,
-      itemId: 'committee_info',
-      method: 'native_share',
-    );
-  }
-
-  // Viewer Events
-  static Future<void> logViewerJoined() async {
-    await _analytics.logEvent(name: 'viewer_joined_committee');
-  }
-
-  // Password Events
-  static Future<void> logPasswordReset() async {
-    await _analytics.logEvent(name: 'password_reset_requested');
-  }
-}
-````
-
 ## File: lib/services/auto_sync_service.dart
 ````dart
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:committee_app/services/sync_service.dart';
-import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/services/realtime_sync_service.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/models/payment.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/realtime_sync_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// A wrapper service that automatically syncs data to Firebase
 /// whenever changes are made locally.
 class AutoSyncService {
-  final SyncService _syncService = SyncService();
-  final DatabaseService _dbService = DatabaseService();
-  final RealtimeSyncService _realtimeSyncService = RealtimeSyncService();
+  final SyncService _syncService;
+  final DatabaseService _dbService;
+  final RealtimeSyncService _realtimeSyncService;
+
+  AutoSyncService({
+    SyncService? syncService,
+    DatabaseService? dbService,
+    RealtimeSyncService? realtimeSyncService,
+  })  : _syncService = syncService ?? SyncService(),
+        _dbService = dbService ?? DatabaseService(),
+        _realtimeSyncService = realtimeSyncService ?? RealtimeSyncService();
 
   // ============ COMMITTEE OPERATIONS WITH AUTO-SYNC ============
 
@@ -19717,9 +20850,9 @@ class AutoSyncService {
 
 ## File: lib/services/biometric_service.dart
 ````dart
+import 'package:committee_app/services/database_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:committee_app/services/database_service.dart';
 
 class BiometricService {
   static final LocalAuthentication _auth = LocalAuthentication();
@@ -19776,7 +20909,7 @@ class BiometricService {
   /// Check if biometric lock is enabled by user
   static Future<bool> isBiometricLockEnabled() async {
     final dbService = DatabaseService();
-    return await dbService.isBiometricEnabled();
+    return dbService.isBiometricEnabled();
   }
   
   /// Enable/disable biometric lock
@@ -19801,10 +20934,10 @@ class BiometricService {
 
 ## File: lib/services/database_service.dart
 ````dart
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/models/payment.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class DatabaseService {
   static const String committeesBox = 'committees';
@@ -20077,18 +21210,19 @@ class DatabaseService {
 ````dart
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:csv/csv.dart';
-import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
+
 import 'package:committee_app/core/models/committee.dart';
 // import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/models/payment.dart';
 import 'package:committee_app/services/database_service.dart';
+import 'package:csv/csv.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ExportService {
   final DatabaseService _dbService = DatabaseService();
@@ -20226,9 +21360,10 @@ class ExportService {
                     ],
                   ),
                   ...members.asMap().entries.map((e) {
-                    int paid = 0;
-                    for (var d in dates)
+                    var paid = 0;
+                    for (var d in dates) {
                       if (_isPaymentMarked(payments, e.value.id, d)) paid++;
+                    }
                     final pct =
                         dates.isNotEmpty
                             ? (paid / dates.length * 100).toInt()
@@ -20536,7 +21671,7 @@ class ExportService {
             : '0';
     final paidCount = members.where((m) => m.hasReceivedPayout).length;
 
-    List<List<dynamic>> rows = [];
+    final rows = <List<dynamic>>[];
 
     rows.add(['=========================================================']);
     rows.add(['${committee.name.toUpperCase()} - PAYMENT REPORT']);
@@ -20560,7 +21695,7 @@ class ExportService {
     rows.add([]);
     rows.add(['------------------ PAYOUT SCHEDULE ------------------']);
     rows.add(['Order', 'Member', 'Phone', 'Code', 'Status', 'Date']);
-    for (var m in members)
+    for (var m in members) {
       rows.add([
         m.payoutOrder,
         m.name,
@@ -20571,6 +21706,7 @@ class ExportService {
             ? DateFormat('dd/MM/yyyy').format(m.payoutDate!)
             : '-',
       ]);
+    }
     rows.add([]);
     rows.add(['------------------ MEMBER PAYMENTS ------------------']);
     rows.add([
@@ -20583,8 +21719,10 @@ class ExportService {
       'Amount Due',
     ]);
     for (var m in members) {
-      int paid = 0;
-      for (var d in dates) if (_isPaymentMarked(payments, m.id, d)) paid++;
+      var paid = 0;
+      for (var d in dates) {
+        if (_isPaymentMarked(payments, m.id, d)) paid++;
+      }
       final missed = dates.length - paid;
       final pct = dates.isNotEmpty ? (paid / dates.length * 100).toInt() : 0;
       rows.add([
@@ -20611,7 +21749,7 @@ class ExportService {
     rows.add(['=========================================================']);
     rows.add(['END OF REPORT']);
 
-    String csv = const ListToCsvConverter().convert(rows);
+    final csv = const ListToCsvConverter().convert(rows);
     if (kIsWeb) {
       await Printing.sharePdf(
         bytes: Uint8List.fromList(csv.codeUnits),
@@ -20632,8 +21770,8 @@ class ExportService {
     DateTime? startDate,
     DateTime? endDate,
   }) {
-    List<DateTime> dates = [];
-    DateTime cur = DateTime(
+    final dates = <DateTime>[];
+    var cur = DateTime(
       (startDate ?? c.startDate).year,
       (startDate ?? c.startDate).month,
       (startDate ?? c.startDate).day,
@@ -20675,8 +21813,8 @@ class ExportService {
 
 ## File: lib/services/localization_service.dart
 ````dart
-import 'package:flutter/widgets.dart';
 import 'package:committee_app/services/database_service.dart';
+import 'package:flutter/widgets.dart';
 
 /// Simple localization service for English and Urdu
 class LocalizationService extends ChangeNotifier {
@@ -20873,300 +22011,11 @@ extension TranslationExtension on String {
 }
 ````
 
-## File: lib/services/realtime_sync_service.dart
-````dart
-import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
-import 'package:committee_app/core/models/committee.dart';
-import 'package:committee_app/core/models/member.dart';
-import 'package:committee_app/core/models/payment.dart';
-import 'package:committee_app/services/database_service.dart';
-
-/// Helper to parse dates that can be Timestamp or String
-DateTime? _parseDate(dynamic value) {
-  if (value == null) return null;
-  if (value is Timestamp) return value.toDate();
-  if (value is String) return DateTime.tryParse(value);
-  return null;
-}
-
-/// Real-time sync service that listens to Firestore changes
-/// and updates local database automatically
-class RealtimeSyncService {
-  static final RealtimeSyncService _instance = RealtimeSyncService._internal();
-  factory RealtimeSyncService() => _instance;
-  RealtimeSyncService._internal();
-
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final DatabaseService _dbService = DatabaseService();
-
-  // Stream subscriptions
-  StreamSubscription<QuerySnapshot>? _committeesSubscription;
-  final Map<String, StreamSubscription<QuerySnapshot>> _membersSubscriptions = {};
-  final Map<String, StreamSubscription<QuerySnapshot>> _paymentsSubscriptions = {};
-
-  // Track pending deletes to prevent re-syncing deleted items
-  final Set<String> _pendingCommitteeDeletes = {};
-  final Set<String> _pendingMemberDeletes = {};
-  final Set<String> _pendingPaymentUpdates = {};  // For payment toggles and reverts
-
-  // Callback for UI updates
-  VoidCallback? onDataChanged;
-
-  bool _isListening = false;
-  String? _currentHostId;
-
-  /// Mark a committee as pending delete (call before deleting)
-  void markCommitteeForDelete(String committeeId) {
-    _pendingCommitteeDeletes.add(committeeId);
-    // Auto-clear after 10 seconds (in case cloud delete fails)
-    Future.delayed(const Duration(seconds: 10), () {
-      _pendingCommitteeDeletes.remove(committeeId);
-    });
-  }
-
-  /// Mark a member as pending delete
-  void markMemberForDelete(String memberId) {
-    _pendingMemberDeletes.add(memberId);
-    Future.delayed(const Duration(seconds: 10), () {
-      _pendingMemberDeletes.remove(memberId);
-    });
-  }
-
-  /// Mark a member as pending update (for payout revert and edits)
-  void markMemberForUpdate(String memberId) {
-    _pendingMemberDeletes.add(memberId); // Reuse the same set to skip sync
-    Future.delayed(const Duration(seconds: 10), () {
-      _pendingMemberDeletes.remove(memberId);
-    });
-  }
-
-  /// Mark a payment as pending update (for toggles and reverts)
-  void markPaymentForUpdate(String paymentId) {
-    _pendingPaymentUpdates.add(paymentId);
-    Future.delayed(const Duration(seconds: 10), () {
-      _pendingPaymentUpdates.remove(paymentId);
-    });
-  }
-
-  /// Check if payment is pending update
-  bool isPaymentPendingUpdate(String paymentId) {
-    return _pendingPaymentUpdates.contains(paymentId);
-  }
-
-  /// Start listening to real-time updates for a host
-  void startListening(String hostId) {
-    if (_isListening && _currentHostId == hostId) return;
-    
-    // Stop any existing listeners
-    stopListening();
-
-    _currentHostId = hostId;
-    _isListening = true;
-
-    debugPrint('🔄 Starting real-time sync for host: $hostId');
-
-    // Listen to committees
-    _committeesSubscription = _firestore
-        .collection('committees')
-        .where('hostId', isEqualTo: hostId)
-        .snapshots()
-        .listen(
-      (snapshot) {
-        _handleCommitteesChange(snapshot, hostId);
-      },
-      onError: (e) => debugPrint('Committees listener error: $e'),
-    );
-  }
-
-  /// Handle committee changes from Firestore
-  void _handleCommitteesChange(QuerySnapshot snapshot, String hostId) async {
-    debugPrint('📥 Received ${snapshot.docChanges.length} committee changes');
-
-    for (final change in snapshot.docChanges) {
-      final data = change.doc.data() as Map<String, dynamic>?;
-      if (data == null) continue;
-
-      final committeeId = change.doc.id;
-
-      // Skip if this committee is pending delete locally
-      if (_pendingCommitteeDeletes.contains(committeeId)) {
-        debugPrint('⏳ Skipping committee $committeeId (pending delete)');
-        continue;
-      }
-
-      final committee = Committee(
-        id: committeeId,
-        code: data['code'] ?? '',
-        name: data['name'] ?? '',
-        hostId: data['hostId'] ?? '',
-        contributionAmount: (data['contributionAmount'] ?? 0).toDouble(),
-        frequency: data['frequency'] ?? 'monthly',
-        startDate: _parseDate(data['startDate']) ?? DateTime.now(),
-        totalMembers: data['totalMembers'] ?? 0,
-        createdAt: _parseDate(data['createdAt']) ?? DateTime.now(),
-        isActive: data['isActive'] ?? true,
-        paymentIntervalDays: data['paymentIntervalDays'] ?? 30,
-        isArchived: data['isArchived'] ?? false,
-        archivedAt: _parseDate(data['archivedAt']),
-      );
-
-      if (change.type == DocumentChangeType.removed) {
-        // Committee was deleted on another device
-        await _dbService.deleteCommittee(committee.id);
-        _stopListeningToCommitteeData(committee.id);
-        _pendingCommitteeDeletes.remove(committeeId); // Clear pending if cloud deleted
-        debugPrint('🗑️ Committee deleted: ${committee.name}');
-      } else {
-        // Committee was added or modified
-        await _dbService.saveCommittee(committee);
-        // Start listening to this committee's members and payments
-        _startListeningToCommitteeData(committee.id);
-        debugPrint('💾 Committee updated: ${committee.name}');
-      }
-    }
-
-    // Notify UI to refresh
-    onDataChanged?.call();
-  }
-
-  /// Start listening to members and payments for a committee
-  void _startListeningToCommitteeData(String committeeId) {
-    // Skip if already listening
-    if (_membersSubscriptions.containsKey(committeeId)) return;
-
-    // Listen to members
-    _membersSubscriptions[committeeId] = _firestore
-        .collection('members')
-        .where('committeeId', isEqualTo: committeeId)
-        .snapshots()
-        .listen(
-      (snapshot) => _handleMembersChange(snapshot, committeeId),
-      onError: (e) => debugPrint('Members listener error: $e'),
-    );
-
-    // Listen to payments
-    _paymentsSubscriptions[committeeId] = _firestore
-        .collection('payments')
-        .where('committeeId', isEqualTo: committeeId)
-        .snapshots()
-        .listen(
-      (snapshot) => _handlePaymentsChange(snapshot, committeeId),
-      onError: (e) => debugPrint('Payments listener error: $e'),
-    );
-  }
-
-  /// Handle member changes
-  void _handleMembersChange(QuerySnapshot snapshot, String committeeId) async {
-    for (final change in snapshot.docChanges) {
-      final data = change.doc.data() as Map<String, dynamic>?;
-      if (data == null) continue;
-
-      final memberId = change.doc.id;
-
-      // Skip if pending delete
-      if (_pendingMemberDeletes.contains(memberId)) {
-        debugPrint('⏳ Skipping member $memberId (pending delete)');
-        continue;
-      }
-
-      final member = Member(
-        id: memberId,
-        committeeId: data['committeeId'] ?? '',
-        memberCode: data['memberCode'] ?? '',
-        name: data['name'] ?? '',
-        phone: data['phone'] ?? '',
-        payoutOrder: data['payoutOrder'] ?? 0,
-        hasReceivedPayout: data['hasReceivedPayout'] ?? false,
-        payoutDate: _parseDate(data['payoutDate']),
-        createdAt: _parseDate(data['createdAt']) ?? DateTime.now(),
-      );
-
-      if (change.type == DocumentChangeType.removed) {
-        await _dbService.deleteMember(member.id);
-        _pendingMemberDeletes.remove(memberId);
-        debugPrint('🗑️ Member deleted: ${member.name}');
-      } else {
-        await _dbService.saveMember(member);
-        debugPrint('💾 Member updated: ${member.name}');
-      }
-    }
-
-    onDataChanged?.call();
-  }
-
-  /// Handle payment changes
-  void _handlePaymentsChange(QuerySnapshot snapshot, String committeeId) async {
-    for (final change in snapshot.docChanges) {
-      final data = change.doc.data() as Map<String, dynamic>?;
-      if (data == null) continue;
-
-      final paymentId = change.doc.id;
-
-      // Skip if pending update locally
-      if (_pendingPaymentUpdates.contains(paymentId)) {
-        debugPrint('⏳ Skipping payment $paymentId (pending update)');
-        continue;
-      }
-
-      final payment = Payment(
-        id: paymentId,
-        memberId: data['memberId'] ?? '',
-        committeeId: data['committeeId'] ?? '',
-        date: _parseDate(data['date']) ?? DateTime.now(),
-        isPaid: data['isPaid'] ?? false,
-        markedBy: data['markedBy'] ?? '',
-        markedAt: _parseDate(data['markedAt']),
-      );
-
-      if (change.type == DocumentChangeType.removed) {
-        await _dbService.deletePayment(payment.id);
-        _pendingPaymentUpdates.remove(paymentId);
-      } else {
-        await _dbService.savePayment(payment);
-      }
-    }
-
-    onDataChanged?.call();
-  }
-
-  /// Stop listening to a specific committee's data
-  void _stopListeningToCommitteeData(String committeeId) {
-    _membersSubscriptions[committeeId]?.cancel();
-    _membersSubscriptions.remove(committeeId);
-    _paymentsSubscriptions[committeeId]?.cancel();
-    _paymentsSubscriptions.remove(committeeId);
-  }
-
-  /// Stop all listeners
-  void stopListening() {
-    debugPrint('⏹️ Stopping real-time sync');
-    
-    _committeesSubscription?.cancel();
-    _committeesSubscription = null;
-
-    for (final sub in _membersSubscriptions.values) {
-      sub.cancel();
-    }
-    _membersSubscriptions.clear();
-
-    for (final sub in _paymentsSubscriptions.values) {
-      sub.cancel();
-    }
-    _paymentsSubscriptions.clear();
-
-    _isListening = false;
-    _currentHostId = null;
-  }
-}
-````
-
 ## File: lib/services/remote_config_service.dart
 ````dart
 import 'package:firebase_remote_config/firebase_remote_config.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class RemoteConfigService {
   static final RemoteConfigService _instance = RemoteConfigService._internal();
@@ -21220,23 +22069,29 @@ class RemoteConfigService {
 
 ## File: lib/services/services.dart
 ````dart
-export 'database_service.dart';
 export '../features/auth/data/auth_service.dart';
+export 'database_service.dart';
 export 'sync_service.dart';
 ````
 
 ## File: lib/services/sync_service.dart
 ````dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/core/models/payment.dart';
 import 'package:committee_app/services/database_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class SyncService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final DatabaseService _dbService = DatabaseService();
+  final FirebaseFirestore _firestore;
+  final DatabaseService _dbService;
+
+  SyncService({
+    FirebaseFirestore? firestore,
+    DatabaseService? dbService,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _dbService = dbService ?? DatabaseService();
 
   // Collection names
   static const String committeesCollection = 'committees';
@@ -21257,8 +22112,8 @@ class SyncService {
     }
 
     try {
-      int uploaded = 0;
-      int downloaded = 0;
+      var uploaded = 0;
+      var downloaded = 0;
 
       // Sync committees first (must complete before members/payments)
       final committeesResult = await syncCommittees(hostId);
@@ -21296,8 +22151,8 @@ class SyncService {
   // ============ COMMITTEE SYNC ============
 
   Future<SyncCounts> syncCommittees(String hostId) async {
-    int uploaded = 0;
-    int downloaded = 0;
+    var uploaded = 0;
+    var downloaded = 0;
 
     // Upload local committees to Firestore using batch (faster)
     final localCommittees = _dbService.getHostedCommittees(hostId);
@@ -21336,8 +22191,8 @@ class SyncService {
   // ============ MEMBER SYNC ============
 
   Future<SyncCounts> syncMembers(String committeeId) async {
-    int uploaded = 0;
-    int downloaded = 0;
+    var uploaded = 0;
+    var downloaded = 0;
 
     // Upload local members to Firestore using batch (faster)
     final localMembers = _dbService.getMembersByCommittee(committeeId);
@@ -21363,7 +22218,7 @@ class SyncService {
       final localMember = _dbService.getMemberById(cloudMember.id);
 
       // Check if cloud is newer - compare payout status
-      bool shouldDownload = false;
+      var shouldDownload = false;
       
       if (localMember == null) {
         shouldDownload = true;
@@ -21407,8 +22262,8 @@ class SyncService {
   // ============ PAYMENT SYNC ============
 
   Future<SyncCounts> syncPayments(String committeeId) async {
-    int uploaded = 0;
-    int downloaded = 0;
+    var uploaded = 0;
+    var downloaded = 0;
 
     // Upload local payments to Firestore using batch (faster)
     final localPayments = _dbService.getPaymentsByCommittee(committeeId);
@@ -21444,7 +22299,7 @@ class SyncService {
         cloudPayment.date,
       );
 
-      bool shouldDownload = false;
+      var shouldDownload = false;
       
       if (existingPayment == null) {
         shouldDownload = true;
@@ -21594,8 +22449,8 @@ class SyncCounts {
 
 ## File: lib/services/toast_service.dart
 ````dart
-import 'package:flutter/material.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:flutter/material.dart';
 
 enum ToastType { success, error, warning, info }
 
@@ -21706,12 +22561,12 @@ class _ToastConfig {
 
 ## File: lib/services/widget_service.dart
 ````dart
-import 'package:flutter/foundation.dart';
-import 'package:home_widget/home_widget.dart';
-import 'package:intl/intl.dart';
 import 'package:committee_app/core/models/committee.dart';
 import 'package:committee_app/core/models/member.dart';
 import 'package:committee_app/services/database_service.dart';
+import 'package:flutter/foundation.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:intl/intl.dart';
 
 /// Service to update the Android home screen widget with payout info
 class WidgetService {
@@ -21837,10 +22692,10 @@ class WidgetService {
 
 ## File: lib/ui/widgets/buttons/gradient_button.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:committee_app/core/theme/app_colors.dart';
 import 'package:committee_app/core/theme/app_decorations.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Gradient button with primary theme colors
 /// 
@@ -22031,10 +22886,10 @@ class CircularIconButton extends StatelessWidget {
 
 ## File: lib/ui/widgets/cards/committee_card.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:committee_app/core/theme/app_colors.dart';
 import 'package:committee_app/core/theme/app_decorations.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Reusable committee card widget
 /// 
@@ -22153,8 +23008,9 @@ class CommitteeCard extends StatelessWidget {
                       PopupMenuButton<String>(
                         icon: Icon(Icons.more_vert, color: Colors.grey[400]),
                         onSelected: (value) {
-                          if (value == 'archive') onArchive?.call();
-                          else if (value == 'delete') onDelete?.call();
+                          if (value == 'archive') {
+                            onArchive?.call();
+                          } else if (value == 'delete') onDelete?.call();
                         },
                         itemBuilder: (context) => [
                           if (onArchive != null)
@@ -22312,10 +23168,10 @@ class AvatarStack extends StatelessWidget {
 
 ## File: lib/ui/widgets/cards/stat_card.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:committee_app/core/theme/app_colors.dart';
 import 'package:committee_app/core/theme/app_decorations.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Reusable stat card widget for displaying metrics
 /// 
@@ -22447,10 +23303,10 @@ class StatCardData {
 
 ## File: lib/ui/widgets/dialogs/confirm_dialog.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:committee_app/core/theme/app_colors.dart';
 import 'package:committee_app/core/theme/app_decorations.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Reusable confirm dialog
 /// 
@@ -22612,9 +23468,9 @@ void hideLoadingDialog(BuildContext context) {
 
 ## File: lib/ui/widgets/navigation/app_drawer.dart
 ````dart
+import 'package:committee_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:committee_app/core/theme/app_colors.dart';
 // import 'package:committee_app/core/theme/app_decorations.dart';
 
 /// Reusable app drawer widget
@@ -22667,7 +23523,7 @@ class AppDrawer extends StatelessWidget {
         children: [
           // Header
           DrawerHeader(
-            decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+            decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
@@ -22808,9 +23664,9 @@ class DrawerMenuItem {
 
 ## File: lib/ui/widgets/states/empty_state.dart
 ````dart
+import 'package:committee_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:committee_app/core/theme/app_colors.dart';
 
 /// Empty state widget for when there's no data
 /// 
@@ -22999,21 +23855,17 @@ class ErrorState extends StatelessWidget {
 ## File: lib/ui/widgets/widgets.dart
 ````dart
 /// Widget exports - import this file to get all reusable widgets
-library widgets;
-
-// Cards
-export 'cards/stat_card.dart';
-export 'cards/committee_card.dart';
+library;
 
 // Buttons
 export 'buttons/gradient_button.dart';
-
+export 'cards/committee_card.dart';
+// Cards
+export 'cards/stat_card.dart';
 // Dialogs
 export 'dialogs/confirm_dialog.dart';
-
 // Navigation
 export 'navigation/app_drawer.dart';
-
 // States
 export 'states/empty_state.dart';
 ````
@@ -23021,113 +23873,20 @@ export 'states/empty_state.dart';
 ## File: lib/ui/ui.dart
 ````dart
 /// UI exports - import this file to get all UI components
-library ui;
+library;
 
 export '../core/theme/theme.dart';
 export 'widgets/widgets.dart';
 ````
 
-## File: lib/firebase_options.dart
-````dart
-// File generated by FlutterFire CLI.
-// ignore_for_file: type=lint
-import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
-import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
-
-/// Default [FirebaseOptions] for use with your Firebase apps.
-///
-/// Example:
-/// ```dart
-/// import 'package:committee_app/firebase_options.dart';
-/// // ...
-/// await Firebase.initializeApp(
-///   options: DefaultFirebaseOptions.currentPlatform,
-/// );
-/// ```
-class DefaultFirebaseOptions {
-  static FirebaseOptions get currentPlatform {
-    if (kIsWeb) {
-      return web;
-    }
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return android;
-      case TargetPlatform.iOS:
-        return ios;
-      case TargetPlatform.macOS:
-        return macos;
-      case TargetPlatform.windows:
-        return windows;
-      case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
-      default:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions are not supported for this platform.',
-        );
-    }
-  }
-
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyANO9qmhToM_kfp85YLWZdmsPtt7n98ZNs',
-    appId: '1:216531343276:web:48400f50b5f7960e490c09',
-    messagingSenderId: '216531343276',
-    projectId: 'commiteeapp-7cd16',
-    authDomain: 'commiteeapp-7cd16.firebaseapp.com',
-    storageBucket: 'commiteeapp-7cd16.firebasestorage.app',
-    measurementId: 'G-2JH34PTCBQ',
-  );
-
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCyuYVFnF-enUcSfOge_7M40EenOwQKFqQ',
-    appId: '1:216531343276:android:4904ebd09b93956d490c09',
-    messagingSenderId: '216531343276',
-    projectId: 'commiteeapp-7cd16',
-    storageBucket: 'commiteeapp-7cd16.firebasestorage.app',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyC0FmFLCeYDiGPE6dNvAPUK-pEwMXBOY58',
-    appId: '1:216531343276:ios:f93e66543b44de8c490c09',
-    messagingSenderId: '216531343276',
-    projectId: 'commiteeapp-7cd16',
-    storageBucket: 'commiteeapp-7cd16.firebasestorage.app',
-    iosBundleId: 'com.committee.committeeApp',
-  );
-
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyC0FmFLCeYDiGPE6dNvAPUK-pEwMXBOY58',
-    appId: '1:216531343276:ios:f93e66543b44de8c490c09',
-    messagingSenderId: '216531343276',
-    projectId: 'commiteeapp-7cd16',
-    storageBucket: 'commiteeapp-7cd16.firebasestorage.app',
-    iosBundleId: 'com.committee.committeeApp',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyANO9qmhToM_kfp85YLWZdmsPtt7n98ZNs',
-    appId: '1:216531343276:web:50644caa8f32d173490c09',
-    messagingSenderId: '216531343276',
-    projectId: 'commiteeapp-7cd16',
-    authDomain: 'commiteeapp-7cd16.firebaseapp.com',
-    storageBucket: 'commiteeapp-7cd16.firebasestorage.app',
-    measurementId: 'G-920YQ18LN4',
-  );
-
-}
-````
-
 ## File: lib/main.dart
 ````dart
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:committee_app/app.dart';
 import 'package:committee_app/firebase_options.dart';
 import 'package:committee_app/services/database_service.dart';
-import 'package:committee_app/app.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23146,55 +23905,6 @@ void main() async {
     ),
   );
 }
-````
-
-## File: analysis_options.yaml
-````yaml
-# This file configures the analyzer, which statically analyzes Dart code to
-# check for errors, warnings, and lints.
-#
-# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
-# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
-# invoked from the command line by running `flutter analyze`.
-
-# The following line activates a set of recommended lints for Flutter apps,
-# packages, and plugins designed to encourage good coding practices.
-include: package:flutter_lints/flutter.yaml
-
-linter:
-  # The lint rules applied to this project can be customized in the
-  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
-  # included above or to enable additional rules. A list of all available lints
-  # and their documentation is published at https://dart.dev/lints.
-  #
-  # Instead of disabling a lint rule for the entire project in the
-  # section below, it can also be suppressed for a single line of code
-  # or a specific dart file by using the `// ignore: name_of_lint` and
-  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
-  # producing the lint.
-  rules:
-    always_use_package_imports: true
-    avoid_void_async: true
-    prefer_final_locals: true
-    prefer_final_in_forEach: true
-    unnecessary_await_in_return: true
-    unawaited_futures: true
-    camel_case_types: true
-    library_names: true
-    file_names: true
-    library_prefixes: true
-    non_constant_identifier_names: true
-    constant_identifier_names: true
-    directives_ordering: true
-    lines_longer_than_80_chars: false
-    omit_local_variable_types: true
-    prefer_const_constructors: true
-    prefer_const_literals_to_create_immutables: true
-    unused_import: true
-    unused_local_variable: true
-
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
 ````
 
 ## File: pubspec.lock
@@ -23239,6 +23949,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.11.3"
+  antlr4:
+    dependency: transitive
+    description:
+      name: antlr4
+      sha256: "752b4a6e4ad97953652a2b2bbf5377f46c94b579d3372b50080c7e5858234a05"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.13.2"
   archive:
     dependency: transitive
     description:
@@ -23351,6 +24069,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "8.12.1"
+  cel:
+    dependency: transitive
+    description:
+      name: cel
+      sha256: "51d77e16424d41b5fdb0a239be4c8a0550d4dd3f952801d35375ddd90cfb49da"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.4+1"
   characters:
     dependency: transitive
     description:
@@ -23519,6 +24245,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.1"
+  equatable:
+    dependency: transitive
+    description:
+      name: equatable
+      sha256: "3e0141505477fd8ad55d6eb4e7776d3fe8430be8e497ccb1521370c3f21a3e2b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.8"
   fake_async:
     dependency: transitive
     description:
@@ -23527,6 +24261,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.2"
+  fake_cloud_firestore:
+    dependency: "direct dev"
+    description:
+      name: fake_cloud_firestore
+      sha256: "804bfb59108fc93b93c28b61e8142c477bd6f188a12d06875310f0b2f01b3974"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.0"
+  fake_firebase_security_rules:
+    dependency: transitive
+    description:
+      name: fake_firebase_security_rules
+      sha256: "7a9011d42d99848ece92784fed5a20167ad76da66de2c1102a2bc053e66b0305"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.3"
   ffi:
     dependency: transitive
     description:
@@ -23716,6 +24466,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.0"
+  flutter_localizations:
+    dependency: "direct main"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -24030,6 +24785,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.11"
+  logger:
+    dependency: transitive
+    description:
+      name: logger
+      sha256: a7967e31b703831a893bbc3c3dd11db08126fe5f369b5c648a36f821979f5be3
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.6.2"
   logging:
     dependency: transitive
     description:
@@ -24086,6 +24849,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  mock_exceptions:
+    dependency: transitive
+    description:
+      name: mock_exceptions
+      sha256: "6e3e623712d2c6106ffe9e14732912522b565ddaa82a8dcee6cd4441b5984056"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.8.2"
+  mockito:
+    dependency: "direct dev"
+    description:
+      name: mockito
+      sha256: f99d8d072e249f719a5531735d146d8cf04c580d93920b04de75bef6dfb2daf6
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.4.5"
+  more:
+    dependency: transitive
+    description:
+      name: more
+      sha256: d3908d710f78ee5470d2ae9d7599a11aeb00a17909cc36cbd0f23a0b659ca375
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.5.0"
   nm:
     dependency: transitive
     description:
@@ -24270,6 +25057,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  quiver:
+    dependency: transitive
+    description:
+      name: quiver
+      sha256: ea0b925899e64ecdfbf9c7becb60d5b50e706ade44a85b2363be2a22d88117d2
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.2"
   riverpod:
     dependency: transitive
     description:
@@ -24302,6 +25097,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.6.3"
+  rx:
+    dependency: transitive
+    description:
+      name: rx
+      sha256: "7f54bd39cc63a01c770c1de4b6ce8e135eb13119614cba2216bd9a93ccd29e56"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.0"
+  rxdart:
+    dependency: transitive
+    description:
+      name: rxdart
+      sha256: "5c3004a4a8dbb94bd4bf5412a4def4acdaa12e12f269737a5751369e12d1a962"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.28.0"
   share_plus:
     dependency: "direct main"
     description:
@@ -24483,6 +25294,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
+  tuple:
+    dependency: transitive
+    description:
+      name: tuple
+      sha256: a97ce2013f240b2f3807bcbaf218765b6f301c3eff91092bcfa23a039e7dd151
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.2"
   typed_data:
     dependency: transitive
     description:
@@ -24648,6 +25467,2084 @@ sdks:
   flutter: ">=3.29.0"
 ````
 
+## File: lib/screens/host/committee_detail_screen.dart
+````dart
+import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/core/models/member.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/screens/host/member_management_screen.dart';
+import 'package:committee_app/screens/host/payment_sheet_screen.dart';
+import 'package:committee_app/screens/host/shuffle_members_screen.dart';
+import 'package:committee_app/services/auto_sync_service.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:committee_app/services/sync_service.dart';
+import 'package:committee_app/core/providers/service_providers.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
+
+class CommitteeDetailScreen extends ConsumerStatefulWidget {
+  final Committee committee;
+
+  const CommitteeDetailScreen({super.key, required this.committee});
+
+  @override
+  ConsumerState<CommitteeDetailScreen> createState() => _CommitteeDetailScreenState();
+}
+
+class _CommitteeDetailScreenState extends ConsumerState<CommitteeDetailScreen> {
+  late Committee _committee;
+  List<Member> _members = [];
+  bool _showCollectionDetails = false;
+  bool _isRefreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _committee = widget.committee;
+    _loadMembers();
+    ref.read(realtimeSyncServiceProvider).addListener(_loadData);
+  }
+
+  @override
+  void dispose() {
+    ref.read(realtimeSyncServiceProvider).removeListener(_loadData);
+    super.dispose();
+  }
+
+  void _loadData() {
+    if (!mounted) return;
+    _loadMembers();
+    final updated = ref.read(databaseServiceProvider).getCommitteeById(_committee.id);
+    if (updated != null) {
+      setState(() => _committee = updated);
+    }
+  }
+
+  void _loadMembers() {
+    if (!mounted) return;
+    setState(() {
+      _members = ref.read(databaseServiceProvider).getMembersByCommittee(_committee.id);
+    });
+  }
+
+  Future<void> _refreshCommittee() async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+
+    try {
+      await ref.read(syncServiceProvider).syncMembers(_committee.id);
+      await ref.read(syncServiceProvider).syncPayments(_committee.id);
+
+      _loadMembers();
+
+      final updatedCommittee = ref.read(databaseServiceProvider).getCommitteeById(_committee.id);
+      if (updatedCommittee != null && mounted) {
+        setState(() => _committee = updatedCommittee);
+      }
+    } catch (e) {
+      debugPrint('Refresh error: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
+  }
+
+  void _showShareOptions() {
+    final message =
+        '📋 *${_committee.name}*\n\n'
+        '*Committee Code:* ${_committee.code}\n'
+        '*Contribution:* Rs. ${_committee.contributionAmount.toInt()}\n'
+        '*Duration:* ${_members.length} months\n\n'
+        '_Download Committee App to view payments!_';
+    Share.share(message, subject: '${_committee.name} - Committee Details');
+  }
+
+  void _showEditDialog() {
+    final nameController = TextEditingController(text: _committee.name);
+    final amountController = TextEditingController(
+      text: _committee.contributionAmount.toInt().toString(),
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            24,
+            24,
+            MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Edit Committee',
+                style: GoogleFonts.inter(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'Kameti Name',
+                  prefixIcon: const Icon(Icons.group_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Contribution Amount',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  prefixIcon: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    alignment: Alignment.center,
+                    width: 60,
+                    child: Text(
+                      'Rs.',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () async {
+                  final name = nameController.text.trim();
+                  final amount =
+                      double.tryParse(amountController.text.trim()) ?? 0;
+
+                  if (name.isEmpty || amount <= 0) return;
+
+                  final updated = _committee.copyWith(
+                    name: name,
+                    contributionAmount: amount,
+                  );
+                  await ref.read(autoSyncServiceProvider).saveCommittee(updated);
+                  setState(() {
+                    _committee = updated;
+                  });
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Save Changes'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation() {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    showDialog(
+      context: context,
+      builder:
+          (dialogContext) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text(
+              'Delete Committee?',
+              style: TextStyle(color: Colors.black87),
+            ),
+            content: Text(
+              'This will permanently delete "${_committee.name}" and all its members and payment records. This action cannot be undone.',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(dialogContext);
+
+                  await ref.read(autoSyncServiceProvider).deleteCommittee(
+                    _committee.id,
+                    _committee.hostId,
+                  );
+
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(
+                      content: const Text('Kameti deleted'),
+                      backgroundColor: AppTheme.secondaryColor,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+
+                  navigator.pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.errorColor,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final paidMembers = _members.where((m) => m.hasReceivedPayout).length;
+    final totalAmount = _committee.contributionAmount * _members.length;
+
+    final payments = ref.read(databaseServiceProvider).getPaymentsByCommittee(_committee.id);
+    final paidPayments = payments.where((p) => p.isPaid).length;
+    final totalCollected = paidPayments * _committee.contributionAmount;
+
+    final collectionInterval =
+        _committee.frequency == 'daily'
+            ? 1
+            : _committee.frequency == 'weekly'
+            ? 7
+            : 30;
+    final collectionsPerPayout =
+        _committee.paymentIntervalDays ~/ collectionInterval;
+
+    final now = DateTime.now();
+    final payoutInterval = _committee.paymentIntervalDays;
+    final startDate = _committee.startDate;
+    final daysElapsed = now.difference(startDate).inDays;
+    final currentPayoutCycle = daysElapsed ~/ payoutInterval;
+    double currentCycleCollected = 0;
+    final isMonthlyMonthly =
+        _committee.frequency == 'monthly' && payoutInterval == 30;
+    for (var member in _members) {
+      for (var payment in payments.where(
+        (p) => p.memberId == member.id && p.isPaid,
+      )) {
+        final dateDaysElapsed = payment.date.difference(startDate).inDays;
+        final datePayoutCycle = dateDaysElapsed ~/ payoutInterval;
+        if (datePayoutCycle == currentPayoutCycle) {
+          if (isMonthlyMonthly) {
+            if (payment.date.month == now.month &&
+                payment.date.year == now.year) {
+              currentCycleCollected += _committee.contributionAmount;
+            }
+          } else {
+            currentCycleCollected += _committee.contributionAmount;
+          }
+        }
+      }
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: Text(_committee.name),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black87),
+        titleTextStyle: GoogleFonts.inter(
+          color: Colors.black87,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share_rounded),
+            onPressed: _showShareOptions,
+            tooltip: 'Share Code',
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            color: Colors.white,
+            onSelected: (value) {
+              if (value == 'edit') {
+                _showEditDialog();
+              } else if (value == 'delete') {
+                _showDeleteConfirmation();
+              }
+            },
+            itemBuilder:
+                (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Edit Committee',
+                          style: TextStyle(color: Colors.black87),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.delete,
+                          size: 18,
+                          color: AppTheme.errorColor,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Delete Committee',
+                          style: TextStyle(color: AppTheme.errorColor),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _refreshCommittee,
+        color: AppTheme.primaryColor,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryColor.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Kameti Code',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              GestureDetector(
+                                onTap: _showShareOptions,
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      _committee.code,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        letterSpacing: 3,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.copy_rounded,
+                                      color: Colors.white70,
+                                      size: 18,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            _committee.frequency.toUpperCase(),
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        _buildStatItem(
+                          'Members',
+                          '${_members.length}',
+                          Icons.people_outline,
+                        ),
+                        const SizedBox(width: 16),
+                        _buildStatItem(
+                          'Amount',
+                          'Rs. ${_committee.contributionAmount.toInt()}',
+                          Icons.payments_outlined,
+                        ),
+                        const SizedBox(width: 16),
+                        _buildStatItem(
+                          'Per Cycle',
+                          'Rs. ${totalAmount.toInt()}',
+                          Icons.account_balance_wallet_outlined,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[200]!),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Payout Progress',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    LinearProgressIndicator(
+                      value:
+                          _members.isEmpty ? 0 : paidMembers / _members.length,
+                      backgroundColor: Colors.grey[100],
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        AppTheme.secondaryColor,
+                      ),
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$paidMembers of ${_members.length} members received payout',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[200]!),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _showCollectionDetails = !_showCollectionDetails;
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.secondaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.account_balance_wallet_rounded,
+                              color: AppTheme.secondaryColor,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Per Payout Collection',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      _showCollectionDetails
+                                          ? Icons.keyboard_arrow_up
+                                          : Icons.keyboard_arrow_down,
+                                      size: 16,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  'Rs. ${currentCycleCollected.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.secondaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (_showCollectionDetails) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Total Collected (All Time):',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                Text(
+                                  'Rs. ${totalCollected.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    const Divider(color: Colors.grey),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${_members.length * collectionsPerPayout} payments per payout',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
+                          '${_members.length} × $collectionsPerPayout collections',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              _buildActionCard(
+                icon: Icons.people_rounded,
+                title: 'Manage Members',
+                subtitle: 'Add, edit or remove members',
+                color: AppTheme.primaryColor,
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) =>
+                              MemberManagementScreen(committee: _committee),
+                    ),
+                  );
+                  _loadMembers();
+                },
+              ),
+              const SizedBox(height: 12),
+
+              _buildActionCard(
+                icon: Icons.grid_on_rounded,
+                title: 'Payment Sheet',
+                subtitle: 'Mark daily payments',
+                color: AppTheme.secondaryColor,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) =>
+                              PaymentSheetScreen(committee: _committee),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+
+              _buildActionCard(
+                icon: Icons.shuffle_rounded,
+                title: 'Shuffle & Assign',
+                subtitle: 'Randomly assign payout order',
+                color: AppTheme.warningColor,
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) =>
+                              ShuffleMembersScreen(committee: _committee),
+                    ),
+                  );
+                  _loadMembers();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: Colors.white70, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            Text(
+              label,
+              style: GoogleFonts.inter(fontSize: 10, color: Colors.white70),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      margin: EdgeInsets.zero,
+      color: Colors.white,
+      elevation: 2,
+      shadowColor: Colors.black12,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: Colors.grey[400]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+````
+
+## File: lib/screens/host/host_dashboard_screen.dart
+````dart
+import 'dart:async';
+
+import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/core/providers/service_providers.dart';
+import 'package:committee_app/core/theme/app_theme.dart';
+import 'package:committee_app/screens/home_screen.dart';
+import 'package:committee_app/screens/host/about_screen.dart';
+import 'package:committee_app/screens/host/committee_detail_screen.dart';
+import 'package:committee_app/screens/host/contact_screen.dart';
+import 'package:committee_app/screens/host/create_committee_screen.dart';
+import 'package:committee_app/screens/host/privacy_policy_screen.dart';
+import 'package:committee_app/screens/host/profile_screen.dart';
+import 'package:committee_app/screens/host/terms_screen.dart';
+import 'package:committee_app/screens/settings_screen.dart';
+import 'package:committee_app/screens/viewer/join_committee_screen.dart';
+import 'package:committee_app/services/realtime_sync_service.dart';
+import 'package:committee_app/services/toast_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class HostDashboardScreen extends ConsumerStatefulWidget {
+  const HostDashboardScreen({super.key});
+
+  @override
+  ConsumerState<HostDashboardScreen> createState() => _HostDashboardScreenState();
+}
+
+class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
+    with SingleTickerProviderStateMixin {
+  List<Committee> _activeCommittees = [];
+  List<Committee> _archivedCommittees = [];
+  bool _isSyncing = false;
+  late TabController _tabController;
+  Timer? _emailVerificationTimer;
+  late RealtimeSyncService _realtimeSyncService;
+
+  @override
+  void initState() {
+    super.initState();
+    _realtimeSyncService = ref.read(realtimeSyncServiceProvider);
+    _tabController = TabController(length: 2, vsync: this);
+    _loadCommittees();
+
+    final userId = ref.read(authServiceProvider).currentUser?.uid ?? '';
+    if (userId.isNotEmpty) {
+      final realtimeService = ref.read(realtimeSyncServiceProvider);
+      realtimeService.addListener(_loadCommittees);
+      realtimeService.startListening(userId);
+    }
+
+    _syncDataSilent();
+
+    _startEmailVerificationCheck();
+  }
+
+  void _startEmailVerificationCheck() {
+    final authService = ref.read(authServiceProvider);
+    final user = authService.currentUser;
+    if (user != null && !user.emailVerified) {
+      _emailVerificationTimer = Timer.periodic(const Duration(seconds: 3), (
+        timer,
+      ) async {
+        await authService.reloadUser();
+        if (authService.isEmailVerified) {
+          timer.cancel();
+          if (mounted) {
+            setState(() {});
+            ToastService.success(context, AppLocalizations.of(context)!.emailVerifiedSuccess);
+          }
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailVerificationTimer?.cancel();
+    _realtimeSyncService.removeListener(_loadCommittees);
+    _realtimeSyncService.stopListening();
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _loadCommittees() {
+    if (!mounted) return;
+    final userId = ref.read(authServiceProvider).currentUser?.uid ?? '';
+    final all = ref.read(databaseServiceProvider).getHostedCommittees(userId);
+    setState(() {
+      _activeCommittees = all.where((c) => !c.isArchived).toList();
+      _archivedCommittees = all.where((c) => c.isArchived).toList();
+    });
+  }
+
+  Future<void> _syncDataSilent() async {
+    if (_isSyncing) return;
+
+    setState(() {
+      _isSyncing = true;
+    });
+
+    final hostId = ref.read(authServiceProvider).currentUser?.uid ?? '';
+    final result = await ref.read(syncServiceProvider).syncAll(hostId);
+
+    if (mounted) {
+      setState(() {
+        _isSyncing = false;
+      });
+
+      if (result.success) {
+        _loadCommittees();
+      }
+    }
+  }
+
+  Future<void> _syncData() async {
+    if (_isSyncing) return;
+
+    setState(() {
+      _isSyncing = true;
+    });
+
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    final hostId = ref.read(authServiceProvider).currentUser?.uid ?? '';
+    final result = await ref.read(syncServiceProvider).syncAll(hostId);
+
+    if (mounted) {
+      setState(() {
+        _isSyncing = false;
+      });
+
+      if (!result.success) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.cloud_off, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Text(result.message),
+              ],
+            ),
+            backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+
+      if (result.success) {
+        _loadCommittees();
+      }
+    }
+  }
+
+  Future<void> _logout() async {
+    await ref.read(authServiceProvider).signOut();
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (route) => false,
+      );
+    }
+  }
+
+  void _showArchivedSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (context) => Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.archive, color: AppTheme.primaryColor),
+                    const SizedBox(width: 12),
+                    Text(
+                      AppLocalizations.of(context)!.archivedKametis,
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (_archivedCommittees.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Center(
+                      child: Text(
+                        AppLocalizations.of(context)!.noArchivedKametis,
+                        style: TextStyle(color: Colors.grey[500]),
+                      ),
+                    ),
+                  )
+                else
+                  ...(_archivedCommittees
+                      .map(
+                        (committee) => ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(Icons.group, color: Colors.grey[600]),
+                          ),
+                          title: Text(
+                            committee.name,
+                            style: const TextStyle(color: Colors.black87),
+                          ),
+                          subtitle: Text(
+                            'Archived on ${committee.archivedAt != null ? "${committee.archivedAt!.day}/${committee.archivedAt!.month}/${committee.archivedAt!.year}" : "Unknown"}',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 12,
+                            ),
+                          ),
+                          trailing: TextButton(
+                            onPressed: () async {
+                              await ref.read(autoSyncServiceProvider).unarchiveCommittee(
+                                committee,
+                              );
+                              _loadCommittees();
+                              if (mounted) Navigator.pop(context);
+                            },
+                            child: Text(AppLocalizations.of(context)!.restore),
+                          ),
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => CommitteeDetailScreen(
+                                      committee: committee,
+                                    ),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                      .toList()),
+              ],
+            ),
+          ),
+    );
+  }
+
+  Future<void> _archiveCommittee(Committee committee) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.white,
+            title: Text(AppLocalizations.of(context)!.archiveKametiTitle),
+            content: Text(
+              AppLocalizations.of(context)!.archiveKametiContent(committee.name),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(AppLocalizations.of(context)!.cancel),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                ),
+                child: Text(AppLocalizations.of(context)!.archive),
+              ),
+            ],
+          ),
+    );
+
+    if (confirm == true) {
+      await ref.read(autoSyncServiceProvider).archiveCommittee(committee);
+      _loadCommittees();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.kametiArchived(committee.name)),
+            action: SnackBarAction(
+              label: AppLocalizations.of(context)!.undo,
+              onPressed: () async {
+                await ref.read(autoSyncServiceProvider).unarchiveCommittee(committee);
+                _loadCommittees();
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteCommittee(Committee committee) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.white,
+            title: Text(AppLocalizations.of(context)!.deleteKametiTitle),
+            content: Text(
+              AppLocalizations.of(context)!.deleteKametiContent(committee.name),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(AppLocalizations.of(context)!.cancel),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.errorColor,
+                ),
+                child: Text(AppLocalizations.of(context)!.delete),
+              ),
+            ],
+          ),
+    );
+
+    if (confirm == true) {
+      final hostId = ref.read(authServiceProvider).currentUser?.uid ?? '';
+      await ref.read(autoSyncServiceProvider).deleteCommittee(committee.id, hostId);
+      _loadCommittees();
+      if (mounted) {
+        ToastService.error(context, AppLocalizations.of(context)!.kametiDeleted(committee.name));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.read(authServiceProvider).currentUser;
+    final displayName =
+        user?.displayName ?? user?.email?.split('@')[0] ?? 'Host';
+
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: Text(AppLocalizations.of(context)!.myKametis),
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          titleTextStyle: GoogleFonts.inter(
+            color: Colors.black87,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          leading: Builder(
+            builder:
+                (context) => IconButton(
+                  icon: const Icon(Icons.menu, color: Colors.black87),
+                  tooltip: 'Menu',
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
+          ),
+        ),
+        drawer: _buildDrawer(context),
+        body: RefreshIndicator(
+          onRefresh: _syncData,
+          color: AppTheme.primaryColor,
+          backgroundColor: Colors.white,
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 80),
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              if (user != null && !user.emailVerified)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.warningColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.warningColor.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.email_outlined,
+                        color: AppTheme.warningColor,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppLocalizations.of(context)!.verifyEmail,
+                              style: const TextStyle(
+                                color: AppTheme.warningColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              AppLocalizations.of(context)!.checkInbox,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          await ref.read(authServiceProvider).sendEmailVerification();
+                          if (mounted) {
+                            ToastService.success(
+                              context,
+                              'Verification email sent!',
+                            );
+                          }
+                        },
+                        child: Text(
+                          AppLocalizations.of(context)!.resend,
+                          style: const TextStyle(color: AppTheme.warningColor),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryColor.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$displayName!',
+                      style: GoogleFonts.inter(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_activeCommittees.length} ${AppLocalizations.of(context)!.activeKametis}',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const JoinCommitteeScreen(),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey[200]!),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.secondaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.receipt_long_rounded,
+                              color: AppTheme.secondaryColor,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  AppLocalizations.of(context)!.joinedAKameti,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  AppLocalizations.of(context)!.viewKametiPayments,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Colors.grey,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.yourHostedKametis,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    if (_archivedCommittees.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: () => _showArchivedSheet(),
+                        icon: const Icon(Icons.archive_outlined, size: 18),
+                        label: Text('${AppLocalizations.of(context)!.archivedSection} (${_archivedCommittees.length})'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.grey[600],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              if (_activeCommittees.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: _buildEmptyState(),
+                )
+              else
+                ..._activeCommittees
+                    .map(
+                      (committee) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: _buildCommitteeCard(committee),
+                      ),
+                    )
+                    ,
+            ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CreateCommitteeScreen(),
+              ),
+            );
+            if (result == true) {
+              _loadCommittees();
+            }
+          },
+          icon: const Icon(Icons.add),
+          label: Text(AppLocalizations.of(context)!.newCommittee),
+          backgroundColor: AppTheme.primaryColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    final user = ref.read(authServiceProvider).currentUser;
+    final displayName =
+        user?.displayName ?? user?.email?.split('@')[0] ?? 'Guest';
+    final email = user?.email ?? 'Anonymous User';
+
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(51),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  displayName,
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  email,
+                  style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+
+          ListTile(
+            leading: Icon(Icons.person_outline, color: Colors.grey[700]),
+            title: Text(
+              AppLocalizations.of(context)!.profile,
+              style: const TextStyle(color: Colors.black87),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+          ),
+
+          const Divider(color: Colors.black12),
+
+          ListTile(
+            leading: Icon(Icons.info_outline, color: Colors.grey[700]),
+            title: Text(
+              AppLocalizations.of(context)!.about,
+              style: const TextStyle(color: Colors.black87),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AboutScreen()),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: Icon(Icons.settings_outlined, color: Colors.grey[700]),
+            title: Text(
+              AppLocalizations.of(context)!.settings,
+              style: const TextStyle(color: Colors.black87),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: Icon(Icons.article_outlined, color: Colors.grey[700]),
+            title: Text(
+              AppLocalizations.of(context)!.termsConditions,
+              style: const TextStyle(color: Colors.black87),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TermsScreen()),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: Icon(Icons.privacy_tip_outlined, color: Colors.grey[700]),
+            title: Text(
+              AppLocalizations.of(context)!.privacyPolicy,
+              style: const TextStyle(color: Colors.black87),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PrivacyPolicyScreen(),
+                ),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: Icon(Icons.mail_outline, color: Colors.grey[700]),
+            title: Text(
+              AppLocalizations.of(context)!.contactUs,
+              style: const TextStyle(color: Colors.black87),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ContactScreen()),
+              );
+            },
+          ),
+
+          const Divider(color: Colors.black12),
+
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.redAccent),
+            title: Text(
+              AppLocalizations.of(context)!.logout,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+            onTap: () async {
+              Navigator.pop(context);
+              await _logout();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.group_off_outlined, size: 80, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            AppLocalizations.of(context)!.noCommitteesYet,
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            AppLocalizations.of(context)!.createFirstCommittee,
+            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommitteeCard(Committee committee) {
+    final members = ref.read(databaseServiceProvider).getMembersByCommittee(committee.id);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shadowColor: Colors.black12,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CommitteeDetailScreen(committee: committee),
+            ),
+          );
+          _loadCommittees();
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.group_rounded,
+                  color: AppTheme.primaryColor,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      committee.name,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${members.length} members • ${committee.frequency}',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.secondaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'Code: ${committee.code}',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.secondaryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, color: Colors.grey),
+                color: Colors.white,
+                onSelected: (value) {
+                  if (value == 'archive') {
+                    _archiveCommittee(committee);
+                  } else if (value == 'delete') {
+                    _deleteCommittee(committee);
+                  }
+                },
+                itemBuilder:
+                    (context) => [
+                      const PopupMenuItem(
+                        value: 'archive',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.archive_outlined,
+                              size: 20,
+                              color: Colors.black87,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Archive',
+                              style: TextStyle(color: Colors.black87),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.delete_outline,
+                              size: 20,
+                              color: Colors.red,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+````
+
+## File: lib/services/realtime_sync_service.dart
+````dart
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:committee_app/core/models/committee.dart';
+import 'package:committee_app/core/models/member.dart';
+import 'package:committee_app/core/models/payment.dart';
+import 'package:committee_app/services/database_service.dart';
+import 'package:flutter/foundation.dart';
+
+/// Helper to parse dates that can be Timestamp or String
+DateTime? _parseDate(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
+
+/// Real-time sync service that listens to Firestore changes
+/// and updates local database automatically
+class RealtimeSyncService {
+  final FirebaseFirestore _firestore;
+  final DatabaseService _dbService;
+
+  RealtimeSyncService({
+    FirebaseFirestore? firestore,
+    DatabaseService? dbService,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _dbService = dbService ?? DatabaseService();
+
+  // Stream subscriptions
+  StreamSubscription<QuerySnapshot>? _committeesSubscription;
+  final Map<String, StreamSubscription<QuerySnapshot>> _membersSubscriptions = {};
+  final Map<String, StreamSubscription<QuerySnapshot>> _paymentsSubscriptions = {};
+
+  // Track pending deletes to prevent re-syncing deleted items
+  final Set<String> _pendingCommitteeDeletes = {};
+  final Set<String> _pendingMemberDeletes = {};
+  final Set<String> _pendingPaymentUpdates = {};  // For payment toggles and reverts
+
+  // Listeners for UI updates
+  final List<VoidCallback> _listeners = [];
+
+  bool _isListening = false;
+  String? _currentHostId;
+
+  /// Mark a committee as pending delete (call before deleting)
+  void markCommitteeForDelete(String committeeId) {
+    _pendingCommitteeDeletes.add(committeeId);
+    // Auto-clear after 10 seconds (in case cloud delete fails)
+    Future.delayed(const Duration(seconds: 10), () {
+      _pendingCommitteeDeletes.remove(committeeId);
+    });
+  }
+
+  /// Mark a member as pending delete
+  void markMemberForDelete(String memberId) {
+    _pendingMemberDeletes.add(memberId);
+    Future.delayed(const Duration(seconds: 10), () {
+      _pendingMemberDeletes.remove(memberId);
+    });
+  }
+
+  /// Mark a member as pending update (for payout revert and edits)
+  void markMemberForUpdate(String memberId) {
+    _pendingMemberDeletes.add(memberId); // Reuse the same set to skip sync
+    Future.delayed(const Duration(seconds: 10), () {
+      _pendingMemberDeletes.remove(memberId);
+    });
+  }
+
+  /// Mark a payment as pending update (for toggles and reverts)
+  void markPaymentForUpdate(String paymentId) {
+    _pendingPaymentUpdates.add(paymentId);
+    Future.delayed(const Duration(seconds: 10), () {
+      _pendingPaymentUpdates.remove(paymentId);
+    });
+  }
+
+  /// Check if payment is pending update
+  bool isPaymentPendingUpdate(String paymentId) {
+    return _pendingPaymentUpdates.contains(paymentId);
+  }
+
+  /// Start listening to real-time updates for a host
+  void startListening(String hostId) {
+    if (_isListening && _currentHostId == hostId) return;
+    
+    // Stop any existing listeners
+    stopListening();
+
+    _currentHostId = hostId;
+    _isListening = true;
+
+    debugPrint('🔄 Starting real-time sync for host: $hostId');
+
+    // Listen to committees
+    _committeesSubscription = _firestore
+        .collection('committees')
+        .where('hostId', isEqualTo: hostId)
+        .snapshots()
+        .listen(
+      (snapshot) {
+        _handleCommitteesChange(snapshot, hostId);
+      },
+      onError: (e) => debugPrint('Committees listener error: $e'),
+    );
+  }
+
+  /// Handle committee changes from Firestore
+  Future<void> _handleCommitteesChange(QuerySnapshot snapshot, String hostId) async {
+    debugPrint('📥 Received ${snapshot.docChanges.length} committee changes');
+
+    for (final change in snapshot.docChanges) {
+      final data = change.doc.data() as Map<String, dynamic>?;
+      if (data == null) continue;
+
+      final committeeId = change.doc.id;
+
+      // Skip if this committee is pending delete locally
+      if (_pendingCommitteeDeletes.contains(committeeId)) {
+        debugPrint('⏳ Skipping committee $committeeId (pending delete)');
+        continue;
+      }
+
+      final committee = Committee(
+        id: committeeId,
+        code: data['code'] ?? '',
+        name: data['name'] ?? '',
+        hostId: data['hostId'] ?? '',
+        contributionAmount: (data['contributionAmount'] ?? 0).toDouble(),
+        frequency: data['frequency'] ?? 'monthly',
+        startDate: _parseDate(data['startDate']) ?? DateTime.now(),
+        totalMembers: data['totalMembers'] ?? 0,
+        createdAt: _parseDate(data['createdAt']) ?? DateTime.now(),
+        isActive: data['isActive'] ?? true,
+        paymentIntervalDays: data['paymentIntervalDays'] ?? 30,
+        isArchived: data['isArchived'] ?? false,
+        archivedAt: _parseDate(data['archivedAt']),
+      );
+
+      if (change.type == DocumentChangeType.removed) {
+        // Committee was deleted on another device
+        await _dbService.deleteCommittee(committee.id);
+        _stopListeningToCommitteeData(committee.id);
+        _pendingCommitteeDeletes.remove(committeeId); // Clear pending if cloud deleted
+        debugPrint('🗑️ Committee deleted: ${committee.name}');
+      } else {
+        // Committee was added or modified
+        await _dbService.saveCommittee(committee);
+        // Start listening to this committee's members and payments
+        _startListeningToCommitteeData(committee.id);
+        debugPrint('💾 Committee updated: ${committee.name}');
+      }
+    }
+
+    // Notify UI to refresh
+    _notifyListeners();
+  }
+
+  /// Start listening to members and payments for a committee
+  void _startListeningToCommitteeData(String committeeId) {
+    // Skip if already listening
+    if (_membersSubscriptions.containsKey(committeeId)) return;
+
+    // Listen to members
+    _membersSubscriptions[committeeId] = _firestore
+        .collection('members')
+        .where('committeeId', isEqualTo: committeeId)
+        .snapshots()
+        .listen(
+      (snapshot) => _handleMembersChange(snapshot, committeeId),
+      onError: (e) => debugPrint('Members listener error: $e'),
+    );
+
+    // Listen to payments
+    _paymentsSubscriptions[committeeId] = _firestore
+        .collection('payments')
+        .where('committeeId', isEqualTo: committeeId)
+        .snapshots()
+        .listen(
+      (snapshot) => _handlePaymentsChange(snapshot, committeeId),
+      onError: (e) => debugPrint('Payments listener error: $e'),
+    );
+  }
+
+  /// Handle member changes
+  Future<void> _handleMembersChange(QuerySnapshot snapshot, String committeeId) async {
+    for (final change in snapshot.docChanges) {
+      final data = change.doc.data() as Map<String, dynamic>?;
+      if (data == null) continue;
+
+      final memberId = change.doc.id;
+
+      // Skip if pending delete
+      if (_pendingMemberDeletes.contains(memberId)) {
+        debugPrint('⏳ Skipping member $memberId (pending delete)');
+        continue;
+      }
+
+      final member = Member(
+        id: memberId,
+        committeeId: data['committeeId'] ?? '',
+        memberCode: data['memberCode'] ?? '',
+        name: data['name'] ?? '',
+        phone: data['phone'] ?? '',
+        payoutOrder: data['payoutOrder'] ?? 0,
+        hasReceivedPayout: data['hasReceivedPayout'] ?? false,
+        payoutDate: _parseDate(data['payoutDate']),
+        createdAt: _parseDate(data['createdAt']) ?? DateTime.now(),
+      );
+
+      if (change.type == DocumentChangeType.removed) {
+        await _dbService.deleteMember(member.id);
+        _pendingMemberDeletes.remove(memberId);
+        debugPrint('🗑️ Member deleted: ${member.name}');
+      } else {
+        await _dbService.saveMember(member);
+        debugPrint('💾 Member updated: ${member.name}');
+      }
+    }
+
+    _notifyListeners();
+  }
+
+  /// Handle payment changes
+  Future<void> _handlePaymentsChange(QuerySnapshot snapshot, String committeeId) async {
+    for (final change in snapshot.docChanges) {
+      final data = change.doc.data() as Map<String, dynamic>?;
+      if (data == null) continue;
+
+      final paymentId = change.doc.id;
+
+      // Skip if pending update locally
+      if (_pendingPaymentUpdates.contains(paymentId)) {
+        debugPrint('⏳ Skipping payment $paymentId (pending update)');
+        continue;
+      }
+
+      final payment = Payment(
+        id: paymentId,
+        memberId: data['memberId'] ?? '',
+        committeeId: data['committeeId'] ?? '',
+        date: _parseDate(data['date']) ?? DateTime.now(),
+        isPaid: data['isPaid'] ?? false,
+        markedBy: data['markedBy'] ?? '',
+        markedAt: _parseDate(data['markedAt']),
+      );
+
+      if (change.type == DocumentChangeType.removed) {
+        await _dbService.deletePayment(payment.id);
+        _pendingPaymentUpdates.remove(paymentId);
+      } else {
+        await _dbService.savePayment(payment);
+      }
+    }
+
+    _notifyListeners();
+  }
+
+  /// Stop listening to a specific committee's data
+  void _stopListeningToCommitteeData(String committeeId) {
+    _membersSubscriptions[committeeId]?.cancel();
+    _membersSubscriptions.remove(committeeId);
+    _paymentsSubscriptions[committeeId]?.cancel();
+    _paymentsSubscriptions.remove(committeeId);
+  }
+
+  /// Stop all listeners
+  void stopListening() {
+    debugPrint('⏹️ Stopping real-time sync');
+    
+    _committeesSubscription?.cancel();
+    _committeesSubscription = null;
+
+    for (final sub in _membersSubscriptions.values) {
+      sub.cancel();
+    }
+    _membersSubscriptions.clear();
+
+    for (final sub in _paymentsSubscriptions.values) {
+      sub.cancel();
+    }
+    _paymentsSubscriptions.clear();
+
+    _isListening = false;
+    _currentHostId = null;
+  }
+
+  void addListener(VoidCallback listener) {
+    if (!_listeners.contains(listener)) {
+      _listeners.add(listener);
+    }
+  }
+
+  void removeListener(VoidCallback listener) {
+    _listeners.remove(listener);
+  }
+
+  void _notifyListeners() {
+    for (final listener in _listeners) {
+      listener();
+    }
+  }
+}
+````
+
 ## File: pubspec.yaml
 ````yaml
 name: committee_app
@@ -24668,7 +27565,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.4+4
+version: 1.0.5+5
 environment:
   sdk: ^3.7.0
 
@@ -24685,7 +27582,11 @@ dependencies:
   in_app_update: ^4.2.0
   in_app_review: ^2.0.9
   shared_preferences: ^2.5.3
-  
+
+  # Localization
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.19.0
 
   # UI
   cupertino_icons: ^1.0.8
@@ -24708,7 +27609,6 @@ dependencies:
   # Utilities
   uuid: ^4.5.1
   connectivity_plus: ^6.1.1
-  intl: ^0.19.0
 
   # Export
   pdf: ^3.11.1
@@ -24722,9 +27622,9 @@ dependencies:
   firebase_analytics: ^11.6.0
 
   # New Features
-  introduction_screen: ^3.1.14  # Onboarding
-  local_auth: ^2.3.0            # Biometric Lock
-  home_widget: ^0.7.0           # Home Screen Widget
+  introduction_screen: ^3.1.14 # Onboarding
+  local_auth: ^2.3.0 # Biometric Lock
+  home_widget: ^0.7.0 # Home Screen Widget
   firebase_remote_config: ^5.5.0
   lottie: ^3.3.1
 
@@ -24732,6 +27632,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  mockito: ^5.4.4
+  fake_cloud_firestore: ^3.0.1
   flutter_lints: ^5.0.0
   hive_generator: ^2.0.1
   build_runner: ^2.4.13
@@ -24743,6 +27645,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

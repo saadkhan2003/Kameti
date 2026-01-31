@@ -96,5 +96,12 @@
       }
     }
   },
-  "enterEmail": "Please enter your email"
+  "enterEmail": "Please enter your email",
+  "appearance": "Appearance",
+  "light_theme": "Light",
+  "dark_theme": "Dark",
+  "system_theme": "System",
+  "app_settings": "App Settings",
+  "security_settings": "Security Settings",
+  "biometric_lock": "Biometric Lock"
 }

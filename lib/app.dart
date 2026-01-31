@@ -1,4 +1,5 @@
 import 'package:committee_app/core/providers/service_providers.dart';
+import 'package:committee_app/core/providers/theme_provider.dart';
 import 'package:committee_app/core/theme/app_theme.dart';
 import 'package:committee_app/screens/lock_screen.dart';
 import 'package:committee_app/screens/splash_screen.dart';
@@ -56,6 +57,8 @@ class _CommitteeAppState extends ConsumerState<CommitteeApp> with WidgetsBinding
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = ref.watch(themeModeProvider);
+    
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Kameti',
@@ -69,7 +72,7 @@ class _CommitteeAppState extends ConsumerState<CommitteeApp> with WidgetsBinding
       supportedLocales: AppLocalizations.supportedLocales,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark,
+      themeMode: themeMode,
       home: const SplashScreen(),
     );
   }
