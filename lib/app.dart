@@ -5,7 +5,7 @@ import 'package:committee_app/screens/lock_screen.dart';
 import 'package:committee_app/screens/splash_screen.dart';
 import 'package:committee_app/services/biometric_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:committee_app/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,7 +18,8 @@ class CommitteeApp extends ConsumerStatefulWidget {
   ConsumerState<CommitteeApp> createState() => _CommitteeAppState();
 }
 
-class _CommitteeAppState extends ConsumerState<CommitteeApp> with WidgetsBindingObserver {
+class _CommitteeAppState extends ConsumerState<CommitteeApp>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -44,8 +45,9 @@ class _CommitteeAppState extends ConsumerState<CommitteeApp> with WidgetsBinding
     // Only lock if enabled and not already showing lock screen
     if (isEnabled && !LockScreen.isShown) {
       final user = ref.read(authServiceProvider).currentUser;
-      final isRealHost = user != null && !user.isAnonymous && user.email != null;
-      
+      final isRealHost =
+          user != null && !user.isAnonymous && user.email != null;
+
       navigatorKey.currentState?.pushReplacement(
         PageRouteBuilder(
           pageBuilder: (_, __, ___) => LockScreen(isHost: isRealHost),
@@ -58,7 +60,7 @@ class _CommitteeAppState extends ConsumerState<CommitteeApp> with WidgetsBinding
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
-    
+
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Kameti',

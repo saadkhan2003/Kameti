@@ -8,7 +8,7 @@ import 'package:committee_app/services/realtime_sync_service.dart';
 import 'package:committee_app/services/sync_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:committee_app/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -48,10 +48,11 @@ void main() {
     when(mockUser.emailVerified).thenReturn(true);
     when(mockUser.email).thenReturn('host@test.com');
     when(mockUser.displayName).thenReturn('Test Host');
-    
+
     when(mockDatabaseService.getHostedCommittees(any)).thenReturn([]);
-    when(mockSyncService.syncAll(any)).thenAnswer((_) async => SyncResult(success: true, message: 'Synced'));
-    
+    when(mockSyncService.syncAll(any))
+        .thenAnswer((_) async => SyncResult(success: true, message: 'Synced'));
+
     when(mockRealtimeSyncService.addListener(any)).thenReturn(null);
     when(mockRealtimeSyncService.removeListener(any)).thenReturn(null);
     when(mockRealtimeSyncService.startListening(any)).thenReturn(null);
@@ -80,16 +81,19 @@ void main() {
     );
   }
 
-  testWidgets('HostDashboard displays empty state when no committees exist', (tester) async {
+  testWidgets('HostDashboard displays empty state when no committees exist',
+      (tester) async {
     await tester.pumpWidget(createSubject());
     await tester.pumpAndSettle(); // Wait for animations and sync
 
     expect(find.text('No Committees Yet'), findsOneWidget);
-    expect(find.text('Create your first committee to get started'), findsOneWidget);
+    expect(find.text('Create your first committee to get started'),
+        findsOneWidget);
     expect(find.text('New Committee'), findsOneWidget);
   });
 
-  testWidgets('HostDashboard displays committees when data exists', (tester) async {
+  testWidgets('HostDashboard displays committees when data exists',
+      (tester) async {
     final committee = Committee(
       id: '1',
       code: '123456',
@@ -101,7 +105,8 @@ void main() {
       totalMembers: 10,
       createdAt: DateTime.now(),
     );
-    when(mockDatabaseService.getHostedCommittees('test_host_id')).thenReturn([committee]);
+    when(mockDatabaseService.getHostedCommittees('test_host_id'))
+        .thenReturn([committee]);
     when(mockDatabaseService.getMembersByCommittee('1')).thenReturn([]);
 
     await tester.pumpWidget(createSubject());

@@ -36,14 +36,15 @@ class AutoSyncService {
   Future<bool> deleteCommittee(String committeeId, String hostId) async {
     // Mark as pending delete to prevent real-time sync from re-adding
     _realtimeSyncService.markCommitteeForDelete(committeeId);
-    
+
     // Delete locally FIRST for instant UI feedback
     await _dbService.deleteCommittee(committeeId);
 
     // Delete from cloud in background (non-blocking)
     _syncInBackground(() async {
       try {
-        final success = await _syncService.deleteCommitteeFromCloud(committeeId);
+        final success =
+            await _syncService.deleteCommitteeFromCloud(committeeId);
         if (success) {
           print('Cloud delete succeeded for committee $committeeId');
         } else {
@@ -93,18 +94,19 @@ class AutoSyncService {
   Future<void> saveMember(Member member) async {
     // Mark as pending update to prevent real-time sync from reverting
     _realtimeSyncService.markMemberForUpdate(member.id);
-    
+
     await _dbService.saveMember(member);
 
+    // Force immediate sync after member change (bypass cooldown)
     _syncInBackground(() async {
-      await _syncService.syncMembers(member.committeeId);
+      await _syncService.syncMembers(member.committeeId, forceSync: true);
     });
   }
 
   Future<void> deleteMember(String memberId, String committeeId) async {
     // Mark as pending delete to prevent real-time sync from re-adding
     _realtimeSyncService.markMemberForDelete(memberId);
-    
+
     // Delete locally first for instant UI
     await _dbService.deleteMember(memberId);
 
@@ -140,7 +142,7 @@ class AutoSyncService {
   Future<void> savePayment(Payment payment) async {
     // Mark as pending update
     _realtimeSyncService.markPaymentForUpdate(payment.id);
-    
+
     await _dbService.savePayment(payment);
 
     _syncInBackground(() async {
@@ -157,11 +159,12 @@ class AutoSyncService {
     // Mark payment as pending to prevent real-time sync from reverting
     final paymentId = '${memberId}_${date.toIso8601String()}';
     _realtimeSyncService.markPaymentForUpdate(paymentId);
-    
+
     await _dbService.togglePayment(memberId, committeeId, date, hostId);
 
+    // Force immediate sync after payment change (bypass cooldown)
     _syncInBackground(() async {
-      await _syncService.syncPayments(committeeId);
+      await _syncService.syncPayments(committeeId, forceSync: true);
     });
   }
 
@@ -171,11 +174,16 @@ class AutoSyncService {
     try {
       final connectivity = await Connectivity().checkConnectivity();
       if (connectivity != ConnectivityResult.none) {
+        print('🌐 Network available, starting sync...');
         await syncFn();
+        print('✅ Sync completed successfully');
+      } else {
+        print('⚠️ No network connection, sync skipped');
       }
-    } catch (e) {
-      // Silently fail - data is saved locally and will sync on next refresh
-      print('Auto-sync failed (will retry on refresh): $e');
+    } catch (e, stackTrace) {
+      // Log the error with stack trace for debugging
+      print('❌ Auto-sync failed: $e');
+      print('Stack trace: $stackTrace');
     }
   }
 }

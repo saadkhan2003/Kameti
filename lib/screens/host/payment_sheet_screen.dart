@@ -52,43 +52,80 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   @override
   void initState() {
     super.initState();
-    _syncAndLoad();
+    _loadData(); // Load local data first
+    _syncInBackground(); // Sync in background
   }
 
-  Future<void> _syncAndLoad() async {
-    setState(() => _isLoading = true);
+  Future<void> _syncInBackground() async {
+    if (!mounted) return;
 
     try {
-      await _syncService.syncMembers(widget.committee.id);
-      await _syncService.syncPayments(widget.committee.id);
-    } catch (e) {
-      debugPrint('Sync error: $e');
-    }
+      debugPrint('🔄 Background sync for committee: ${widget.committee.id}');
 
-    await _loadData();
+      // Sync with longer timeout for background operation
+      await _syncService.syncMembers(widget.committee.id).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          debugPrint('⚠️ Members sync timed out');
+          return SyncCounts(uploaded: 0, downloaded: 0);
+        },
+      );
+
+      await _syncService.syncPayments(widget.committee.id).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          debugPrint('⚠️ Payments sync timed out');
+          return SyncCounts(uploaded: 0, downloaded: 0);
+        },
+      );
+
+      // Reload data after sync completes
+      if (mounted) {
+        await _loadData();
+      }
+    } catch (e) {
+      debugPrint('❌ Background sync error: $e');
+    }
   }
 
   Future<void> _loadData() async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
 
-    _members = _dbService.getMembersByCommittee(widget.committee.id);
-    _members.sort((a, b) => a.payoutOrder.compareTo(b.payoutOrder));
+    try {
+      setState(() => _isLoading = true);
+      debugPrint('📊 Loading payment sheet data...');
 
-    final allPayments = _dbService.getPaymentsByCommittee(widget.committee.id);
-    _maxCycles = _computeMaxCycles(allPayments);
+      _members = _dbService.getMembersByCommittee(widget.committee.id);
+      debugPrint('👥 Loaded ${_members.length} members');
+      _members.sort((a, b) => a.payoutOrder.compareTo(b.payoutOrder));
 
-    _selectedCycle = _dbService.getSelectedCycle(widget.committee.id);
-    if (_selectedCycle < 1) _selectedCycle = 1;
-    if (_selectedCycle > _maxCycles) {
-      _selectedCycle = _maxCycles;
-      _dbService.setSelectedCycle(widget.committee.id, _selectedCycle);
+      final allPayments =
+          _dbService.getPaymentsByCommittee(widget.committee.id);
+      debugPrint('💰 Loaded ${allPayments.length} payments');
+      _maxCycles = _computeMaxCycles(allPayments);
+      debugPrint('🔢 Max cycles: $_maxCycles');
+
+      _selectedCycle = _dbService.getSelectedCycle(widget.committee.id);
+      if (_selectedCycle < 1) _selectedCycle = 1;
+      if (_selectedCycle > _maxCycles) {
+        _selectedCycle = _maxCycles;
+        _dbService.setSelectedCycle(widget.committee.id, _selectedCycle);
+      }
+      debugPrint('📅 Selected cycle: $_selectedCycle');
+
+      _generateDates();
+      debugPrint('📆 Generated ${_dates.length} dates');
+      _loadPayments();
+      debugPrint('✅ Payment grid loaded');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error loading payment data: $e');
+      debugPrint('Stack trace: $stackTrace');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        debugPrint('🏁 Loading complete, isLoading: false');
+      }
     }
-
-    _generateDates();
-    _loadPayments();
-
-    if (mounted) setState(() => _isLoading = false);
   }
 
   DateTime _addMonths(DateTime date, int monthsToAdd) {
@@ -129,12 +166,11 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       if (periodsPerPayout < 1) periodsPerPayout = 1;
     }
 
-    final numMembers =
-        _members.isNotEmpty
-            ? _members.length
-            : (widget.committee.totalMembers > 0
-                ? widget.committee.totalMembers
-                : 0);
+    final numMembers = _members.isNotEmpty
+        ? _members.length
+        : (widget.committee.totalMembers > 0
+            ? widget.committee.totalMembers
+            : 0);
 
     if (numMembers > 0) {
       DateTime cycleStartDate;
@@ -148,11 +184,10 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         cycleStartDate = committeeStartDate.add(Duration(days: daysOffset));
       }
 
-      final effectiveStartDate =
-          (_filterStartDate != null &&
-                  _filterStartDate!.isAfter(cycleStartDate))
-              ? _filterStartDate!
-              : cycleStartDate;
+      final effectiveStartDate = (_filterStartDate != null &&
+              _filterStartDate!.isAfter(cycleStartDate))
+          ? _filterStartDate!
+          : cycleStartDate;
 
       var current = effectiveStartDate;
       for (var i = 0; i < periodsPerPayout; i++) {
@@ -237,8 +272,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       return _members.length;
     }
 
-    var farDate =
-        _dates.isNotEmpty ? _dates.last : widget.committee.startDate;
+    var farDate = _dates.isNotEmpty ? _dates.last : widget.committee.startDate;
     for (final p in payments) {
       if (p.date.isAfter(farDate)) farDate = p.date;
     }
@@ -323,10 +357,9 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       }
     }
 
-    final collectionInterval =
-        widget.committee.frequency == 'daily'
-            ? 1
-            : widget.committee.frequency == 'weekly'
+    final collectionInterval = widget.committee.frequency == 'daily'
+        ? 1
+        : widget.committee.frequency == 'weekly'
             ? 7
             : 30;
     final collectionsPerPayout =
@@ -412,106 +445,104 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   void _showDateFilterDialog() {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: Colors.white,
-            title: const Text(
-              'Filter by Date Range',
-              style: TextStyle(color: Colors.black87),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  title: const Text(
-                    'Start Date',
-                    style: TextStyle(color: Colors.black54),
-                  ),
-                  subtitle: Text(
-                    _filterStartDate != null
-                        ? DateFormat('dd/MM/yyyy').format(_filterStartDate!)
-                        : 'Kameti Start',
-                    style: const TextStyle(color: Colors.black87),
-                  ),
-                  trailing: const Icon(
-                    Icons.calendar_today,
-                    color: AppTheme.primaryColor,
-                  ),
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate:
-                          _filterStartDate ?? widget.committee.startDate,
-                      firstDate: widget.committee.startDate,
-                      lastDate: DateTime.now(),
-                    );
-                    if (date != null && mounted) {
-                      setState(() => _filterStartDate = date);
-                      _generateDates();
-                      _loadPayments();
-                      Navigator.pop(context);
-                      _showDateFilterDialog();
-                    }
-                  },
-                ),
-                ListTile(
-                  title: const Text(
-                    'End Date',
-                    style: TextStyle(color: Colors.black54),
-                  ),
-                  subtitle: Text(
-                    _filterEndDate != null
-                        ? DateFormat('dd/MM/yyyy').format(_filterEndDate!)
-                        : 'Today',
-                    style: const TextStyle(color: Colors.black87),
-                  ),
-                  trailing: const Icon(
-                    Icons.calendar_today,
-                    color: AppTheme.primaryColor,
-                  ),
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _filterEndDate ?? DateTime.now(),
-                      firstDate: widget.committee.startDate,
-                      lastDate: DateTime.now(),
-                    );
-                    if (date != null && mounted) {
-                      setState(() => _filterEndDate = date);
-                      _generateDates();
-                      _loadPayments();
-                      Navigator.pop(context);
-                      _showDateFilterDialog();
-                    }
-                  },
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _filterStartDate = null;
-                    _filterEndDate = null;
-                  });
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Filter by Date Range',
+          style: TextStyle(color: Colors.black87),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text(
+                'Start Date',
+                style: TextStyle(color: Colors.black54),
+              ),
+              subtitle: Text(
+                _filterStartDate != null
+                    ? DateFormat('dd/MM/yyyy').format(_filterStartDate!)
+                    : 'Kameti Start',
+                style: const TextStyle(color: Colors.black87),
+              ),
+              trailing: const Icon(
+                Icons.calendar_today,
+                color: AppTheme.primaryColor,
+              ),
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: _filterStartDate ?? widget.committee.startDate,
+                  firstDate: widget.committee.startDate,
+                  lastDate: DateTime.now(),
+                );
+                if (date != null && mounted) {
+                  setState(() => _filterStartDate = date);
                   _generateDates();
                   _loadPayments();
                   Navigator.pop(context);
-                },
-                child: const Text('Clear Filter'),
+                  _showDateFilterDialog();
+                }
+              },
+            ),
+            ListTile(
+              title: const Text(
+                'End Date',
+                style: TextStyle(color: Colors.black54),
               ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                ),
-                child: const Text(
-                  'Done',
-                  style: TextStyle(color: Colors.white),
-                ),
+              subtitle: Text(
+                _filterEndDate != null
+                    ? DateFormat('dd/MM/yyyy').format(_filterEndDate!)
+                    : 'Today',
+                style: const TextStyle(color: Colors.black87),
               ),
-            ],
+              trailing: const Icon(
+                Icons.calendar_today,
+                color: AppTheme.primaryColor,
+              ),
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: _filterEndDate ?? DateTime.now(),
+                  firstDate: widget.committee.startDate,
+                  lastDate: DateTime.now(),
+                );
+                if (date != null && mounted) {
+                  setState(() => _filterEndDate = date);
+                  _generateDates();
+                  _loadPayments();
+                  Navigator.pop(context);
+                  _showDateFilterDialog();
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _filterStartDate = null;
+                _filterEndDate = null;
+              });
+              _generateDates();
+              _loadPayments();
+              Navigator.pop(context);
+            },
+            child: const Text('Clear Filter'),
           ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+            ),
+            child: const Text(
+              'Done',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -522,86 +553,85 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Export Payment Sheet',
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _filterStartDate != null || _filterEndDate != null
-                      ? 'Exporting filtered range'
-                      : 'Exporting all records',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                  ),
-                  title: const Text(
-                    'Export as PDF',
-                    style: TextStyle(color: Colors.black87),
-                  ),
-                  subtitle: const Text(
-                    'Print or share as document',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    ToastService.info(context, 'Generating PDF...');
-                    await _exportService.exportToPdf(
-                      widget.committee,
-                      startDate: _filterStartDate,
-                      endDate: _filterEndDate,
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.table_chart, color: Colors.green),
-                  ),
-                  title: const Text(
-                    'Export as CSV',
-                    style: TextStyle(color: Colors.black87),
-                  ),
-                  subtitle: const Text(
-                    'Open in Excel or Google Sheets',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    ToastService.info(context, 'Generating CSV...');
-                    await _exportService.exportToCsv(
-                      widget.committee,
-                      startDate: _filterStartDate,
-                      endDate: _filterEndDate,
-                    );
-                  },
-                ),
-              ],
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Export Payment Sheet',
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
             ),
-          ),
+            const SizedBox(height: 8),
+            Text(
+              _filterStartDate != null || _filterEndDate != null
+                  ? 'Exporting filtered range'
+                  : 'Exporting all records',
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.picture_as_pdf, color: Colors.red),
+              ),
+              title: const Text(
+                'Export as PDF',
+                style: TextStyle(color: Colors.black87),
+              ),
+              subtitle: const Text(
+                'Print or share as document',
+                style: TextStyle(color: Colors.grey),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                ToastService.info(context, 'Generating PDF...');
+                await _exportService.exportToPdf(
+                  widget.committee,
+                  startDate: _filterStartDate,
+                  endDate: _filterEndDate,
+                );
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.table_chart, color: Colors.green),
+              ),
+              title: const Text(
+                'Export as CSV',
+                style: TextStyle(color: Colors.black87),
+              ),
+              subtitle: const Text(
+                'Open in Excel or Google Sheets',
+                style: TextStyle(color: Colors.grey),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                ToastService.info(context, 'Generating CSV...');
+                await _exportService.exportToCsv(
+                  widget.committee,
+                  startDate: _filterStartDate,
+                  endDate: _filterEndDate,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -630,10 +660,9 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
           IconButton(
             icon: Icon(
               Icons.date_range,
-              color:
-                  (_filterStartDate != null || _filterEndDate != null)
-                      ? AppTheme.primaryColor
-                      : Colors.black87,
+              color: (_filterStartDate != null || _filterEndDate != null)
+                  ? AppTheme.primaryColor
+                  : Colors.black87,
             ),
             tooltip: 'Filter by Date',
             onPressed: _showDateFilterDialog,
@@ -646,221 +675,217 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _members.isEmpty
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _members.isEmpty
               ? _buildEmptyState()
               : Column(
-                children: [
-                  Builder(
-                    builder: (context) {
-                      final stats = _calculateCurrentStats();
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[200]!),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildStatItem(
-                                    icon: Icons.check_circle,
-                                    color: AppTheme.secondaryColor,
-                                    value: '${stats['totalPaid']}',
-                                    label: 'Paid',
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _buildStatItem(
-                                    icon: Icons.cancel,
-                                    color: Colors.grey[500]!,
-                                    value: '${stats['totalUnpaid']}',
-                                    label: 'Unpaid',
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _buildStatItem(
-                                    icon: Icons.today,
-                                    color: Colors.blue[400]!,
-                                    value:
-                                        'PKR ${(stats['currentCycleCollected'] as double).toInt()}',
-                                    label:
-                                        'Amount of\n(${stats['daysElapsed']} days)',
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
+                  children: [
+                    Builder(
+                      builder: (context) {
+                        final stats = _calculateCurrentStats();
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[200]!),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
                               ),
-                              decoration: BoxDecoration(
-                                color:
-                                    (stats['totalPending'] as double) == 0
-                                        ? Colors.green.withOpacity(0.1)
-                                        : Colors.red.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
                                 children: [
-                                  Text(
-                                    (stats['totalPending'] as double) == 0
-                                        ? 'All Paid:'
-                                        : 'Pending Dues:',
-                                    style: TextStyle(
-                                      color: Colors.grey[700],
-                                      fontSize: 12,
+                                  Expanded(
+                                    child: _buildStatItem(
+                                      icon: Icons.check_circle,
+                                      color: AppTheme.secondaryColor,
+                                      value: '${stats['totalPaid']}',
+                                      label: 'Paid',
                                     ),
                                   ),
-                                  Text(
-                                    (stats['totalPending'] as double) == 0
-                                        ? 'No Pending ✓'
-                                        : 'PKR ${(stats['totalPending'] as double).toInt()}',
-                                    style: TextStyle(
-                                      color:
-                                          (stats['totalPending'] as double) == 0
-                                              ? Colors.green[700]
-                                              : Colors.red[700],
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: _buildStatItem(
+                                      icon: Icons.cancel,
+                                      color: Colors.grey[500]!,
+                                      value: '${stats['totalUnpaid']}',
+                                      label: 'Unpaid',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: _buildStatItem(
+                                      icon: Icons.today,
+                                      color: Colors.blue[400]!,
+                                      value:
+                                          'PKR ${(stats['currentCycleCollected'] as double).toInt()}',
+                                      label:
+                                          'Amount of\n(${stats['daysElapsed']} days)',
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Collection: ${widget.committee.frequency.toUpperCase()} • Payout: Every ${widget.committee.paymentIntervalDays} Days',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 10,
-                                    color: Colors.grey[500],
-                                  ),
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-
-                  if (_members.isNotEmpty)
-                    Center(
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppTheme.primaryColor.withOpacity(0.2),
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primaryColor.withOpacity(0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<int>(
-                            value: _selectedCycle,
-                            isDense: true,
-                            icon: const Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: AppTheme.primaryColor,
-                              size: 20,
-                            ),
-                            style: GoogleFonts.inter(
-                              color: Colors.black87,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            dropdownColor: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            elevation: 4,
-                            menuMaxHeight: 300,
-                            items: List.generate(
-                              _maxCycles,
-                              (i) => DropdownMenuItem<int>(
-                                value: i + 1,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
+                                decoration: BoxDecoration(
+                                  color: (stats['totalPending'] as double) == 0
+                                      ? Colors.green.withOpacity(0.1)
+                                      : Colors.red.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      (stats['totalPending'] as double) == 0
+                                          ? 'All Paid:'
+                                          : 'Pending Dues:',
+                                      style: TextStyle(
+                                        color: Colors.grey[700],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      (stats['totalPending'] as double) == 0
+                                          ? 'No Pending ✓'
+                                          : 'PKR ${(stats['totalPending'] as double).toInt()}',
+                                      style: TextStyle(
+                                        color:
+                                            (stats['totalPending'] as double) ==
+                                                    0
+                                                ? Colors.green[700]
+                                                : Colors.red[700],
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Collection: ${widget.committee.frequency.toUpperCase()} • Payout: Every ${widget.committee.paymentIntervalDays} Days',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      color: Colors.grey[500],
+                                    ),
                                   ),
-                                  child: Text(
-                                    'Payout ${i + 1}',
-                                    style: TextStyle(
-                                      color:
-                                          (i + 1) == _selectedCycle
-                                              ? AppTheme.primaryColor
-                                              : Colors.black87,
-                                      fontWeight:
-                                          (i + 1) == _selectedCycle
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    if (_members.isNotEmpty)
+                      Center(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppTheme.primaryColor.withOpacity(0.2),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryColor.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<int>(
+                              value: _selectedCycle,
+                              isDense: true,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: AppTheme.primaryColor,
+                                size: 20,
+                              ),
+                              style: GoogleFonts.inter(
+                                color: Colors.black87,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              dropdownColor: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              elevation: 4,
+                              menuMaxHeight: 300,
+                              items: List.generate(
+                                _maxCycles,
+                                (i) => DropdownMenuItem<int>(
+                                  value: i + 1,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    child: Text(
+                                      'Payout ${i + 1}',
+                                      style: TextStyle(
+                                        color: (i + 1) == _selectedCycle
+                                            ? AppTheme.primaryColor
+                                            : Colors.black87,
+                                        fontWeight: (i + 1) == _selectedCycle
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
+                              onChanged: (val) {
+                                if (val == null) return;
+                                setState(() {
+                                  _selectedCycle = val;
+                                  _dbService.setSelectedCycle(
+                                    widget.committee.id,
+                                    val,
+                                  );
+                                  _generateDates();
+                                  _loadPayments();
+                                });
+                              },
                             ),
-                            onChanged: (val) {
-                              if (val == null) return;
-                              setState(() {
-                                _selectedCycle = val;
-                                _dbService.setSelectedCycle(
-                                  widget.committee.id,
-                                  val,
-                                );
-                                _generateDates();
-                                _loadPayments();
-                              });
-                            },
                           ),
                         ),
                       ),
-                    ),
-
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
+                    Expanded(
                       child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: _buildGrid(amountPerCell),
+                        scrollDirection: Axis.vertical,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: _buildGrid(amountPerCell),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
     );
   }
 
@@ -899,15 +924,13 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
           final date = entry.value;
           final now = DateTime.now();
           final isFutureDate = date.isAfter(now);
-          final format =
-              widget.committee.frequency == 'monthly'
-                  ? DateFormat('MMM')
-                  : DateFormat('dd/MM');
+          final format = widget.committee.frequency == 'monthly'
+              ? DateFormat('MMM')
+              : DateFormat('dd/MM');
           final isTargetMet = totals[index] >= targetAmount;
 
           final daysElapsed = date.difference(startDate).inDays + 1;
-          final isPayoutDay =
-              payoutInterval > 0 &&
+          final isPayoutDay = payoutInterval > 0 &&
               daysElapsed > 0 &&
               (daysElapsed % payoutInterval == 0);
 
@@ -928,10 +951,9 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color:
-                              isFutureDate
-                                  ? Colors.blue[300]
-                                  : isPayoutDay
+                          color: isFutureDate
+                              ? Colors.blue[300]
+                              : isPayoutDay
                                   ? Colors.amber[700]
                                   : Colors.black87,
                         ),
@@ -1008,10 +1030,9 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontWeight: FontWeight.w500,
-                          color:
-                              isDefaulter
-                                  ? Colors.amber[800]
-                                  : hasAdvance
+                          color: isDefaulter
+                              ? Colors.amber[800]
+                              : hasAdvance
                                   ? Colors.blue[700]
                                   : Colors.black87,
                         ),
@@ -1051,8 +1072,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                 final receiverIndex = currentRound % _members.length;
                 final isPayoutReceiver = (receiverIndex == memberIndex);
 
-                final isPayoutDay =
-                    payoutInterval > 0 &&
+                final isPayoutDay = payoutInterval > 0 &&
                     ((daysElapsed + 1) % payoutInterval == 0);
                 final isPayoutCell = isPayoutReceiver && isPayoutDay;
 
@@ -1066,25 +1086,22 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                         color:
                             isPaid ? AppTheme.secondaryColor : Colors.grey[200],
                         borderRadius: BorderRadius.circular(6),
-                        border:
-                            isPayoutCell
-                                ? Border.all(color: Colors.amber, width: 2)
-                                : Border.all(
-                                  color:
-                                      isPaid
-                                          ? AppTheme.secondaryColor
-                                          : Colors.grey[300]!,
-                                  width: 1,
+                        border: isPayoutCell
+                            ? Border.all(color: Colors.amber, width: 2)
+                            : Border.all(
+                                color: isPaid
+                                    ? AppTheme.secondaryColor
+                                    : Colors.grey[300]!,
+                                width: 1,
+                              ),
+                        boxShadow: isPayoutCell
+                            ? [
+                                BoxShadow(
+                                  color: Colors.amber.withOpacity(0.3),
+                                  blurRadius: 4,
                                 ),
-                        boxShadow:
-                            isPayoutCell
-                                ? [
-                                  BoxShadow(
-                                    color: Colors.amber.withOpacity(0.3),
-                                    blurRadius: 4,
-                                  ),
-                                ]
-                                : null,
+                              ]
+                            : null,
                       ),
                       child: Stack(
                         alignment: Alignment.center,
@@ -1124,10 +1141,9 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        isDefaulter
-                            ? Colors.red.withOpacity(0.1)
-                            : hasAdvance
+                    color: isDefaulter
+                        ? Colors.red.withOpacity(0.1)
+                        : hasAdvance
                             ? Colors.blue.withOpacity(0.1)
                             : Colors.green.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
@@ -1209,10 +1225,9 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color:
-                      _calculateTotalDebt() > 0
-                          ? Colors.red.withOpacity(0.1)
-                          : Colors.green.withOpacity(0.1),
+                  color: _calculateTotalDebt() > 0
+                      ? Colors.red.withOpacity(0.1)
+                      : Colors.green.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -1222,10 +1237,9 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color:
-                        _calculateTotalDebt() > 0
-                            ? Colors.red[700]
-                            : AppTheme.secondaryColor,
+                    color: _calculateTotalDebt() > 0
+                        ? Colors.red[700]
+                        : AppTheme.secondaryColor,
                   ),
                 ),
               ),
@@ -1293,9 +1307,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder:
-                      (_) =>
-                          MemberManagementScreen(committee: widget.committee),
+                  builder: (_) =>
+                      MemberManagementScreen(committee: widget.committee),
                 ),
               );
               _loadData();
@@ -1537,76 +1550,72 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color:
-                            isAdvancePaid
-                                ? Colors.blue.withOpacity(0.1)
-                                : isPaid
-                                ? Colors.green.withOpacity(0.1)
-                                : Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        isAdvancePaid
-                            ? Icons.star
-                            : isPaid
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isAdvancePaid
+                        ? Colors.blue.withOpacity(0.1)
+                        : isPaid
+                            ? Colors.green.withOpacity(0.1)
+                            : Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    isAdvancePaid
+                        ? Icons.star
+                        : isPaid
                             ? Icons.check_circle
                             : Icons.schedule,
-                        color:
-                            isAdvancePaid
-                                ? Colors.blue
-                                : isPaid
-                                ? Colors.green
-                                : Colors.orange,
-                        size: 28,
+                    color: isAdvancePaid
+                        ? Colors.blue
+                        : isPaid
+                            ? Colors.green
+                            : Colors.orange,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${date.day} ${_getMonthName(date.month)} ${date.year}',
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${date.day} ${_getMonthName(date.month)} ${date.year}',
-                          style: const TextStyle(
-                            color: Colors.black87,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          isAdvancePaid
-                              ? 'Paid in Advance ⭐'
-                              : isPaid
+                    Text(
+                      isAdvancePaid
+                          ? 'Paid in Advance ⭐'
+                          : isPaid
                               ? 'Payment Completed'
                               : 'Payment Pending',
-                          style: TextStyle(
-                            color:
-                                isAdvancePaid
-                                    ? Colors.blue
-                                    : isPaid
-                                    ? Colors.green
-                                    : Colors.orange,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+                      style: TextStyle(
+                        color: isAdvancePaid
+                            ? Colors.blue
+                            : isPaid
+                                ? Colors.green
+                                : Colors.orange,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
-          ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1733,7 +1742,6 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
               ],
             ),
           ),
-
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -1777,30 +1785,27 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
               ],
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
-              children:
-                  weekDays
-                      .map(
-                        (day) => Expanded(
-                          child: Center(
-                            child: Text(
-                              day,
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+              children: weekDays
+                  .map(
+                    (day) => Expanded(
+                      child: Center(
+                        child: Text(
+                          day,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      )
-                      .toList(),
+                      ),
+                    ),
+                  )
+                  .toList(),
             ),
           ),
-
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1817,8 +1822,7 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
                   final now = DateTime.now();
                   final isFutureDate = date.isAfter(now);
                   final isPaymentDate = _isPaymentDateForMember(date);
-                  final isPaid =
-                      isPaymentDate &&
+                  final isPaid = isPaymentDate &&
                       widget.isPaymentMarked(widget.member.id, date);
                   final isAdvancePaid = isPaid && isFutureDate;
                   final isCurrentMonth = _isInCurrentMonth(date);
@@ -1837,22 +1841,22 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color:
-                            isSelected
-                                ? AppTheme.primaryColor.withOpacity(0.3)
-                                : (isAdvancePaid && isCurrentMonth)
+                        color: isSelected
+                            ? AppTheme.primaryColor.withOpacity(0.3)
+                            : (isAdvancePaid && isCurrentMonth)
                                 ? Colors.blue.withOpacity(0.1)
                                 : (isPaid && isCurrentMonth)
-                                ? Colors.green.withOpacity(0.1)
-                                : (isPaymentDate && isCurrentMonth && !isPaid)
-                                ? Colors.orange.withOpacity(0.1)
-                                : Colors.white,
+                                    ? Colors.green.withOpacity(0.1)
+                                    : (isPaymentDate &&
+                                            isCurrentMonth &&
+                                            !isPaid)
+                                        ? Colors.orange.withOpacity(0.1)
+                                        : Colors.white,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color:
-                              isToday
-                                  ? AppTheme.primaryColor
-                                  : isPaymentDate && isCurrentMonth
+                          color: isToday
+                              ? AppTheme.primaryColor
+                              : isPaymentDate && isCurrentMonth
                                   ? Colors.grey[300]!
                                   : Colors.transparent,
                           width: isToday ? 2 : 1,
@@ -1864,10 +1868,9 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
                           Text(
                             '${date.day}',
                             style: TextStyle(
-                              color:
-                                  isCurrentMonth
-                                      ? Colors.black87
-                                      : Colors.grey[300],
+                              color: isCurrentMonth
+                                  ? Colors.black87
+                                  : Colors.grey[300],
                               fontWeight:
                                   isToday ? FontWeight.bold : FontWeight.normal,
                             ),
@@ -1890,7 +1893,6 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
               ),
             ),
           ),
-
           Padding(
             padding: EdgeInsets.fromLTRB(
               16,
@@ -1905,11 +1907,10 @@ class _MemberCalendarViewState extends State<_MemberCalendarView> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder:
-                          (context) => MemberDashboardScreen(
-                            committee: widget.committee,
-                            member: widget.member,
-                          ),
+                      builder: (context) => MemberDashboardScreen(
+                        committee: widget.committee,
+                        member: widget.member,
+                      ),
                     ),
                   );
                 },

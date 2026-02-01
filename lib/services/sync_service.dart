@@ -9,11 +9,16 @@ class SyncService {
   final FirebaseFirestore _firestore;
   final DatabaseService _dbService;
 
+  // Cache last sync times to avoid redundant syncs
+  static final Map<String, DateTime> _lastMemberSync = {};
+  static final Map<String, DateTime> _lastPaymentSync = {};
+  static const Duration _syncCooldown = Duration(minutes: 5);
+
   SyncService({
     FirebaseFirestore? firestore,
     DatabaseService? dbService,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _dbService = dbService ?? DatabaseService();
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _dbService = dbService ?? DatabaseService();
 
   // Collection names
   static const String committeesCollection = 'committees';
@@ -44,14 +49,14 @@ class SyncService {
 
       // Get all committees to sync
       final committees = _dbService.getHostedCommittees(hostId);
-      
+
       // Sync all members and payments in PARALLEL for speed
       final futures = <Future<SyncCounts>>[];
       for (final committee in committees) {
         futures.add(syncMembers(committee.id));
         futures.add(syncPayments(committee.id));
       }
-      
+
       // Wait for all parallel syncs to complete
       final results = await Future.wait(futures);
       for (final result in results) {
@@ -81,7 +86,8 @@ class SyncService {
     if (localCommittees.isNotEmpty) {
       final batch = _firestore.batch();
       for (final committee in localCommittees) {
-        final docRef = _firestore.collection(committeesCollection).doc(committee.id);
+        final docRef =
+            _firestore.collection(committeesCollection).doc(committee.id);
         batch.set(docRef, committee.toJson());
         uploaded++;
       }
@@ -89,11 +95,10 @@ class SyncService {
     }
 
     // Download committees from Firestore
-    final snapshot =
-        await _firestore
-            .collection(committeesCollection)
-            .where('hostId', isEqualTo: hostId)
-            .get();
+    final snapshot = await _firestore
+        .collection(committeesCollection)
+        .where('hostId', isEqualTo: hostId)
+        .get();
 
     for (final doc in snapshot.docs) {
       final cloudCommittee = Committee.fromJson(doc.data());
@@ -112,11 +117,21 @@ class SyncService {
 
   // ============ MEMBER SYNC ============
 
-  Future<SyncCounts> syncMembers(String committeeId) async {
+  Future<SyncCounts> syncMembers(String committeeId,
+      {bool forceSync = false}) async {
+    // Check if we synced recently (skip if within cooldown)
+    if (!forceSync && _lastMemberSync.containsKey(committeeId)) {
+      final timeSinceLastSync =
+          DateTime.now().difference(_lastMemberSync[committeeId]!);
+      if (timeSinceLastSync < _syncCooldown) {
+        return SyncCounts(uploaded: 0, downloaded: 0);
+      }
+    }
+
     var uploaded = 0;
     var downloaded = 0;
 
-    // Upload local members to Firestore using batch (faster)
+    // Skip upload if no local members (optimization)
     final localMembers = _dbService.getMembersByCommittee(committeeId);
     if (localMembers.isNotEmpty) {
       final batch = _firestore.batch();
@@ -129,11 +144,10 @@ class SyncService {
     }
 
     // Download members from Firestore
-    final snapshot =
-        await _firestore
-            .collection(membersCollection)
-            .where('committeeId', isEqualTo: committeeId)
-            .get();
+    final snapshot = await _firestore
+        .collection(membersCollection)
+        .where('committeeId', isEqualTo: committeeId)
+        .get();
 
     for (final doc in snapshot.docs) {
       final cloudMember = Member.fromJson(doc.data());
@@ -141,25 +155,30 @@ class SyncService {
 
       // Check if cloud is newer - compare payout status
       var shouldDownload = false;
-      
+
       if (localMember == null) {
         shouldDownload = true;
       } else {
         // Compare payout status
         if (cloudMember.hasReceivedPayout != localMember.hasReceivedPayout) {
           // Payout status differs - use timestamps to decide
-          if (cloudMember.payoutDate != null && localMember.payoutDate != null) {
+          if (cloudMember.payoutDate != null &&
+              localMember.payoutDate != null) {
             // Both have dates - take newer
-            shouldDownload = cloudMember.payoutDate!.isAfter(localMember.payoutDate!);
-          } else if (cloudMember.payoutDate != null && localMember.payoutDate == null) {
+            shouldDownload =
+                cloudMember.payoutDate!.isAfter(localMember.payoutDate!);
+          } else if (cloudMember.payoutDate != null &&
+              localMember.payoutDate == null) {
             // Cloud has payout, local doesn't - cloud marked payout
             shouldDownload = true;
-          } else if (cloudMember.payoutDate == null && localMember.payoutDate != null) {
+          } else if (cloudMember.payoutDate == null &&
+              localMember.payoutDate != null) {
             // Cloud was REVERTED - download the reverted state
             shouldDownload = true;
           } else {
             // Both null - compare hasReceivedPayout directly
-            shouldDownload = cloudMember.hasReceivedPayout != localMember.hasReceivedPayout;
+            shouldDownload =
+                cloudMember.hasReceivedPayout != localMember.hasReceivedPayout;
           }
         }
         // Also check for payoutOrder changes
@@ -167,7 +186,8 @@ class SyncService {
           shouldDownload = true;
         }
         // Also check for name/phone changes
-        if (cloudMember.name != localMember.name || cloudMember.phone != localMember.phone) {
+        if (cloudMember.name != localMember.name ||
+            cloudMember.phone != localMember.phone) {
           shouldDownload = true;
         }
       }
@@ -178,41 +198,74 @@ class SyncService {
       }
     }
 
+    // Update last sync time
+    _lastMemberSync[committeeId] = DateTime.now();
+
     return SyncCounts(uploaded: uploaded, downloaded: downloaded);
   }
 
   // ============ PAYMENT SYNC ============
 
-  Future<SyncCounts> syncPayments(String committeeId) async {
+  Future<SyncCounts> syncPayments(String committeeId,
+      {bool forceSync = false}) async {
+    // Check if we synced recently (skip if within cooldown)
+    if (!forceSync && _lastPaymentSync.containsKey(committeeId)) {
+      final timeSinceLastSync =
+          DateTime.now().difference(_lastPaymentSync[committeeId]!);
+      if (timeSinceLastSync < _syncCooldown) {
+        return SyncCounts(uploaded: 0, downloaded: 0);
+      }
+    }
+
     var uploaded = 0;
     var downloaded = 0;
 
-    // Upload local payments to Firestore using batch (faster)
+    // Upload local payments to Firestore
     final localPayments = _dbService.getPaymentsByCommittee(committeeId);
+    print('💾 Found ${localPayments.length} local payments to upload');
+    
+    if (localPayments.isEmpty) {
+      print('⚠️ No local payments to upload');
+    }
+    
     if (localPayments.isNotEmpty) {
       // Firebase batch limit is 500, so chunk if needed
       final chunks = <List<dynamic>>[];
       for (var i = 0; i < localPayments.length; i += 500) {
         chunks.add(localPayments.skip(i).take(500).toList());
       }
-      
+
       for (final chunk in chunks) {
         final batch = _firestore.batch();
         for (final payment in chunk) {
-          final docRef = _firestore.collection(paymentsCollection).doc(payment.id);
+          final docRef =
+              _firestore.collection(paymentsCollection).doc(payment.id);
           batch.set(docRef, payment.toJson());
           uploaded++;
         }
-        await batch.commit();
+        try {
+          await batch.commit();
+          print('✅ Uploaded ${chunk.length} payments to Firebase');
+        } catch (e) {
+          print('❌ ❌ ❌ FIREBASE UPLOAD FAILED ❌ ❌ ❌');
+          print('Error: $e');
+          print('This usually means:');
+          print('1. Firestore security rules are blocking writes');
+          print('2. User is not authenticated');
+          print('3. Network/connection issue');
+          rethrow;
+        }
       }
     }
 
     // Download payments from Firestore
-    final snapshot =
-        await _firestore
-            .collection(paymentsCollection)
-            .where('committeeId', isEqualTo: committeeId)
-            .get();
+    print('📥 Downloading payments from Firebase...');
+    final snapshot = await _firestore
+        .collection(paymentsCollection)
+        .where('committeeId', isEqualTo: committeeId)
+        .get();
+    
+    print('📦 Found ${snapshot.docs.length} payments in Firebase');
 
     for (final doc in snapshot.docs) {
       final cloudPayment = Payment.fromJson(doc.data());
@@ -222,19 +275,29 @@ class SyncService {
       );
 
       var shouldDownload = false;
-      
+
       if (existingPayment == null) {
         shouldDownload = true;
+        print('⬇️ New payment from cloud: ${doc.id}');
       } else if (cloudPayment.isPaid != existingPayment.isPaid) {
         // Payment status changed - compare timestamps
         if (cloudPayment.markedAt != null && existingPayment.markedAt != null) {
-          shouldDownload = cloudPayment.markedAt!.isAfter(existingPayment.markedAt!);
+          shouldDownload =
+              cloudPayment.markedAt!.isAfter(existingPayment.markedAt!);
+          if (shouldDownload) {
+            print('⬇️ Cloud payment is newer: ${doc.id} (cloud: ${cloudPayment.markedAt}, local: ${existingPayment.markedAt})');
+          } else {
+            print('⏭️ Local payment is newer: ${doc.id}, keeping local');
+          }
         } else if (cloudPayment.markedAt != null) {
           shouldDownload = true;
+          print('⬇️ Cloud has timestamp, local does not: ${doc.id}');
         }
-      } else if (cloudPayment.markedAt != null && existingPayment.markedAt != null) {
+      } else if (cloudPayment.markedAt != null &&
+          existingPayment.markedAt != null) {
         // Same status but check if cloud is newer
-        shouldDownload = cloudPayment.markedAt!.isAfter(existingPayment.markedAt!);
+        shouldDownload =
+            cloudPayment.markedAt!.isAfter(existingPayment.markedAt!);
       }
 
       if (shouldDownload) {
@@ -242,6 +305,9 @@ class SyncService {
         downloaded++;
       }
     }
+
+    // Update last sync time
+    _lastPaymentSync[committeeId] = DateTime.now();
 
     return SyncCounts(uploaded: uploaded, downloaded: downloaded);
   }
@@ -259,21 +325,19 @@ class SyncService {
           .delete();
 
       // Delete all members of this committee
-      final membersSnapshot =
-          await _firestore
-              .collection(membersCollection)
-              .where('committeeId', isEqualTo: committeeId)
-              .get();
+      final membersSnapshot = await _firestore
+          .collection(membersCollection)
+          .where('committeeId', isEqualTo: committeeId)
+          .get();
       for (final doc in membersSnapshot.docs) {
         await doc.reference.delete();
       }
 
       // Delete all payments of this committee
-      final paymentsSnapshot =
-          await _firestore
-              .collection(paymentsCollection)
-              .where('committeeId', isEqualTo: committeeId)
-              .get();
+      final paymentsSnapshot = await _firestore
+          .collection(paymentsCollection)
+          .where('committeeId', isEqualTo: committeeId)
+          .get();
       for (final doc in paymentsSnapshot.docs) {
         await doc.reference.delete();
       }
@@ -291,17 +355,13 @@ class SyncService {
     if (!await isOnline()) return false;
 
     try {
-      await _firestore
-          .collection(membersCollection)
-          .doc(memberId)
-          .delete();
+      await _firestore.collection(membersCollection).doc(memberId).delete();
 
       // Also delete related payments for this member
-      final paymentsSnapshot =
-          await _firestore
-              .collection(paymentsCollection)
-              .where('memberId', isEqualTo: memberId)
-              .get();
+      final paymentsSnapshot = await _firestore
+          .collection(paymentsCollection)
+          .where('memberId', isEqualTo: memberId)
+          .get();
       for (final doc in paymentsSnapshot.docs) {
         await doc.reference.delete();
       }
@@ -321,12 +381,11 @@ class SyncService {
 
     try {
       // 1. Fetch Committee
-      final snapshot =
-          await _firestore
-              .collection(committeesCollection)
-              .where('code', isEqualTo: code)
-              .limit(1)
-              .get();
+      final snapshot = await _firestore
+          .collection(committeesCollection)
+          .where('code', isEqualTo: code)
+          .limit(1)
+          .get();
 
       if (snapshot.docs.isEmpty) return null;
 

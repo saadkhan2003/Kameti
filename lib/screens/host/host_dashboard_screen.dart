@@ -16,7 +16,7 @@ import 'package:committee_app/screens/viewer/join_committee_screen.dart';
 import 'package:committee_app/services/realtime_sync_service.dart';
 import 'package:committee_app/services/toast_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:committee_app/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -24,7 +24,8 @@ class HostDashboardScreen extends ConsumerStatefulWidget {
   const HostDashboardScreen({super.key});
 
   @override
-  ConsumerState<HostDashboardScreen> createState() => _HostDashboardScreenState();
+  ConsumerState<HostDashboardScreen> createState() =>
+      _HostDashboardScreenState();
 }
 
 class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
@@ -67,7 +68,8 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
           timer.cancel();
           if (mounted) {
             setState(() {});
-            ToastService.success(context, AppLocalizations.of(context)!.emailVerifiedSuccess);
+            ToastService.success(
+                context, AppLocalizations.of(context)!.emailVerifiedSuccess);
           }
         }
       });
@@ -174,116 +176,115 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.archive, color: AppTheme.primaryColor),
-                    const SizedBox(width: 12),
-                    Text(
-                      AppLocalizations.of(context)!.archivedKametis,
-                      style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
+                const Icon(Icons.archive, color: AppTheme.primaryColor),
+                const SizedBox(width: 12),
+                Text(
+                  AppLocalizations.of(context)!.archivedKametis,
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
-                const SizedBox(height: 16),
-                if (_archivedCommittees.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Center(
-                      child: Text(
-                        AppLocalizations.of(context)!.noArchivedKametis,
-                        style: TextStyle(color: Colors.grey[500]),
-                      ),
-                    ),
-                  )
-                else
-                  ...(_archivedCommittees
-                      .map(
-                        (committee) => ListTile(
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(Icons.group, color: Colors.grey[600]),
-                          ),
-                          title: Text(
-                            committee.name,
-                            style: const TextStyle(color: Colors.black87),
-                          ),
-                          subtitle: Text(
-                            'Archived on ${committee.archivedAt != null ? "${committee.archivedAt!.day}/${committee.archivedAt!.month}/${committee.archivedAt!.year}" : "Unknown"}',
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
-                            ),
-                          ),
-                          trailing: TextButton(
-                            onPressed: () async {
-                              await ref.read(autoSyncServiceProvider).unarchiveCommittee(
-                                committee,
-                              );
-                              _loadCommittees();
-                              if (mounted) Navigator.pop(context);
-                            },
-                            child: Text(AppLocalizations.of(context)!.restore),
-                          ),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => CommitteeDetailScreen(
-                                      committee: committee,
-                                    ),
-                              ),
-                            );
-                          },
-                        ),
-                      )
-                      .toList()),
               ],
             ),
-          ),
+            const SizedBox(height: 16),
+            if (_archivedCommittees.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Center(
+                  child: Text(
+                    AppLocalizations.of(context)!.noArchivedKametis,
+                    style: TextStyle(color: Colors.grey[500]),
+                  ),
+                ),
+              )
+            else
+              ...(_archivedCommittees
+                  .map(
+                    (committee) => ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.group, color: Colors.grey[600]),
+                      ),
+                      title: Text(
+                        committee.name,
+                        style: const TextStyle(color: Colors.black87),
+                      ),
+                      subtitle: Text(
+                        'Archived on ${committee.archivedAt != null ? "${committee.archivedAt!.day}/${committee.archivedAt!.month}/${committee.archivedAt!.year}" : "Unknown"}',
+                        style: TextStyle(
+                          color: Colors.grey[500],
+                          fontSize: 12,
+                        ),
+                      ),
+                      trailing: TextButton(
+                        onPressed: () async {
+                          await ref
+                              .read(autoSyncServiceProvider)
+                              .unarchiveCommittee(
+                                committee,
+                              );
+                          _loadCommittees();
+                          if (mounted) Navigator.pop(context);
+                        },
+                        child: Text(AppLocalizations.of(context)!.restore),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CommitteeDetailScreen(
+                              committee: committee,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                  .toList()),
+          ],
+        ),
+      ),
     );
   }
 
   Future<void> _archiveCommittee(Committee committee) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: Colors.white,
-            title: Text(AppLocalizations.of(context)!.archiveKametiTitle),
-            content: Text(
-              AppLocalizations.of(context)!.archiveKametiContent(committee.name),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(AppLocalizations.of(context)!.cancel),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                ),
-                child: Text(AppLocalizations.of(context)!.archive),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: Text(AppLocalizations.of(context)!.archiveKametiTitle),
+        content: Text(
+          AppLocalizations.of(context)!.archiveKametiContent(committee.name),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+            ),
+            child: Text(AppLocalizations.of(context)!.archive),
+          ),
+        ],
+      ),
     );
 
     if (confirm == true) {
@@ -292,11 +293,14 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.kametiArchived(committee.name)),
+            content: Text(
+                AppLocalizations.of(context)!.kametiArchived(committee.name)),
             action: SnackBarAction(
               label: AppLocalizations.of(context)!.undo,
               onPressed: () async {
-                await ref.read(autoSyncServiceProvider).unarchiveCommittee(committee);
+                await ref
+                    .read(autoSyncServiceProvider)
+                    .unarchiveCommittee(committee);
                 _loadCommittees();
               },
             ),
@@ -309,35 +313,37 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
   Future<void> _deleteCommittee(Committee committee) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: Colors.white,
-            title: Text(AppLocalizations.of(context)!.deleteKametiTitle),
-            content: Text(
-              AppLocalizations.of(context)!.deleteKametiContent(committee.name),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(AppLocalizations.of(context)!.cancel),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.errorColor,
-                ),
-                child: Text(AppLocalizations.of(context)!.delete),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: Text(AppLocalizations.of(context)!.deleteKametiTitle),
+        content: Text(
+          AppLocalizations.of(context)!.deleteKametiContent(committee.name),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorColor,
+            ),
+            child: Text(AppLocalizations.of(context)!.delete),
+          ),
+        ],
+      ),
     );
 
     if (confirm == true) {
       final hostId = ref.read(authServiceProvider).currentUser?.uid ?? '';
-      await ref.read(autoSyncServiceProvider).deleteCommittee(committee.id, hostId);
+      await ref
+          .read(autoSyncServiceProvider)
+          .deleteCommittee(committee.id, hostId);
       _loadCommittees();
       if (mounted) {
-        ToastService.error(context, AppLocalizations.of(context)!.kametiDeleted(committee.name));
+        ToastService.error(context,
+            AppLocalizations.of(context)!.kametiDeleted(committee.name));
       }
     }
   }
@@ -363,12 +369,11 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
             fontWeight: FontWeight.bold,
           ),
           leading: Builder(
-            builder:
-                (context) => IconButton(
-                  icon: const Icon(Icons.menu, color: Colors.black87),
-                  tooltip: 'Menu',
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu, color: Colors.black87),
+              tooltip: 'Menu',
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
           ),
         ),
         drawer: _buildDrawer(context),
@@ -421,7 +426,9 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
                       ),
                       TextButton(
                         onPressed: () async {
-                          await ref.read(authServiceProvider).sendEmailVerification();
+                          await ref
+                              .read(authServiceProvider)
+                              .sendEmailVerification();
                           if (mounted) {
                             ToastService.success(
                               context,
@@ -476,7 +483,6 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
                   ],
                 ),
               ),
-
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -536,7 +542,8 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  AppLocalizations.of(context)!.viewKametiPayments,
+                                  AppLocalizations.of(context)!
+                                      .viewKametiPayments,
                                   style: GoogleFonts.inter(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -556,7 +563,6 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
                   ),
                 ),
               ),
-
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -577,7 +583,8 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
                       TextButton.icon(
                         onPressed: () => _showArchivedSheet(),
                         icon: const Icon(Icons.archive_outlined, size: 18),
-                        label: Text('${AppLocalizations.of(context)!.archivedSection} (${_archivedCommittees.length})'),
+                        label: Text(
+                            '${AppLocalizations.of(context)!.archivedSection} (${_archivedCommittees.length})'),
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.grey[600],
                         ),
@@ -585,21 +592,18 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
                   ],
                 ),
               ),
-
               if (_activeCommittees.isEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 40),
                   child: _buildEmptyState(),
                 )
               else
-                ..._activeCommittees
-                    .map(
-                      (committee) => Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildCommitteeCard(committee),
-                      ),
-                    )
-                    ,
+                ..._activeCommittees.map(
+                  (committee) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildCommitteeCard(committee),
+                  ),
+                ),
             ],
           ),
         ),
@@ -675,7 +679,6 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
               ],
             ),
           ),
-
           ListTile(
             leading: Icon(Icons.person_outline, color: Colors.grey[700]),
             title: Text(
@@ -690,9 +693,7 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
               );
             },
           ),
-
           const Divider(color: Colors.black12),
-
           ListTile(
             leading: Icon(Icons.info_outline, color: Colors.grey[700]),
             title: Text(
@@ -707,7 +708,6 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
               );
             },
           ),
-
           ListTile(
             leading: Icon(Icons.settings_outlined, color: Colors.grey[700]),
             title: Text(
@@ -722,7 +722,6 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
               );
             },
           ),
-
           ListTile(
             leading: Icon(Icons.article_outlined, color: Colors.grey[700]),
             title: Text(
@@ -737,7 +736,6 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
               );
             },
           ),
-
           ListTile(
             leading: Icon(Icons.privacy_tip_outlined, color: Colors.grey[700]),
             title: Text(
@@ -754,7 +752,6 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
               );
             },
           ),
-
           ListTile(
             leading: Icon(Icons.mail_outline, color: Colors.grey[700]),
             title: Text(
@@ -769,9 +766,7 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
               );
             },
           ),
-
           const Divider(color: Colors.black12),
-
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.redAccent),
             title: Text(
@@ -814,7 +809,8 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
   }
 
   Widget _buildCommitteeCard(Committee committee) {
-    final members = ref.read(databaseServiceProvider).getMembersByCommittee(committee.id);
+    final members =
+        ref.read(databaseServiceProvider).getMembersByCommittee(committee.id);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -903,40 +899,39 @@ class _HostDashboardScreenState extends ConsumerState<HostDashboardScreen>
                     _deleteCommittee(committee);
                   }
                 },
-                itemBuilder:
-                    (context) => [
-                      const PopupMenuItem(
-                        value: 'archive',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.archive_outlined,
-                              size: 20,
-                              color: Colors.black87,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Archive',
-                              style: TextStyle(color: Colors.black87),
-                            ),
-                          ],
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'archive',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.archive_outlined,
+                          size: 20,
+                          color: Colors.black87,
                         ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.delete_outline,
-                              size: 20,
-                              color: Colors.red,
-                            ),
-                            SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: Colors.red)),
-                          ],
+                        SizedBox(width: 8),
+                        Text(
+                          'Archive',
+                          style: TextStyle(color: Colors.black87),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.delete_outline,
+                          size: 20,
+                          color: Colors.red,
+                        ),
+                        SizedBox(width: 8),
+                        Text('Delete', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

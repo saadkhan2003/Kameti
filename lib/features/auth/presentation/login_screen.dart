@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:committee_app/l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:committee_app/core/providers/service_providers.dart';
 import 'package:committee_app/services/analytics_service.dart';
@@ -52,17 +52,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       if (_isLogin) {
-        await ref
-            .read(authServiceProvider)
-            .signIn(
+        await ref.read(authServiceProvider).signIn(
               email: _emailController.text.trim(),
               password: _passwordController.text,
             );
         AnalyticsService.logLogin();
       } else {
-        await ref
-            .read(authServiceProvider)
-            .signUp(
+        await ref.read(authServiceProvider).signUp(
               email: _emailController.text.trim(),
               password: _passwordController.text,
               displayName: _nameController.text.trim(),
@@ -138,71 +134,71 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: AppTheme.darkCard,
-            title: Text(AppLocalizations.of(context)!.resetPassword),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  AppLocalizations.of(context)!.resetPasswordDesc,
-                  style: TextStyle(color: Colors.grey[400]),
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.darkCard,
+        title: Text(AppLocalizations.of(context)!.resetPassword),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              AppLocalizations.of(context)!.resetPasswordDesc,
+              style: TextStyle(color: Colors.grey[400]),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: resetEmailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.email,
+                prefixIcon: const Icon(Icons.email_outlined),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[600]!),
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: resetEmailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context)!.email,
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[600]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppTheme.primaryColor,
-                        width: 2,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: AppTheme.darkSurface,
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppTheme.primaryColor,
+                    width: 2,
                   ),
                 ),
-              ],
+                filled: true,
+                fillColor: AppTheme.darkSurface,
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(AppLocalizations.of(context)!.cancel),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final email = resetEmailController.text.trim();
-                  if (email.isEmpty) {
-                    ToastService.warning(context, AppLocalizations.of(context)!.enterEmail);
-                    return;
-                  }
-
-                  try {
-                    await ref.read(authServiceProvider).resetPassword(email);
-                    if (mounted) {
-                      Navigator.pop(context);
-                      ToastService.success(
-                        context,
-                        AppLocalizations.of(context)!.passwordResetSent(email),
-                      );
-                    }
-                  } catch (e) {
-                    ToastService.error(context, e.toString());
-                  }
-                },
-                child: Text(AppLocalizations.of(context)!.sendResetLink),
-              ),
-            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
+          ElevatedButton(
+            onPressed: () async {
+              final email = resetEmailController.text.trim();
+              if (email.isEmpty) {
+                ToastService.warning(
+                    context, AppLocalizations.of(context)!.enterEmail);
+                return;
+              }
+
+              try {
+                await ref.read(authServiceProvider).resetPassword(email);
+                if (mounted) {
+                  Navigator.pop(context);
+                  ToastService.success(
+                    context,
+                    AppLocalizations.of(context)!.passwordResetSent(email),
+                  );
+                }
+              } catch (e) {
+                ToastService.error(context, e.toString());
+              }
+            },
+            child: Text(AppLocalizations.of(context)!.sendResetLink),
+          ),
+        ],
+      ),
     );
   }
 
@@ -210,7 +206,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isLogin ? AppLocalizations.of(context)!.hostLogin : AppLocalizations.of(context)!.createAccount),
+        title: Text(_isLogin
+            ? AppLocalizations.of(context)!.hostLogin
+            : AppLocalizations.of(context)!.createAccount),
         backgroundColor: Colors.transparent,
       ),
       body: Container(
@@ -246,7 +244,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   Text(
-                    _isLogin ? AppLocalizations.of(context)!.welcomeBack : AppLocalizations.of(context)!.createYourAccount,
+                    _isLogin
+                        ? AppLocalizations.of(context)!.welcomeBack
+                        : AppLocalizations.of(context)!.createYourAccount,
                     style: GoogleFonts.inter(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -300,12 +300,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Name Field (only for signup)
                   if (!_isLogin) ...[
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: InputDecoration(
-                          labelText: AppLocalizations.of(context)!.fullName,
-                          prefixIcon: const Icon(Icons.person_outline),
-                        ),
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.fullName,
+                        prefixIcon: const Icon(Icons.person_outline),
+                      ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return AppLocalizations.of(context)!.pleaseEnterName;
@@ -360,7 +360,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return AppLocalizations.of(context)!.pleaseEnterPassword;
+                        return AppLocalizations.of(context)!
+                            .pleaseEnterPassword;
                       }
                       if (value.length < 6) {
                         return AppLocalizations.of(context)!.passwordMinLength;
@@ -376,17 +377,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 18),
                     ),
-                    child:
-                        _isLoading
-                            ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                            : Text(_isLogin ? AppLocalizations.of(context)!.signIn : AppLocalizations.of(context)!.createAccount),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(_isLogin
+                            ? AppLocalizations.of(context)!.signIn
+                            : AppLocalizations.of(context)!.createAccount),
                   ),
 
                   // Forgot Password (only in login mode)
@@ -420,7 +422,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           });
                         },
                         child: Text(
-                          _isLogin ? AppLocalizations.of(context)!.signUp : AppLocalizations.of(context)!.signIn,
+                          _isLogin
+                              ? AppLocalizations.of(context)!.signUp
+                              : AppLocalizations.of(context)!.signIn,
                           style: const TextStyle(
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.w600,
@@ -449,51 +453,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Google Sign-In Button
                   OutlinedButton(
-                    onPressed:
-                        _isLoading
-                            ? () {}
-                            : _signInWithGoogle, // Empty function instead of null
+                    onPressed: _isLoading
+                        ? () {}
+                        : _signInWithGoogle, // Empty function instead of null
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: BorderSide(color: Colors.grey[400]!, width: 1.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      backgroundColor:
-                          _isLoading
-                              ? Colors.grey[50]
-                              : null, // Light background when loading
+                      backgroundColor: _isLoading
+                          ? Colors.grey[50]
+                          : null, // Light background when loading
                     ),
-                    child:
-                        _isLoading
-                            ? const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  height: 16,
-                                  width: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppTheme.textDark,
-                                  ),
+                    child: _isLoading
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppTheme.textDark,
                                 ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Signing in...',
-                                  style: TextStyle(
-                                    color: AppTheme.textDark,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            )
-                            : Text(
-                              AppLocalizations.of(context)!.continueWithGoogle,
-                              style: const TextStyle(
-                                color: AppTheme.textDark,
-                                fontSize: 16,
                               ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Signing in...',
+                                style: TextStyle(
+                                  color: AppTheme.textDark,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            AppLocalizations.of(context)!.continueWithGoogle,
+                            style: const TextStyle(
+                              color: AppTheme.textDark,
+                              fontSize: 16,
                             ),
+                          ),
                   ),
                 ],
               ),
