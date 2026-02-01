@@ -223,11 +223,11 @@ class SyncService {
     // Upload local payments to Firestore
     final localPayments = _dbService.getPaymentsByCommittee(committeeId);
     print('💾 Found ${localPayments.length} local payments to upload');
-    
+
     if (localPayments.isEmpty) {
       print('⚠️ No local payments to upload');
     }
-    
+
     if (localPayments.isNotEmpty) {
       // Firebase batch limit is 500, so chunk if needed
       final chunks = <List<dynamic>>[];
@@ -264,7 +264,7 @@ class SyncService {
         .collection(paymentsCollection)
         .where('committeeId', isEqualTo: committeeId)
         .get();
-    
+
     print('📦 Found ${snapshot.docs.length} payments in Firebase');
 
     for (final doc in snapshot.docs) {
@@ -285,7 +285,8 @@ class SyncService {
           shouldDownload =
               cloudPayment.markedAt!.isAfter(existingPayment.markedAt!);
           if (shouldDownload) {
-            print('⬇️ Cloud payment is newer: ${doc.id} (cloud: ${cloudPayment.markedAt}, local: ${existingPayment.markedAt})');
+            print(
+                '⬇️ Cloud payment is newer: ${doc.id} (cloud: ${cloudPayment.markedAt}, local: ${existingPayment.markedAt})');
           } else {
             print('⏭️ Local payment is newer: ${doc.id}, keeping local');
           }
