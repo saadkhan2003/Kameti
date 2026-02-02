@@ -1,0 +1,14 @@
+{
+    "name": "firestore-to-supabase-migration",
+    "version": "1.0.0",
+    "description": "Script to migrate data from Firestore to Supabase",
+    "main": "migrate.js",
+    "scripts": {
+        "start": "node migrate.js"
+    },
+    "dependencies": {
+        "firebase-admin": "^11.11.1",
+        "@supabase/supabase-js": "^2.39.0",
+        "dotenv": "^16.3.1"
+    }
+}
