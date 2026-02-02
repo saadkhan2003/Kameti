@@ -134,17 +134,8 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
     });
 
     try {
-      // 0. Ensure Authenticated (Anonymous) for Firestore Security Rules
-      // If we are not logged in (as host), sign in anonymously
-      if (!_authService.isLoggedIn) {
-        try {
-          await _authService.signInAnonymously();
-        } catch (e) {
-          print('Anonymous auth failed: $e');
-          // Proceed anyway? Or stop?
-          // If auth fails, sync will fail. But maybe we have local data.
-        }
-      }
+      // Note: With Supabase RLS, anonymous auth is not required for viewing committee data
+      // The app_config table is public, and committee viewing uses sync by code
 
       // 1. Try to fetch/sync from Firebase first (Data Freshness)
       try {

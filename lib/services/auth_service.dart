@@ -48,24 +48,20 @@ class AuthService {
     }
   }
 
-  // Sign in anonymously
-  Future<AuthResponse> signInAnonymously() async {
-    try {
-      return await _auth.signInAnonymously();
-    } catch (e) {
-      throw 'Anonymous sign in failed: ${e.toString()}';
-    }
-  }
+  // Note: signInAnonymously removed - not needed with Supabase RLS
 
   // Sign in with Google
   Future<bool> signInWithGoogle() async {
     try {
       // PROPER WAY for Flutter (Mobile & Web)
       if (kIsWeb) {
-        // Web: Redirect flow
+        // Web: Redirect flow with account picker
         await _auth.signInWithOAuth(
           OAuthProvider.google,
-          redirectTo: kIsWeb ? null : 'io.supabase.flutter://login-callback',
+          redirectTo: null,
+          queryParams: {
+            'prompt': 'select_account', // Shows account picker with existing accounts
+          },
         );
         return true; // Web flow redirects, so this might not be reached immediately
       } else {
