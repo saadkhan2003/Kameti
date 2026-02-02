@@ -136,42 +136,6 @@ flutter run
 
 ---
 
-## 🔄 Migrating from Firebase
-
-If you're migrating from an existing Firebase installation:
-
-### Migration Guide
-
-See detailed guide: [`scripts/MIGRATION_GUIDE.md`](scripts/MIGRATION_GUIDE.md)
-
-**Quick Steps:**
-
-1. **Export Firebase data**
-   ```bash
-   cd scripts
-   node export_firebase_data.js
-   ```
-
-2. **Set up Supabase** (follow steps above)
-
-3. **Migrate users**
-   ```bash
-   node migrate_users.js
-   ```
-   
-   > ⚠️ **Important**: Users must reset their passwords after migration
-
-4. **Migrate committees & data**
-   ```bash
-   node migrate.js
-   ```
-
-5. **Verify migration**
-   ```bash
-   node check_user_data.js
-   node check_committee_details.js
-   ```
-
 ---
 
 ## 🎨 Project Structure
