@@ -19,8 +19,8 @@ void main() async {
   // Initialize Hive
   await DatabaseService.initialize();
 
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
+  // Load environment variables (renamed to avoid Netlify 404 on dotfiles)
+  await dotenv.load(fileName: "assets/env");
   print('📦 Environment variables loaded');
 
   // Initialize Supabase (new backend)
