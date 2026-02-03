@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../services/auth_service.dart';
 import '../../services/analytics_service.dart';
 import '../../services/toast_service.dart';
@@ -79,28 +80,11 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           await _authService.signOut(); // Ensure no partial session
           
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => AlertDialog(
-              backgroundColor: AppTheme.darkCard,
-              title: const Text('Account Created', style: TextStyle(color: Colors.white)),
-              content: const Text(
-                'A verification link has been sent to your email.\nPlease check your inbox and verify your account to log in.',
-                style: TextStyle(color: Colors.grey),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    setState(() {
-                      _isLogin = true;
-                      _errorMessage = null;
-                    });
-                  },
-                  child: const Text('OK', style: TextStyle(color: AppTheme.primaryColor)),
-                ),
-              ],
+          // Navigate to OTP Screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+               builder: (context) => EmailVerificationScreen(email: _emailController.text.trim()),
             ),
           );
         }
@@ -216,22 +200,11 @@ class _LoginScreenState extends State<LoginScreen> {
               _errorMessage = null; // Clear any auth error
             });
             
-            // Show Verification Dialog
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                backgroundColor: AppTheme.darkCard,
-                title: const Text('Verify Your Email', style: TextStyle(color: Colors.white)),
-                content: const Text(
-                  'A verification link has been sent to your email.\nPlease check your inbox and verify your account to log in.',
-                  style: TextStyle(color: Colors.grey),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('OK', style: TextStyle(color: AppTheme.primaryColor)),
-                  ),
-                ],
+            // Navigate to OTP Screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EmailVerificationScreen(email: user.email!),
               ),
             );
           }

@@ -143,4 +143,36 @@ class AuthService {
       throw 'Update password failed: ${e.toString()}';
     }
   }
+
+  // Verify Email OTP (6-digit code)
+  Future<void> verifyEmailOtp({required String email, required String token}) async {
+    try {
+      // Try both 'signup' and 'email' types as context varies
+      try {
+        await _auth.verifyOTP(
+          token: token,
+          type: OtpType.signup,
+          email: email,
+        );
+      } catch (_) {
+        // Fallback if not a new signup
+        await _auth.verifyOTP(
+          token: token,
+          type: OtpType.email,
+          email: email,
+        );
+      }
+    } catch (e) {
+      throw 'Invalid code. Please check and try again.';
+    }
+  }
+
+  // Resend OTP
+  Future<void> resendVerificationCode(String email) async {
+    try {
+       await _auth.resend(type: OtpType.signup, email: email);
+    } catch (e) {
+      throw 'Failed to resend code: ${e.toString()}';
+    }
+  }
 }
