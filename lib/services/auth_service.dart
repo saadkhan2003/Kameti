@@ -134,4 +134,13 @@ class AuthService {
   Future<void> reloadUser() async {
     await _auth.refreshSession();
   }
+
+  // Update password (for reset flow)
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      await _auth.updateUser(UserAttributes(password: newPassword));
+    } catch (e) {
+      throw 'Update password failed: ${e.toString()}';
+    }
+  }
 }

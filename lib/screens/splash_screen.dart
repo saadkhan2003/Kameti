@@ -12,6 +12,7 @@ import '../screens/lock_screen.dart';
 import '../screens/force_update_screen.dart';
 import '../services/remote_config_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../screens/auth/reset_password_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -54,15 +55,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       if (data.event == AuthChangeEvent.passwordRecovery) {
         if (mounted) {
            WidgetsBinding.instance.addPostFrameCallback((_) {
-            // Navigate to Settings Screen (where they can change password)
-            // or show a dialog. For now, let's just let them in, 
-            // but we SHOULD ideally show a "Change Password" sheet.
-             ScaffoldMessenger.of(context).showSnackBar(
-               const SnackBar(
-                 content: Text('Please update your password in Settings'),
-                 backgroundColor: AppTheme.primaryColor,
-                 duration: Duration(seconds: 5),
-               ),
+             Navigator.of(context).pushReplacement(
+               MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
              );
            });
         }
@@ -127,8 +121,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
       final user = authService.currentUser;
       
-      // Step 3: Sync if logged in AND is a real host (not anonymous)
-      final isRealHost = user != null && !user.isAnonymous && user.email != null;
+      // Step 3: Validate Email Verification
+      bool isRealHost = user != null && !user.isAnonymous && user.email != null;
+      
+      if (isRealHost && user.emailConfirmedAt == null) {
+        debugPrint('User is unverified. Signing out override.');
+        await authService.signOut();
+        isRealHost = false; // Treat as logged out
+      }
+
+      // Step 3.5: Sync if logged in AND is a real host (and verified)
       
       if (isRealHost) {
         setState(() => _status = 'Syncing data...');
