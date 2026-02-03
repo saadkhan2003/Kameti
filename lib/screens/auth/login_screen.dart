@@ -77,12 +77,32 @@ class _LoginScreenState extends State<LoginScreen> {
         AnalyticsService.logSignUp();
         
         if (mounted) {
-          ToastService.success(context, 'Verification email sent! Please check your inbox.');
-          // Switch to login mode so they can log in after verifying
-          setState(() {
-            _isLogin = true;
-            _errorMessage = 'Please verify your email then log in.';
-          });
+          await _authService.signOut(); // Ensure no partial session
+          
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              backgroundColor: AppTheme.darkCard,
+              title: const Text('Account Created', style: TextStyle(color: Colors.white)),
+              content: const Text(
+                'A verification link has been sent to your email.\nPlease check your inbox and verify your account to log in.',
+                style: TextStyle(color: Colors.grey),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      _isLogin = true;
+                      _errorMessage = null;
+                    });
+                  },
+                  child: const Text('OK', style: TextStyle(color: AppTheme.primaryColor)),
+                ),
+              ],
+            ),
+          );
         }
       }
     } catch (e) {
