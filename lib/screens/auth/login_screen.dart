@@ -203,6 +203,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     
     try {
+      final success = await _authService.signInWithGoogle();
+      
       if (success && mounted) {
         // Enforce Email Verification
         final user = _authService.currentUser;

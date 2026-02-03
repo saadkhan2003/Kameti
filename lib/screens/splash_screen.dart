@@ -136,7 +136,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         setState(() => _status = 'Syncing data...');
         try {
           final syncService = SyncService();
-          await syncService.syncAll(user.id).timeout(
+          await syncService.syncAll(user!.id).timeout(
             const Duration(seconds: 5),
             onTimeout: () => SyncResult(success: true, message: 'Timeout'),
           );
