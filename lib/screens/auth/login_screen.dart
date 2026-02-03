@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../services/auth_service.dart';
 import '../../services/analytics_service.dart';
 import '../../services/toast_service.dart';
@@ -182,9 +183,11 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     
     try {
-      final credential = await _authService.signInWithGoogle();
+      final success = await _authService.signInWithGoogle();
       
-      if (credential != null && mounted) {
+      // On Web, the browser redirects, so we shouldn't manually navigate
+      // Only navigate on Mobile (where success = true means managed flow)
+      if (success && !kIsWeb && mounted) {
         AnalyticsService.logLogin();
         Navigator.pushReplacement(
           context,
