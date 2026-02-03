@@ -7,6 +7,7 @@ import '../../services/analytics_service.dart';
 import '../../services/toast_service.dart';
 import '../../utils/app_theme.dart';
 import '../host/host_dashboard_screen.dart';
+import 'email_verification_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool startInSignupMode;
