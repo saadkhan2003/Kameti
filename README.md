@@ -164,11 +164,7 @@ lib/
 └── widgets/                     # Reusable components
 
 scripts/
-├── setup_remote_config.sql      # Remote config setup
-├── setup_security_rls.sql       # Security policies
-├── migrate_users.js             # User migration
-├── migrate.js                   # Data migration
-└── MIGRATION_GUIDE.md           # Migration docs
+└── [SQL and Setup Scripts]      # Database configuration
 
 android/                         # Android-specific code
 ios/                            # iOS-specific code
