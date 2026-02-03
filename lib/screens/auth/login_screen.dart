@@ -183,18 +183,49 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     
     try {
-      final success = await _authService.signInWithGoogle();
-      
-      // On Web, the browser redirects, so we shouldn't manually navigate
-      // Only navigate on Mobile (where success = true means managed flow)
-      if (success && !kIsWeb && mounted) {
-        AnalyticsService.logLogin();
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HostDashboardScreen(),
-          ),
-        );
+      if (success && mounted) {
+        // Enforce Email Verification
+        final user = _authService.currentUser;
+        if (user != null && user.emailConfirmedAt == null && !user.isAnonymous) {
+          await _authService.signOut(); // Prevent access
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _errorMessage = null; // Clear any auth error
+            });
+            
+            // Show Verification Dialog
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                backgroundColor: AppTheme.darkCard,
+                title: const Text('Verify Your Email', style: TextStyle(color: Colors.white)),
+                content: const Text(
+                  'A verification link has been sent to your email.\nPlease check your inbox and verify your account to log in.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('OK', style: TextStyle(color: AppTheme.primaryColor)),
+                  ),
+                ],
+              ),
+            );
+          }
+          return;
+        }
+
+        // Only navigate if verified (or anonymous/mobile managed flow)
+        if (!kIsWeb) {
+             AnalyticsService.logLogin();
+             Navigator.pushReplacement(
+               context,
+               MaterialPageRoute(
+                 builder: (context) => const HostDashboardScreen(),
+               ),
+             );
+        }
       }
     } catch (e) {
       if (mounted) {
