@@ -62,6 +62,10 @@ build/
 # 🔒 SECRETS & SENSITIVE FILES (NEVER COMMIT!)
 # ==============================================
 
+# Environment Variables
+.env
+.env.*
+assets/env
 # Environment variables
 .env
 .env.*
