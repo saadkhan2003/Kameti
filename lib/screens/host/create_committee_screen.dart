@@ -96,6 +96,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
         totalMembers: 0,
         createdAt: DateTime.now(),
         paymentIntervalDays: intervalDays,
+        totalCycles: 0,
       );
 
       await _dbService.saveCommittee(committee);

@@ -43,6 +43,9 @@ class Committee extends HiveObject {
   @HiveField(12)
   DateTime? archivedAt; // When the committee was archived
 
+  @HiveField(13)
+  int totalCycles; // Total number of cycles (rounds) for the committee
+
   Committee({
     required this.id,
     required this.code,
@@ -57,6 +60,7 @@ class Committee extends HiveObject {
     this.paymentIntervalDays = 30, // Default to monthly
     this.isArchived = false,
     this.archivedAt,
+    this.totalCycles = 0, // Default to 0
   });
 
   Map<String, dynamic> toJson() {
@@ -74,6 +78,7 @@ class Committee extends HiveObject {
       'payment_interval_days': paymentIntervalDays,
       'is_archived': isArchived,
       'archived_at': archivedAt?.toIso8601String(),
+      'total_cycles': totalCycles,
     };
   }
 
@@ -95,6 +100,7 @@ class Committee extends HiveObject {
       archivedAt: (json['archived_at'] ?? json['archivedAt']) != null
           ? DateTime.tryParse(json['archived_at'] ?? json['archivedAt'])
           : null,
+      totalCycles: json['total_cycles'] ?? json['totalCycles'] ?? 0,
     );
   }
 
@@ -109,6 +115,7 @@ class Committee extends HiveObject {
     int? paymentIntervalDays,
     bool? isArchived,
     DateTime? archivedAt,
+    int? totalCycles,
   }) {
     return Committee(
       id: id,
@@ -124,6 +131,7 @@ class Committee extends HiveObject {
       paymentIntervalDays: paymentIntervalDays ?? this.paymentIntervalDays,
       isArchived: isArchived ?? this.isArchived,
       archivedAt: archivedAt ?? this.archivedAt,
+      totalCycles: totalCycles ?? this.totalCycles,
     );
   }
 }
