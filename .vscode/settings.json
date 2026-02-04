@@ -1,0 +1,148 @@
+{
+  // Editor settings
+  "editor.formatOnSave": true,
+  "editor.wordWrap": "on",
+  "editor.linkedEditing": true,
+  "editor.cursorBlinking": "expand",
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.occurrencesHighlight": "off",
+  "editor.guides.indentation": true,
+  "editor.guides.bracketPairs": true,
+  "editor.guides.highlightActiveIndentation": true,
+  "editor.parameterHints.enabled": true,
+  "editor.hover.enabled": "on",
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": true,
+    "strings": true
+  },
+  "editor.suggestOnTriggerCharacters": true,
+  "editor.acceptSuggestionOnEnter": "on",
+  "editor.suggest.showSnippets": true,
+  "editor.suggest.showWords": true,
+  "editor.suggest.localityBonus": true,
+  "editor.wordBasedSuggestions": "allDocuments",
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": "comment",
+        "settings": {
+          "foreground": "#6c6c6c"
+        }
+      }
+    ]
+  },
+  "python.terminal.activateEnvironment": true,
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.completeFunctionParens": true,
+  "python.analysis.enableAsyncProgram": true,
+
+  // Jupyter settings
+  "jupyter.intelliSenseTimeout": 1000,
+  "jupyter.enableExtendedPythonKernelCompletions": true,
+  "jupyter.interactiveWindow.textEditor.executeSelection": true,
+  "notebook.formatOnSave.enabled": true,
+  "notebook.output.textFontFamily": "Fira Code",
+  "notebook.output.fontSize": 14,
+  "notebook.output.lineHeight": 1.6,
+
+  // Workbench settings
+  "workbench.colorTheme": "GitHub Dark High Contrast",
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.sideBar.location": "right",
+  "workbench.startupEditor": "none",
+  "workbench.editor.empty.hint": "hidden",
+  "workbench.editorAssociations": {
+    "*.docx": "default"
+  },
+  "workbench.colorCustomizations": {
+    "editorIndentGuide.background1": "#484848",
+    "editorIndentGuide.activeBackground1": "#707070"
+  },
+
+  // File settings
+  "files.autoSave": "afterDelay",
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/tmp/**": true
+  },
+
+  // Search settings
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true
+  },
+
+  // Git settings
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
+  "git.openRepositoryInParentFolders": "never",
+
+  // Terminal settings
+  "terminal.integrated.inheritEnv": false,
+  "terminal.integrated.allowChords": false,
+
+  // Explorer settings
+  "explorer.compactFolders": false,
+
+  // Other settings
+  "telemetry.telemetryLevel": "off",
+  "extensions.ignoreRecommendations": true,
+  "dart.flutterSdkPath": "C:\\src\\flutter\\bin\\flutter",
+  "chat.instructionsFilesLocations": {
+    ".github/instructions": true,
+    "/tmp/postman-collections-post-response.instructions.md": true,
+    "/tmp/postman-collections-pre-request.instructions.md": true,
+    "/tmp/postman-folder-post-response.instructions.md": true,
+    "/tmp/postman-folder-pre-request.instructions.md": true,
+    "/tmp/postman-http-request-post-response.instructions.md": true,
+    "/tmp/postman-http-request-pre-request.instructions.md": true,
+    "C:\\Users\\MUHAMM~1\\AppData\\Local\\Temp\\postman-collections-post-response.instructions.md": true,
+    "C:\\Users\\MUHAMM~1\\AppData\\Local\\Temp\\postman-collections-pre-request.instructions.md": true,
+    "C:\\Users\\MUHAMM~1\\AppData\\Local\\Temp\\postman-folder-post-response.instructions.md": true,
+    "C:\\Users\\MUHAMM~1\\AppData\\Local\\Temp\\postman-folder-pre-request.instructions.md": true,
+    "C:\\Users\\MUHAMM~1\\AppData\\Local\\Temp\\postman-http-request-post-response.instructions.md": true,
+    "C:\\Users\\MUHAMM~1\\AppData\\Local\\Temp\\postman-http-request-pre-request.instructions.md": true
+  },
+  "liveServer.settings.donotShowInfoMsg": true,
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": true,
+    "scminput": false
+  },
+  "notebook.output.textLineLimit": 500,
+  "roo-cline.allowedCommands": [
+    "npm test",
+    "npm install",
+    "tsc",
+    "git log",
+    "git diff",
+    "git show"
+  ],
+  "roo-cline.deniedCommands": [],
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  "editor.mouseWheelZoom": true,
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+  "remote.portsAttributes": {
+    "8000": {
+      "protocol": "http"
+    }
+  },
+  "postman.mcp.notifications.postmanMCP": false,
+  "geminicodeassist.project": "robust-air-bm6vf",
+  "github.copilot.nextEditSuggestions.enabled": true
+}

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Password - Kameti</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #0f3460;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            max-width: 450px;
+            width: 100%;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e94560, #533483);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #e94560, #533483);
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.3);
+        }
+
+        .logo-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #a0a0a0;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            color: #e0e0e0;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 16px;
+            padding-right: 45px;
+            background: #1a2332;
+            border: 2px solid #2d3748;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="password"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #e94560;
+            background: #1f2937;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #a0a0a0;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            transition: color 0.3s ease;
+        }
+
+        .toggle-password:hover {
+            color: #e94560;
+        }
+
+        .toggle-password svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .password-strength {
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .strength-bar {
+            height: 4px;
+            background: #2d3748;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .strength-weak .strength-fill {
+            width: 33%;
+            background: #ef4444;
+        }
+
+        .strength-medium .strength-fill {
+            width: 66%;
+            background: #f59e0b;
+        }
+
+        .strength-strong .strength-fill {
+            width: 100%;
+            background: #10b981;
+        }
+
+        .strength-text {
+            color: #a0a0a0;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            text-align: center;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            animation: scaleIn 0.5s ease;
+        }
+
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            stroke: white;
+            stroke-width: 3;
+            fill: none;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .success-title {
+            color: #10b981;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .success-text {
+            color: #a0a0a0;
+            font-size: 15px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #e94560, #533483);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #2d3748;
+            box-shadow: none;
+            margin-top: 12px;
+        }
+
+        .btn-secondary:hover {
+            background: #374151;
+        }
+
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .requirements {
+            background: #1a2332;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .requirements-title {
+            color: #e0e0e0;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .requirement {
+            color: #a0a0a0;
+            font-size: 12px;
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .requirement.met {
+            color: #10b981;
+        }
+
+        .requirement svg {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+                </svg>
+            </div>
+            <h1>Reset Password</h1>
+            <p class="subtitle">Create a new password for your account</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="resetForm">
+            <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="newPassword" placeholder="Enter new password" required>
+                    <button type="button" class="toggle-password" id="toggleBtn1">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="password-strength" id="passwordStrength">
+                    <div class="strength-bar">
+                        <div class="strength-fill"></div>
+                    </div>
+                    <span class="strength-text">Enter at least 8 characters</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="confirmPassword" placeholder="Confirm new password" required>
+                    <button type="button" class="toggle-password" id="toggleBtn2">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="requirements">
+                <div class="requirements-title">Password Requirements:</div>
+                <div class="requirement" id="req-length">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="12" r="10" opacity="0.3" />
+                    </svg>
+                    At least 8 characters
+                </div>
+                <div class="requirement" id="req-letter">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="12" r="10" opacity="0.3" />
+                    </svg>
+                    Contains a letter
+                </div>
+                <div class="requirement" id="req-number">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="12" r="10" opacity="0.3" />
+                    </svg>
+                    Contains a number
+                </div>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+                Reset Password
+            </button>
+        </form>
+
+        <div class="success-message" id="successMessage">
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+            <h2 class="success-title">Password Reset Successful!</h2>
+            <p class="success-text">Your password has been updated successfully.<br>You can now return to the app and
+                login with your new password.</p>
+            <button class="btn btn-secondary" onclick="window.close()">Close This Page</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        (function () {
+            // Use IIFE to avoid global scope conflicts
+            var SUPABASE_URL = 'https://eegsyatcjylbabbhnhhb.supabase.co';
+            var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlZ3N5YXRjanlsYmFiYmhuaGhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwMjg4NjIsImV4cCI6MjA4NTYwNDg2Mn0.ETnuT9uqCdJIEqS1ZivnYhxezYkeh3n07FmQcbaX588';
+
+            // Create client with IMPLICIT flow (not PKCE) for password reset
+            var sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: {
+                    flowType: 'implicit',
+                    detectSessionInUrl: true,
+                    autoRefreshToken: true,
+                    persistSession: true
+                }
+            });
+
+            // DOM elements
+            var form = document.getElementById('resetForm');
+            var newPasswordInput = document.getElementById('newPassword');
+            var confirmPasswordInput = document.getElementById('confirmPassword');
+            var submitBtn = document.getElementById('submitBtn');
+            var errorMessage = document.getElementById('errorMessage');
+            var successMessage = document.getElementById('successMessage');
+            var passwordStrength = document.getElementById('passwordStrength');
+            var toggleBtn1 = document.getElementById('toggleBtn1');
+            var toggleBtn2 = document.getElementById('toggleBtn2');
+
+            // Toggle password visibility
+            function togglePassword(inputId, button) {
+                var input = document.getElementById(inputId);
+                if (!input) return;
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    button.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>';
+                } else {
+                    input.type = 'password';
+                    button.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
+                }
+            }
+
+            // Attach toggle events
+            toggleBtn1.addEventListener('click', function () {
+                togglePassword('newPassword', toggleBtn1);
+            });
+
+            toggleBtn2.addEventListener('click', function () {
+                togglePassword('confirmPassword', toggleBtn2);
+            });
+
+            function updateRequirement(id, met) {
+                var req = document.getElementById(id);
+                if (!req) return;
+
+                if (met) {
+                    req.classList.add('met');
+                    req.querySelector('svg').innerHTML = '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>';
+                } else {
+                    req.classList.remove('met');
+                    req.querySelector('svg').innerHTML = '<circle cx="12" cy="12" r="10" opacity="0.3"/>';
+                }
+            }
+
+            function showError(message) {
+                if (errorMessage) {
+                    errorMessage.textContent = message;
+                    errorMessage.classList.add('show');
+                }
+            }
+
+            // Check password strength on input
+            newPasswordInput.addEventListener('input', function () {
+                var password = this.value;
+                var hasLength = password.length >= 8;
+                var hasLetter = /[a-zA-Z]/.test(password);
+                var hasNumber = /[0-9]/.test(password);
+
+                // Update requirements
+                updateRequirement('req-length', hasLength);
+                updateRequirement('req-letter', hasLetter);
+                updateRequirement('req-number', hasNumber);
+
+                // Calculate strength
+                var strength = 0;
+                if (hasLength) strength++;
+                if (hasLetter) strength++;
+                if (hasNumber) strength++;
+                if (password.length >= 12) strength++;
+                if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+
+                // Update strength bar
+                passwordStrength.className = 'password-strength';
+                var textElement = passwordStrength.querySelector('.strength-text');
+
+                if (password.length === 0) {
+                    textElement.textContent = 'Enter at least 8 characters';
+                } else if (strength <= 2) {
+                    passwordStrength.classList.add('strength-weak');
+                    textElement.textContent = 'Weak password';
+                } else if (strength <= 3) {
+                    passwordStrength.classList.add('strength-medium');
+                    textElement.textContent = 'Medium password';
+                } else {
+                    passwordStrength.classList.add('strength-strong');
+                    textElement.textContent = 'Strong password';
+                }
+            });
+
+            // Handle form submission
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                var newPassword = newPasswordInput.value;
+                var confirmPassword = confirmPasswordInput.value;
+
+                // Validation
+                if (newPassword.length < 8) {
+                    showError('Password must be at least 8 characters long');
+                    return;
+                }
+
+                if (!/[a-zA-Z]/.test(newPassword)) {
+                    showError('Password must contain at least one letter');
+                    return;
+                }
+
+                if (!/[0-9]/.test(newPassword)) {
+                    showError('Password must contain at least one number');
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    showError('Passwords do not match');
+                    return;
+                }
+
+                // Show loading
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="loader"></span>Updating Password...';
+                errorMessage.classList.remove('show');
+
+                try {
+                    // Update password using Supabase
+                    console.log('Attempting to update password...');
+                    var result = await sbClient.auth.updateUser({
+                        password: newPassword
+                    });
+
+                    if (result.error) {
+                        console.error('Update error:', result.error);
+                        throw result.error;
+                    }
+
+                    console.log('Password updated successfully:', result.data);
+
+                    // Show success
+                    form.style.display = 'none';
+                    successMessage.classList.add('show');
+
+                    // Sign out after successful reset
+                    setTimeout(async function () {
+                        await sbClient.auth.signOut();
+                        console.log('User signed out');
+                    }, 2000);
+
+                } catch (error) {
+                    console.error('Password reset failed:', error);
+                    showError(error.message || 'Failed to reset password. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Reset Password';
+                }
+            });
+
+            // Check if user has valid session from reset link
+            async function checkSession() {
+                try {
+                    console.log('Checking session...');
+                    console.log('Current URL:', window.location.href);
+                    console.log('Hash:', window.location.hash);
+
+                    // Check for error in URL hash
+                    var hashParams = new URLSearchParams(window.location.hash.substring(1));
+                    var errorParam = hashParams.get('error');
+                    var errorDesc = hashParams.get('error_description');
+
+                    if (errorParam) {
+                        console.error('Auth error from URL:', errorParam, errorDesc);
+                        showError(decodeURIComponent(errorDesc) || 'Authentication error. Please request a new password reset.');
+                        form.style.display = 'none';
+                        return;
+                    }
+
+                    // Check for token in hash (recovery token from email)
+                    var accessToken = hashParams.get('access_token');
+                    var tokenType = hashParams.get('type');
+
+                    if (accessToken && tokenType === 'recovery') {
+                        console.log('Found recovery token in hash:', accessToken);
+
+                        // Verify the OTP/recovery token with Supabase
+                        try {
+                            console.log('Verifying recovery token...');
+                            var verifyResult = await sbClient.auth.verifyOtp({
+                                token_hash: accessToken,
+                                type: 'recovery'
+                            });
+
+                            console.log('Verify OTP result:', verifyResult);
+
+                            if (verifyResult.error) {
+                                console.error('Verify error:', verifyResult.error);
+                                showError(verifyResult.error.message || 'Invalid or expired reset link.');
+                                form.style.display = 'none';
+                                return;
+                            }
+
+                            if (verifyResult.data.session) {
+                                console.log('Session obtained from token verification!');
+                                form.style.display = 'block';
+                                errorMessage.classList.remove('show');
+                                // Clean up URL
+                                window.history.replaceState({}, document.title, window.location.pathname);
+                                return;
+                            }
+                        } catch (verifyError) {
+                            console.error('Verify failed:', verifyError);
+                            showError('Failed to verify reset link. Please request a new password reset.');
+                            form.style.display = 'none';
+                            return;
+                        }
+                    }
+
+                    // Listen for auth state changes
+                    sbClient.auth.onAuthStateChange(async function (event, session) {
+                        console.log('Auth state changed:', event, session ? 'has session' : 'no session');
+
+                        if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+                            console.log('Recovery/SignIn event - showing form');
+                            form.style.display = 'block';
+                            errorMessage.classList.remove('show');
+                        }
+                    });
+
+                    // Check current session
+                    await new Promise(function (resolve) { setTimeout(resolve, 1000); });
+
+                    var result = await sbClient.auth.getSession();
+                    console.log('Session check result:', result);
+
+                    if (result.data.session) {
+                        console.log('Session valid, user can reset password');
+                        form.style.display = 'block';
+                        errorMessage.classList.remove('show');
+                        return;
+                    }
+
+                    // No session - show error after delay
+                    setTimeout(function () {
+                        sbClient.auth.getSession().then(function (res) {
+                            if (!res.data.session) {
+                                showError('Invalid or expired reset link. Please request a new password reset from the app.');
+                                form.style.display = 'none';
+                            }
+                        });
+                    }, 2000);
+
+                } catch (error) {
+                    console.error('Unexpected error:', error);
+                    showError('An error occurred. Please try again.');
+                    form.style.display = 'none';
+                }
+            }
+
+            checkSession();
+        })();
+    </script>
+</body>
+
+</html>
