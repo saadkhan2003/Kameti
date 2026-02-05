@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_config.dart';
-import 'services/remote_config_service.dart';
 import 'services/database_service.dart';
 import 'utils/app_theme.dart';
 import 'screens/splash_screen.dart';

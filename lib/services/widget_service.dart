@@ -1,3 +1,7 @@
+// NOTE: This service is currently disabled because home_widget package is not in dependencies
+// To enable: Add 'home_widget: ^0.6.0' to pubspec.yaml dependencies
+
+/*
 import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
@@ -116,3 +120,4 @@ class WidgetService {
     await HomeWidget.setAppGroupId(_appGroupId);
   }
 }
+*/

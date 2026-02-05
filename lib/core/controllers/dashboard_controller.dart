@@ -35,12 +35,12 @@ class DashboardController extends ChangeNotifier {
   List<Committee> get archivedCommittees => _archivedCommittees;
   bool get isSyncing => _isSyncing;
   bool get isEmailVerified => _isEmailVerified;
-  String get userId => _authService.currentUser?.uid ?? '';
-  String get displayName => _authService.currentUser?.displayName ?? 
+  String get userId => _authService.currentUser?.id ?? '';
+  String get displayName => _authService.currentUser?.userMetadata?['full_name'] ?? 
                             _authService.currentUser?.email?.split('@')[0] ?? 'Host';
   String get email => _authService.currentUser?.email ?? 'Anonymous User';
   bool get needsEmailVerification => _authService.currentUser != null && 
-                                      !_authService.currentUser!.emailVerified;
+                                      _authService.currentUser!.emailConfirmedAt == null;
 
   /// Initialize controller - call in initState
   Future<void> initialize() async {

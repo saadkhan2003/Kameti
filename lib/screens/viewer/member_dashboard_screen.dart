@@ -57,7 +57,8 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
   }
 
   void _calculateStats() {
-    final payments = _dbService.getPaymentsByMember(widget.member.id);
+    // Get all payments for this member
+    _dbService.getPaymentsByMember(widget.member.id);
     final startDate = widget.committee.startDate;
     final today = DateTime.now();
     final intervalDays = widget.committee.paymentIntervalDays;

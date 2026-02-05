@@ -14,10 +14,10 @@ class AuthController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isLogin => _isLogin;
   bool get isLoggedIn => _authService.currentUser != null;
-  String? get userId => _authService.currentUser?.uid;
+  String? get userId => _authService.currentUser?.id;
   String? get email => _authService.currentUser?.email;
-  String? get displayName => _authService.currentUser?.displayName;
-  bool get isEmailVerified => _authService.currentUser?.emailVerified ?? false;
+  String? get displayName => _authService.currentUser?.userMetadata?['full_name'];
+  bool get isEmailVerified => _authService.currentUser?.emailConfirmedAt != null;
 
   void toggleLoginMode() {
     _isLogin = !_isLogin;

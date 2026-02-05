@@ -27,8 +27,8 @@ class CommitteeController extends ChangeNotifier {
   List<Member> get members => _members;
   bool get isLoading => _isLoading;
   bool get isSyncing => _isSyncing;
-  bool get isHost => _authService.currentUser?.uid == _committee?.hostId;
-  String get hostId => _authService.currentUser?.uid ?? '';
+  bool get isHost => _authService.currentUser?.id == _committee?.hostId;
+  String get hostId => _authService.currentUser?.id ?? '';
 
   CommitteeController({required this.committeeId});
 

@@ -32,8 +32,6 @@ class ExportService {
 
   /// Get the date range for a specific cycle
   Map<String, DateTime> getCycleDateRange(Committee committee, int cycle) {
-    final members = _dbService.getMembersByCommittee(committee.id);
-    final numMembers = members.isNotEmpty ? members.length : (committee.totalMembers > 0 ? committee.totalMembers : 1);
     final payoutIntervalDays = committee.paymentIntervalDays;
     final committeeStartDate = committee.startDate;
 

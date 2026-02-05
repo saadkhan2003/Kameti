@@ -39,7 +39,7 @@ class PaymentController extends ChangeNotifier {
   int get maxCycles => _maxCycles;
   DateTime? get filterStartDate => _filterStartDate;
   DateTime? get filterEndDate => _filterEndDate;
-  bool get isHost => _authService.currentUser?.uid == committee.hostId;
+  bool get isHost => _authService.currentUser?.id == committee.hostId;
 
   PaymentController({required this.committee, this.viewAsMember});
 
@@ -130,7 +130,7 @@ class PaymentController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final hostId = _authService.currentUser?.uid ?? '';
+      final hostId = _authService.currentUser?.id ?? '';
       
       // Use cloud-first toggle
       await _autoSyncService.togglePaymentCloudFirst(memberId, committee.id, date, hostId);

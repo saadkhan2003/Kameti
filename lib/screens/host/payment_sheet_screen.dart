@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 // Project imports
 import '../../services/auth_service.dart';
@@ -16,7 +15,6 @@ import '../../models/member.dart';
 import '../../models/payment.dart';
 import '../../utils/app_theme.dart';
 import 'member_management_screen.dart';
-import '../viewer/member_dashboard_screen.dart';
 import '../viewer/member_calendar_view.dart';
 
 class PaymentSheetScreen extends StatefulWidget {
@@ -45,7 +43,6 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   Map<String, Map<String, bool>> _paymentGrid = {};
   List<Payment> _cloudPayments = []; // Payments fetched from cloud
   bool _isLoading = true;
-  String? _errorMessage;
   int _selectedCycle = 1;
   int _maxCycles = 1;
 
