@@ -28,6 +28,9 @@ void main() async {
     await Supabase.initialize(
       url: SupabaseConfig.url,
       anonKey: SupabaseConfig.anonKey,
+      authOptions: FlutterAuthClientOptions(
+        authFlowType: kIsWeb ? AuthFlowType.pkce : AuthFlowType.pkce,
+      ),
     );
     print('✅ Supabase initialized');
   } else {

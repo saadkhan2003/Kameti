@@ -56,9 +56,10 @@ class AuthService {
       // PROPER WAY for Flutter (Mobile & Web)
       if (kIsWeb) {
         // Web: Redirect flow with account picker
+        // Use the main app URL, NOT the password reset URL
         await _auth.signInWithOAuth(
           OAuthProvider.google,
-          redirectTo: null,
+          redirectTo: 'https://kameti.netlify.app/', // Main app URL, not reset page
           queryParams: {
             'prompt': 'select_account', // Shows account picker with existing accounts
           },

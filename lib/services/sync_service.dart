@@ -258,29 +258,12 @@ class SyncService {
     if (!await isOnline()) return null;
 
     try {
-      // 1. Fetch Committee
+      // 1. Fetch Committee by its 'code' field (6-digit sharing code)
       final response = await _supabase.client
           .from(SupabaseService.committeesTable)
           .select()
-          .eq('id', code) // Assuming code is the ID, previously matched 'code' field?
-          // Wait, Firestore query was .where('code', isEqualTo: code). 
-          // Do we have a 'code' field? The schema in setup guide just has 'id'. 
-          // Assuming 'id' IS the code based on usage. 
-          // If code is separate, we need to check Committee model.
+          .eq('code', code) // Query by the 'code' field, not 'id'
           .maybeSingle();
-
-      // Ah, wait. Committee model has 'id', not 'code'?
-      // Firestore code was: .where('code', isEqualTo: code)
-      // I should check Committee model. Assuming ID for now based on typical usage.
-      // But let's be safe: previously it was searching by a field.
-      // If code is actually ID, then eq('id', code) is correct.
-      // If code is a separate field, I should check.
-      // Let's assume ID for now to match basic CRUD.
-      
-      // Let's actually check if I should use ID or Code. 
-      // The Firestore Code used .where('code', isEqualTo: code). 
-      // I'll stick to ID since Supabase usually uses ID.
-      // Use maybeSingle().
       
       if (response == null) return null;
 

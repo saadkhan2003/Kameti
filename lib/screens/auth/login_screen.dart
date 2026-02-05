@@ -191,17 +191,51 @@ class _LoginScreenState extends State<LoginScreen> {
       final success = await _authService.signInWithGoogle();
       
       if (success && mounted) {
-        // Enforce Email Verification
         final user = _authService.currentUser;
-        if (user != null && user.emailConfirmedAt == null && !user.isAnonymous) {
-          await _authService.signOut(); // Prevent access
+        if (user == null) return;
+        
+        // Check if this is a NEW user (just created) or EXISTING user
+        final createdAt = user.createdAt;
+        final now = DateTime.now();
+        final isNewUser = now.difference(DateTime.parse(createdAt)).inSeconds < 30;
+        
+        // Check if user has password set (existing users from Firebase migration don't)
+        // We can check identities - if only Google identity exists, they're new OAuth user
+        final identities = user.identities ?? [];
+        final hasEmailIdentity = identities.any((i) => i.provider == 'email');
+        final hasGoogleIdentity = identities.any((i) => i.provider == 'google');
+        
+        // Scenario 1: Existing email user signing in with Google for first time
+        // They need to link accounts or reset password
+        if (hasEmailIdentity && hasGoogleIdentity && !isNewUser) {
+          // This is an existing user who had email/password account
+          // Prompt them to reset password to complete migration
+          if (mounted) {
+            setState(() => _isLoading = false);
+            _showMigrationDialog(user.email!);
+          }
+          return;
+        }
+        
+        // Scenario 2: Check if email exists but user just linked Google
+        // (First time Google sign-in for existing Firebase user)
+        if (!isNewUser && identities.length > 1) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            _showMigrationDialog(user.email!);
+          }
+          return;
+        }
+
+        // Enforce Email Verification for new users
+        if (user.emailConfirmedAt == null && !user.isAnonymous) {
+          await _authService.signOut();
           if (mounted) {
             setState(() {
               _isLoading = false;
-              _errorMessage = null; // Clear any auth error
+              _errorMessage = null;
             });
             
-            // Navigate to OTP Screen
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -212,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
-        // Only navigate if verified (or anonymous/mobile managed flow)
+        // New user or verified user - go to dashboard
         if (!kIsWeb) {
              AnalyticsService.logLogin();
              Navigator.pushReplacement(
@@ -236,6 +270,71 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     }
+  }
+
+  void _showMigrationDialog(String email) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Account Migration'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.info_outline, size: 48, color: Colors.blue),
+            const SizedBox(height: 16),
+            Text(
+              'Welcome back! We found an existing account with $email.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'To complete your account migration and secure your data, please reset your password.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              // Sign out and let them use Google directly next time
+              await _authService.signOut();
+            },
+            child: const Text('Later'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              // Send password reset email
+              try {
+                await _authService.resetPassword(email);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Password reset email sent to $email'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+              await _authService.signOut();
+            },
+            child: const Text('Reset Password'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showForgotPasswordDialog() {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_theme.dart';
 import '../services/auth_service.dart';
@@ -52,13 +53,30 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   void _setupAuthListener() {
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      if (data.event == AuthChangeEvent.passwordRecovery) {
+      final event = data.event;
+      final session = data.session;
+      
+      debugPrint('Auth event: $event, session: ${session != null}');
+      
+      if (event == AuthChangeEvent.passwordRecovery) {
         if (mounted) {
            WidgetsBinding.instance.addPostFrameCallback((_) {
              Navigator.of(context).pushReplacement(
                MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
              );
            });
+        }
+      }
+      
+      // Handle OAuth sign-in completion on Web
+      if (event == AuthChangeEvent.signedIn && session != null && kIsWeb) {
+        debugPrint('OAuth sign-in completed on web');
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const HostDashboardScreen()),
+            );
+          });
         }
       }
     });
