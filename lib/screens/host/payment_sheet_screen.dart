@@ -103,17 +103,36 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     final allPayments = _dbService.getPaymentsByCommittee(widget.committee.id);
     _maxCycles = _computeMaxCycles(allPayments);
 
-    _selectedCycle = _dbService.getSelectedCycle(widget.committee.id);
+    // Calculate which cycle contains today's date
+    _selectedCycle = _calculateCycleForToday();
     if (_selectedCycle < 1) _selectedCycle = 1;
     if (_selectedCycle > _maxCycles) {
       _selectedCycle = _maxCycles;
-      _dbService.setSelectedCycle(widget.committee.id, _selectedCycle);
     }
+    _dbService.setSelectedCycle(widget.committee.id, _selectedCycle);
 
     _generateDates();
     _loadPaymentsFromLocal();
 
     if (mounted) setState(() => _isLoading = false);
+  }
+
+  /// Calculate which cycle contains today's date
+  int _calculateCycleForToday() {
+    final today = DateTime.now();
+    final committeeStartDate = widget.committee.startDate;
+    final payoutIntervalDays = widget.committee.paymentIntervalDays;
+    
+    // If today is before the committee start date, return cycle 1
+    if (today.isBefore(committeeStartDate)) {
+      return 1;
+    }
+    
+    // Calculate which cycle today falls into
+    final daysSinceStart = today.difference(committeeStartDate).inDays;
+    final cycleNumber = (daysSinceStart ~/ payoutIntervalDays) + 1;
+    
+    return cycleNumber;
   }
 
   Future<void> _loadData() async {
