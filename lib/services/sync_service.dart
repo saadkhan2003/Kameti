@@ -252,8 +252,9 @@ class SyncService {
     }
   }
 
-  // ============ VIEWER SYNC ============
+  // ============ VIEWER SYNC (READ-ONLY) ============
 
+  /// Sync committee by code - READ ONLY for viewers (no uploads)
   Future<Committee?> syncCommitteeByCode(String code) async {
     if (!await isOnline()) return null;
 
@@ -270,17 +271,63 @@ class SyncService {
       final committee = Committee.fromJson(response);
       await _dbService.saveCommittee(committee);
 
-      // 2. Sync Members
-      await syncMembers(committee.id);
+      // 2. Download Members (READ-ONLY - no upload)
+      await _downloadMembersOnly(committee.id);
 
-      // 3. Sync Payments
-      await syncPayments(committee.id);
+      // 3. Download Payments (READ-ONLY - no upload)
+      await _downloadPaymentsOnly(committee.id);
 
       return committee;
     } catch (e) {
       print('Viewer sync error: $e');
       return null;
     }
+  }
+
+  /// Download members from cloud only - no upload (for viewers)
+  Future<int> _downloadMembersOnly(String committeeId) async {
+    int downloaded = 0;
+    try {
+      final cloudMembers = await _supabase.getMembers(committeeId);
+      print('📥 Downloaded ${cloudMembers.length} members from cloud');
+      
+      for (final cloudMember in cloudMembers) {
+        await _dbService.saveMember(cloudMember);
+        downloaded++;
+      }
+    } catch (e) {
+      print('Error downloading members: $e');
+    }
+    return downloaded;
+  }
+
+  /// Download payments from cloud only - no upload (for viewers)
+  Future<int> _downloadPaymentsOnly(String committeeId) async {
+    int downloaded = 0;
+    try {
+      final cloudPayments = await _supabase.getPayments(committeeId);
+      print('📥 Downloaded ${cloudPayments.length} payments from cloud');
+      
+      for (final payment in cloudPayments) {
+        await _dbService.savePayment(payment);
+        downloaded++;
+      }
+    } catch (e) {
+      print('Error downloading payments: $e');
+    }
+    return downloaded;
+  }
+
+  /// Refresh viewer data from cloud (read-only)
+  Future<void> refreshViewerData(String committeeId) async {
+    if (!await isOnline()) {
+      throw Exception('No internet connection');
+    }
+    
+    print('🔄 Refreshing viewer data for committee: $committeeId');
+    await _downloadMembersOnly(committeeId);
+    await _downloadPaymentsOnly(committeeId);
+    print('✅ Viewer data refreshed');
   }
 
   // ============ CLOUD-ONLY OPERATIONS (NO LOCAL CACHE) ============

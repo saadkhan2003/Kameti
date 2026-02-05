@@ -28,46 +28,68 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
   DateTime? _payoutDate;
   int _daysUntilPayout = 0;
   DateTime? _nextPaymentDate;
+  
+  // Cycle support
+  int _selectedCycle = 1;
+  int _maxCycles = 1;
+  List<DateTime> _cycleDates = [];
 
   @override
   void initState() {
     super.initState();
+    final members = _dbService.getMembersByCommittee(widget.committee.id);
+    _maxCycles = members.isNotEmpty ? members.length : 1;
+    _selectedCycle = _findOngoingCycle();
     _calculateStats();
+  }
+  
+  /// Find the ongoing cycle based on current date
+  int _findOngoingCycle() {
+    final now = DateTime.now();
+    final startDate = widget.committee.startDate;
+    final intervalDays = widget.committee.paymentIntervalDays;
+    
+    // Calculate which cycle we're in
+    final daysSinceStart = now.difference(startDate).inDays;
+    final cycle = (daysSinceStart / intervalDays).floor() + 1;
+    
+    return cycle.clamp(1, _maxCycles);
   }
 
   void _calculateStats() {
-    final payments = _dbService.getPaymentsByMember(
-      widget.member.id,
-    );
-
+    final payments = _dbService.getPaymentsByMember(widget.member.id);
     final startDate = widget.committee.startDate;
     final today = DateTime.now();
-    final members = _dbService.getMembersByCommittee(widget.committee.id);
-    final totalCycles = members.length;
     final intervalDays = widget.committee.paymentIntervalDays;
-    final endDate = startDate.add(Duration(days: intervalDays * totalCycles));
     
-    int totalDays = 0;
-    if (widget.committee.frequency == 'daily') {
-      final actualEndDate = today.isBefore(endDate) ? today : endDate;
-      totalDays = actualEndDate.difference(startDate).inDays + 1;
-      if (totalDays < 0) totalDays = 0;
-    } else if (widget.committee.frequency == 'weekly') {
-      final actualEndDate = today.isBefore(endDate) ? today : endDate;
-      totalDays = (actualEndDate.difference(startDate).inDays / 7).ceil();
-    } else if (widget.committee.frequency == 'monthly') {
-      final actualEndDate = today.isBefore(endDate) ? today : endDate;
-      totalDays = (actualEndDate.difference(startDate).inDays / 30).ceil();
+    // Calculate cycle start and end dates
+    final cycleStartDate = startDate.add(Duration(days: intervalDays * (_selectedCycle - 1)));
+    final cycleEndDate = cycleStartDate.add(Duration(days: intervalDays - 1));
+    
+    // Generate dates for THIS cycle only
+    _cycleDates = [];
+    DateTime current = cycleStartDate;
+    int collectionInterval = widget.committee.frequency == 'daily' ? 1 
+        : widget.committee.frequency == 'weekly' ? 7 : 30;
+    
+    while (!current.isAfter(cycleEndDate) && _cycleDates.length < 35) {
+      _cycleDates.add(current);
+      current = current.add(Duration(days: collectionInterval));
     }
     
-    _totalPayments = totalDays > 0 ? totalDays : 0;
-    _paidPayments = payments.where((p) => p.isPaid).length;
+    // Count payments for THIS cycle only
+    _totalPayments = _cycleDates.length;
+    _paidPayments = 0;
+    for (var date in _cycleDates) {
+      final payment = _dbService.getPayment(widget.member.id, date);
+      if (payment != null && payment.isPaid) {
+        _paidPayments++;
+      }
+    }
     _pendingPayments = _totalPayments - _paidPayments;
     if (_pendingPayments < 0) _pendingPayments = 0;
 
     if (widget.member.payoutOrder > 0) {
-      // Payout happens at the END of the cycle, not beginning
-      // So payoutOrder 1 gets payout after 1 interval (e.g., 1 month for monthly)
       _payoutDate = startDate.add(
         Duration(days: intervalDays * widget.member.payoutOrder),
       );
@@ -144,6 +166,133 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
               ),
             ),
             const SizedBox(height: 24),
+
+            // Cycle Selector
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppTheme.darkCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    onPressed: _selectedCycle > 1 ? () => _changeCycle(-1) : null,
+                    icon: Icon(
+                      Icons.chevron_left,
+                      color: _selectedCycle > 1 ? Colors.white : Colors.grey[600],
+                    ),
+                  ),
+                  Column(
+                    children: [
+                      Text(
+                        'Cycle $_selectedCycle of $_maxCycles',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      if (_cycleDates.isNotEmpty)
+                        Text(
+                          '${DateFormat('MMM d').format(_cycleDates.first)} - ${DateFormat('MMM d, yyyy').format(_cycleDates.last)}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: _selectedCycle < _maxCycles ? () => _changeCycle(1) : null,
+                    icon: Icon(
+                      Icons.chevron_right,
+                      color: _selectedCycle < _maxCycles ? Colors.white : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Payment Calendar Grid
+            if (_cycleDates.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.darkCard,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[800]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cycle $_selectedCycle Payments',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 7,
+                        mainAxisSpacing: 8,
+                        crossAxisSpacing: 8,
+                        childAspectRatio: 1.0,
+                      ),
+                      itemCount: _cycleDates.length,
+                      itemBuilder: (context, index) {
+                        final date = _cycleDates[index];
+                        final payment = _dbService.getPayment(widget.member.id, date);
+                        final isPaid = payment != null && payment.isPaid;
+                        
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: isPaid ? AppTheme.secondaryColor : Colors.grey[800],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                isPaid ? Icons.check : Icons.close,
+                                color: isPaid ? Colors.white : Colors.grey[600],
+                                size: 16,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                DateFormat('d').format(date),
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  color: isPaid ? Colors.white : Colors.grey[500],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildLegendItem(AppTheme.secondaryColor, 'Paid'),
+                        const SizedBox(width: 16),
+                        _buildLegendItem(Colors.grey[800]!, 'Pending'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 16),
 
             // Payout Card
             _buildInfoCard(
@@ -302,8 +451,191 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+
+            // Payout List Card
+            _buildPayoutListCard(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPayoutListCard() {
+    final members = _dbService.getMembersByCommittee(widget.committee.id);
+    members.sort((a, b) => a.payoutOrder.compareTo(b.payoutOrder));
+    
+    final intervalDays = widget.committee.paymentIntervalDays;
+    final startDate = widget.committee.startDate;
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.darkCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[800]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.people_alt_rounded, color: AppTheme.primaryColor, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                'Payout Schedule',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Members who have received their payout',
+            style: TextStyle(color: Colors.grey[500], fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: members.length,
+            separatorBuilder: (context, index) => Divider(
+              color: Colors.grey[800],
+              height: 1,
+            ),
+            itemBuilder: (context, index) {
+              final member = members[index];
+              final isCurrentMember = member.id == widget.member.id;
+              final payoutDate = startDate.add(Duration(days: intervalDays * member.payoutOrder));
+              
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: isCurrentMember ? BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ) : null,
+                child: Row(
+                  children: [
+                    // Payout order number
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: member.hasReceivedPayout
+                            ? AppTheme.secondaryColor
+                            : Colors.grey[700],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '#${member.payoutOrder}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Member info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  member.name,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: isCurrentMember ? FontWeight.bold : FontWeight.w500,
+                                    color: isCurrentMember ? AppTheme.primaryColor : Colors.white,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (isCurrentMember) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryColor,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'You',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            DateFormat('MMM d, yyyy').format(payoutDate),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Payout status
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: member.hasReceivedPayout
+                            ? AppTheme.secondaryColor.withOpacity(0.2)
+                            : Colors.grey[800],
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: member.hasReceivedPayout
+                              ? AppTheme.secondaryColor
+                              : Colors.grey[600]!,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            member.hasReceivedPayout
+                                ? Icons.check_circle
+                                : Icons.schedule,
+                            size: 14,
+                            color: member.hasReceivedPayout
+                                ? AppTheme.secondaryColor
+                                : Colors.grey[500],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            member.hasReceivedPayout ? 'Paid' : 'Pending',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: member.hasReceivedPayout
+                                  ? AppTheme.secondaryColor
+                                  : Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -422,5 +754,39 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
   String _capitalize(String s) {
     if (s.isEmpty) return s;
     return '${s[0].toUpperCase()}${s.substring(1)}';
+  }
+  
+  void _changeCycle(int delta) {
+    final newCycle = _selectedCycle + delta;
+    if (newCycle >= 1 && newCycle <= _maxCycles) {
+      setState(() {
+        _selectedCycle = newCycle;
+      });
+      _calculateStats();
+    }
+  }
+  
+  Widget _buildLegendItem(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[400],
+          ),
+        ),
+      ],
+    );
   }
 }

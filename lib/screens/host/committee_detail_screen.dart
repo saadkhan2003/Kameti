@@ -522,7 +522,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                               Row(
                                 children: [
                                   Text(
-                                    'Per Payout Collection',
+                                    'Per Cycle Collection',
                                     style: GoogleFonts.inter(
                                       fontSize: 12,
                                       color: Colors.grey[400],
@@ -594,7 +594,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '${_members.length * collectionsPerPayout} payments per payout',
+                        '${_members.length * collectionsPerPayout} payments per cycle',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: Colors.grey[500],

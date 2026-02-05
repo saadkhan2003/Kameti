@@ -17,6 +17,7 @@ import '../../models/payment.dart';
 import '../../utils/app_theme.dart';
 import 'member_management_screen.dart';
 import '../viewer/member_dashboard_screen.dart';
+import '../viewer/member_calendar_view.dart';
 
 class PaymentSheetScreen extends StatefulWidget {
   final Committee committee;
@@ -73,8 +74,14 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     // Fire and forget - don't block UI
     Future(() async {
       try {
-        await _syncService.syncMembers(widget.committee.id);
-        await _syncService.syncPayments(widget.committee.id);
+        // If viewing as member (viewer mode), use read-only sync
+        if (widget.viewAsMember != null) {
+          await _syncService.refreshViewerData(widget.committee.id);
+        } else {
+          // Host mode - can write
+          await _syncService.syncMembers(widget.committee.id);
+          await _syncService.syncPayments(widget.committee.id);
+        }
         // Reload after sync completes
         if (mounted) {
           _loadPaymentsFromLocal();
@@ -161,7 +168,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       if (periodsPerPayout < 1) periodsPerPayout = 1;
     }
 
-    // If committee has members, show only the current selected payout cycle's dates
+    // If committee has members, generate dates for the SELECTED cycle only
     final numMembers =
         _members.isNotEmpty
             ? _members.length
@@ -170,25 +177,19 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                 : 0);
 
     if (numMembers > 0) {
-      // Calculate start date for the selected payout cycle
-      // Payout 1 starts at committeeStartDate
-      // Payout 2 starts after payoutIntervalDays from startDate
-      // etc.
+      // Generate dates for the SELECTED payout cycle only
+      final cycleIndex = _selectedCycle - 1; // _selectedCycle is 1-based
+      
       DateTime cycleStartDate;
       if (widget.committee.frequency == 'monthly') {
-        cycleStartDate = _addMonths(committeeStartDate, (_selectedCycle - 1) * periodsPerPayout);
+        cycleStartDate = _addMonths(committeeStartDate, cycleIndex * periodsPerPayout);
       } else {
-        final daysOffset = (_selectedCycle - 1) * payoutIntervalDays;
+        final daysOffset = cycleIndex * payoutIntervalDays;
         cycleStartDate = committeeStartDate.add(Duration(days: daysOffset));
       }
 
-      // Apply filter start date if set
-      final effectiveStartDate = (_filterStartDate != null && _filterStartDate!.isAfter(cycleStartDate))
-          ? _filterStartDate!
-          : cycleStartDate;
-
       // Generate exactly periodsPerPayout dates for this payout cycle
-      DateTime current = effectiveStartDate;
+      DateTime current = cycleStartDate;
       for (int i = 0; i < periodsPerPayout; i++) {
         _dates.add(current);
         if (widget.committee.frequency == 'monthly') {
@@ -599,70 +600,161 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _filterStartDate != null || _filterEndDate != null
-                      ? 'Exporting filtered range'
-                      : 'Exporting all records',
+                  'Select a cycle to export',
                   style: TextStyle(color: Colors.grey[400], fontSize: 12),
                 ),
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                const SizedBox(height: 16),
+                // Cycle selection chips
+                SizedBox(
+                  height: 40,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _maxCycles + 1, // +1 for "All Cycles" option
+                    itemBuilder: (context, index) {
+                      final isAllCycles = index == 0;
+                      final cycleNum = index;
+                      final isOngoing = !isAllCycles && _exportService.isCycleOngoing(widget.committee, cycleNum);
+                      final isCompleted = !isAllCycles && _exportService.isCycleCompleted(widget.committee, cycleNum);
+                      
+                      String label;
+                      Color bgColor;
+                      if (isAllCycles) {
+                        label = 'All Cycles';
+                        bgColor = AppTheme.primaryColor.withOpacity(0.2);
+                      } else if (isOngoing) {
+                        label = 'Cycle $cycleNum (Ongoing)';
+                        bgColor = Colors.orange.withOpacity(0.2);
+                      } else if (isCompleted) {
+                        label = 'Cycle $cycleNum';
+                        bgColor = Colors.green.withOpacity(0.2);
+                      } else {
+                        label = 'Cycle $cycleNum (Upcoming)';
+                        bgColor = Colors.grey.withOpacity(0.2);
+                      }
+                      
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ActionChip(
+                          label: Text(label, style: const TextStyle(fontSize: 12)),
+                          backgroundColor: bgColor,
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _showExportFormatDialog(isAllCycles ? null : cycleNum);
+                          },
+                        ),
+                      );
+                    },
                   ),
-                  title: const Text(
-                    'Export as PDF',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  subtitle: Text(
-                    'Print or share as document',
-                    style: TextStyle(color: Colors.grey[500]),
-                  ),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    ToastService.info(context, 'Generating PDF...');
-                    await _exportService.exportToPdf(
-                      widget.committee,
-                      startDate: _filterStartDate,
-                      endDate: _filterEndDate,
-                    );
-                  },
                 ),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.table_chart, color: Colors.green),
-                  ),
-                  title: const Text(
-                    'Export as CSV',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  subtitle: Text(
-                    'Open in Excel or Google Sheets',
-                    style: TextStyle(color: Colors.grey[500]),
-                  ),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    ToastService.info(context, 'Generating CSV...');
-                    await _exportService.exportToCsv(
-                      widget.committee,
-                      startDate: _filterStartDate,
-                      endDate: _filterEndDate,
-                    );
-                  },
+                const SizedBox(height: 12),
+                Text(
+                  'Tap a cycle above to export, or scroll for more cycles',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 11),
                 ),
               ],
             ),
           ),
     );
+  }
+
+  void _showExportFormatDialog(int? cycle) {
+    final cycleLabel = cycle != null ? 'Cycle $cycle' : 'All Cycles';
+    String? dateRange;
+    if (cycle != null) {
+      final range = _exportService.getCycleDateRange(widget.committee, cycle);
+      final start = range['start']!;
+      final end = range['end']!;
+      dateRange = '${_formatDate(start)} - ${_formatDate(end)}';
+    }
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.darkCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Export $cycleLabel',
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            if (dateRange != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                dateRange,
+                style: TextStyle(color: Colors.grey[400], fontSize: 12),
+              ),
+            ],
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.picture_as_pdf, color: Colors.red),
+              ),
+              title: const Text(
+                'Export as PDF',
+                style: TextStyle(color: Colors.white),
+              ),
+              subtitle: Text(
+                'Print or share as document',
+                style: TextStyle(color: Colors.grey[500]),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                ToastService.info(context, 'Generating PDF...');
+                await _exportService.exportToPdf(
+                  widget.committee,
+                  cycle: cycle,
+                );
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.table_chart, color: Colors.green),
+              ),
+              title: const Text(
+                'Export as CSV (Excel)',
+                style: TextStyle(color: Colors.white),
+              ),
+              subtitle: Text(
+                'Open in Excel or Google Sheets',
+                style: TextStyle(color: Colors.grey[500]),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                ToastService.info(context, 'Generating CSV...');
+                await _exportService.exportToCsv(
+                  widget.committee,
+                  cycle: cycle,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   @override
@@ -862,7 +954,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   child: Text(
-                                    'Payout ${i + 1}',
+                                    'Cycle ${i + 1}',
                                     style: TextStyle(
                                       color: (i + 1) == _selectedCycle
                                           ? AppTheme.primaryColor
@@ -1400,9 +1492,10 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     final totalContribution = paidCount * widget.committee.contributionAmount;
     final advanceAmount = advanceCount * widget.committee.contributionAmount;
 
-    return _MemberCalendarView(
+    return MemberCalendarView(
       member: member,
       committee: widget.committee,
+      members: _members,
       dates: _dates,
       paidCount: paidCount,
       totalDue: totalDue,
@@ -1411,676 +1504,6 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       advanceAmount: advanceAmount,
       isPaymentMarked: _isPaymentMarked,
       onRefresh: _loadData,
-    );
-  }
-}
-
-// -----------------------------------------------------------------------------
-// MEMBER CALENDAR VIEW
-// -----------------------------------------------------------------------------
-
-class _MemberCalendarView extends StatefulWidget {
-  final Committee committee;
-  final Member member;
-  final List<DateTime> dates;
-  final int paidCount;
-  final int totalDue;
-  final double totalContribution;
-  final int advanceCount;
-  final double advanceAmount;
-  final bool Function(String, DateTime) isPaymentMarked;
-  final VoidCallback onRefresh;
-
-  const _MemberCalendarView({
-    required this.committee,
-    required this.member,
-    required this.dates,
-    required this.paidCount,
-    required this.totalDue,
-    required this.totalContribution,
-    required this.advanceCount,
-    required this.advanceAmount,
-    required this.isPaymentMarked,
-    required this.onRefresh,
-  });
-
-  @override
-  State<_MemberCalendarView> createState() => _MemberCalendarViewState();
-}
-
-class _MemberCalendarViewState extends State<_MemberCalendarView> {
-  late DateTime _selectedMonth;
-  DateTime? _selectedDate;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedMonth = DateTime.now();
-
-  }
-
-  List<DateTime> _getDaysInMonth(DateTime month) {
-    final firstDay = DateTime(month.year, month.month, 1);
-    final lastDay = DateTime(month.year, month.month + 1, 0);
-
-    List<DateTime> days = [];
-    int startingWeekday = firstDay.weekday % 7; // Sunday = 0
-
-    // Days from prev month
-    for (int i = 0; i < startingWeekday; i++) {
-      days.add(DateTime(month.year, month.month, 1 - (startingWeekday - i)));
-    }
-
-    // Days of current month
-    for (int i = 1; i <= lastDay.day; i++) {
-      days.add(DateTime(month.year, month.month, i));
-    }
-
-    // Days of next month
-    int remainingDays = 42 - days.length;
-    for (int i = 1; i <= remainingDays; i++) {
-      days.add(DateTime(month.year, month.month + 1, i));
-    }
-
-    return days;
-  }
-
-  bool _isPaymentDateForMember(DateTime date) {
-    final frequency = widget.committee.frequency;
-    for (var paymentDate in widget.dates) {
-      if (frequency == 'monthly') {
-        if (paymentDate.year == date.year &&
-            paymentDate.month == date.month &&
-            paymentDate.day == date.day) {
-          return true;
-        }
-      } else if (frequency == 'weekly') {
-        if (_isSameDay(paymentDate, date)) {
-          return true;
-        }
-      } else {
-        if (_isSameDay(paymentDate, date)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  bool _isInCurrentMonth(DateTime date) {
-    return date.month == _selectedMonth.month &&
-        date.year == _selectedMonth.year;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final days = _getDaysInMonth(_selectedMonth);
-    final weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-    return Scaffold(
-      backgroundColor: AppTheme.darkBg,
-      appBar: AppBar(
-        backgroundColor: AppTheme.darkSurface,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.committee.name, style: const TextStyle(fontSize: 18)),
-            Text(
-              'Welcome, ${widget.member.name}',
-              style: TextStyle(fontSize: 14, color: Colors.grey[400]),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: widget.onRefresh,
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Stats Card
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryColor.withOpacity(0.8),
-                  AppTheme.secondaryColor.withOpacity(0.8),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatItem(
-                      'Paid',
-                      '${widget.paidCount} / ${widget.dates.length}',
-                      Icons.check_circle,
-                    ),
-                    Container(width: 1, height: 40, color: Colors.white24),
-                    _buildStatItem(
-                      'Contributed',
-                      'PKR ${widget.totalContribution.toStringAsFixed(0)}',
-                      Icons.account_balance_wallet,
-                    ),
-                    Container(width: 1, height: 40, color: Colors.white24),
-                    _buildStatItem(
-                      _getFrequencyLabel(),
-                      'PKR ${widget.committee.contributionAmount.toStringAsFixed(0)}',
-                      Icons.calendar_today,
-                    ),
-                  ],
-                ),
-                if (widget.advanceCount > 0) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue.withOpacity(0.5)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.star, color: Colors.white, size: 18),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${widget.advanceCount} advance payment${widget.advanceCount > 1 ? 's' : ''} • +PKR ${widget.advanceAmount.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          // Month Navigator
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left, color: Colors.white),
-                  onPressed: () {
-                    setState(() {
-                      _selectedMonth = DateTime(
-                        _selectedMonth.year,
-                        _selectedMonth.month - 1,
-                      );
-                    });
-                  },
-                ),
-                Text(
-                  '${_getMonthName(_selectedMonth.month)} ${_selectedMonth.year}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right, color: Colors.white),
-                  onPressed: () {
-                    setState(() {
-                      _selectedMonth = DateTime(
-                        _selectedMonth.year,
-                        _selectedMonth.month + 1,
-                      );
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          // Week days header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children:
-                  weekDays
-                      .map(
-                        (day) => Expanded(
-                          child: Center(
-                            child: Text(
-                              day,
-                              style: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Calendar Grid
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  childAspectRatio: 1,
-                ),
-                itemCount: days.length,
-                itemBuilder: (context, index) {
-                  final date = days[index];
-                  final now = DateTime.now();
-                  final isFutureDate = date.isAfter(now);
-                  final isPaymentDate = _isPaymentDateForMember(date);
-                  final isPaid =
-                      isPaymentDate &&
-                      widget.isPaymentMarked(widget.member.id, date);
-                  final isAdvancePaid = isPaid && isFutureDate;
-                  final isCurrentMonth = _isInCurrentMonth(date);
-                  final isToday = _isSameDay(date, DateTime.now());
-                  final isSelected =
-                      _selectedDate != null && _isSameDay(date, _selectedDate!);
-
-                  return GestureDetector(
-                    onTap: () {
-                      if (isCurrentMonth && isPaymentDate) {
-                        setState(() {
-                          _selectedDate = date;
-                        });
-                        _showPaymentDetails(date, isPaid, isAdvancePaid);
-                      }
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color:
-                            isSelected
-                                ? AppTheme.primaryColor.withOpacity(0.3)
-                                : (isAdvancePaid && isCurrentMonth)
-                                ? Colors.blue.withOpacity(0.3)
-                                : (isPaid && isCurrentMonth)
-                                ? Colors.green.withOpacity(0.2)
-                                : (isPaymentDate && isCurrentMonth && !isPaid)
-                                ? Colors.orange.withOpacity(0.1)
-                                : Colors.transparent,
-                        borderRadius: BorderRadius.circular(8),
-                        border:
-                            isToday
-                                ? Border.all(
-                                  color: AppTheme.primaryColor,
-                                  width: 2,
-                                )
-                                : isAdvancePaid
-                                ? Border.all(color: Colors.blue, width: 1)
-                                : null,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '${date.day}',
-                            style: TextStyle(
-                              color:
-                                  isCurrentMonth
-                                      ? Colors.white
-                                      : Colors.grey[700],
-                              fontWeight:
-                                  isToday ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                          if (isPaymentDate && isCurrentMonth) ...[
-                            const SizedBox(height: 2),
-                            Icon(
-                              isPaid
-                                  ? Icons.check_circle
-                                  : Icons.circle_outlined,
-                              size: 14,
-                              color: isPaid ? Colors.green : Colors.orange,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-
-          // Legend
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildLegendPaid(),
-                const SizedBox(width: 16),
-                _buildLegendAdvance(),
-                const SizedBox(width: 16),
-                _buildLegendPending(),
-              ],
-            ),
-          ),
-
-          // More Details Button
-          Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).padding.bottom + 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MemberDashboardScreen(
-                        committee: widget.committee,
-                        member: widget.member,
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.dashboard_rounded),
-                label: const Text('More Details'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, color: Colors.white, size: 20),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
-        ),
-      ],
-    );
-  }
-
-  // Paid: Green check in rounded square
-  Widget _buildLegendPaid() {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.green),
-          ),
-          child: const Icon(Icons.check, size: 12, color: Colors.green),
-        ),
-        const SizedBox(width: 8),
-        Text('Paid', style: TextStyle(color: Colors.grey[400])),
-      ],
-    );
-  }
-
-  // Advance: Blue check in rounded square
-  Widget _buildLegendAdvance() {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.blue),
-          ),
-          child: const Icon(Icons.check, size: 12, color: Colors.blue),
-        ),
-        const SizedBox(width: 8),
-        Text('Advance', style: TextStyle(color: Colors.grey[400])),
-      ],
-    );
-  }
-
-  // Pending: Orange circle outline
-  Widget _buildLegendPending() {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          alignment: Alignment.center,
-          child: const Icon(Icons.circle_outlined, size: 14, color: Colors.orange),
-        ),
-        const SizedBox(width: 8),
-        Text('Pending', style: TextStyle(color: Colors.grey[400])),
-      ],
-    );
-  }
-
-  String _getMonthName(int month) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    return months[month - 1];
-  }
-
-  String _getFrequencyLabel() {
-    switch (widget.committee.frequency) {
-      case 'daily':
-        return 'Per Day';
-      case 'weekly':
-        return 'Per Week';
-      case 'monthly':
-        return 'Per Month';
-      default:
-        return 'Per Period';
-    }
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
-  void _showPaymentDetails(DateTime date, bool isPaid, bool isAdvancePaid) {
-    int dayNumber = 0;
-    for (int i = 0; i < widget.dates.length; i++) {
-      if (_isSameDay(widget.dates[i], date)) {
-        dayNumber = i + 1;
-        break;
-      }
-    }
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.darkSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder:
-          (context) => Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color:
-                            isAdvancePaid
-                                ? Colors.blue.withOpacity(0.2)
-                                : isPaid
-                                ? Colors.green.withOpacity(0.2)
-                                : Colors.orange.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        isAdvancePaid
-                            ? Icons.star
-                            : isPaid
-                            ? Icons.check_circle
-                            : Icons.schedule,
-                        color:
-                            isAdvancePaid
-                                ? Colors.blue
-                                : isPaid
-                                ? Colors.green
-                                : Colors.orange,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${date.day} ${_getMonthName(date.month)} ${date.year}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          isAdvancePaid
-                              ? 'Paid in Advance ⭐'
-                              : isPaid
-                              ? 'Payment Completed'
-                              : 'Payment Pending',
-                          style: TextStyle(
-                            color:
-                                isAdvancePaid
-                                    ? Colors.blue
-                                    : isPaid
-                                    ? Colors.green
-                                    : Colors.orange,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _buildDetailRow(
-                  'Amount',
-                  'PKR ${widget.committee.contributionAmount.toStringAsFixed(0)}',
-                ),
-                _buildDetailRow(
-                  _getPeriodLabel(),
-                  '$_getPeriodPrefix $dayNumber',
-                ),
-                _buildDetailRow(
-                  'Status',
-                  isAdvancePaid
-                      ? 'Advance ⭐'
-                      : isPaid
-                      ? 'Paid ✓'
-                      : 'Pending',
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-    );
-  }
-
-  String get _getPeriodPrefix {
-    switch (widget.committee.frequency) {
-      case 'daily':
-        return 'Day';
-      case 'weekly':
-        return 'Week';
-      case 'monthly':
-        return 'Month';
-      default:
-        return 'Period';
-    }
-  }
-
-  String _getPeriodLabel() {
-    switch (widget.committee.frequency) {
-      case 'daily':
-        return 'Day Number';
-      case 'weekly':
-        return 'Week Number';
-      case 'monthly':
-        return 'Month Number';
-      default:
-        return 'Period Number';
-    }
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(color: Colors.grey[400])),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
