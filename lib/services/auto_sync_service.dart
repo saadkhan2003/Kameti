@@ -72,6 +72,7 @@ class AutoSyncService {
       paymentIntervalDays: committee.paymentIntervalDays,
       isArchived: false,
       archivedAt: null,
+      isSynced: committee.isSynced, // Retain sync status
     );
     await _dbService.saveCommittee(unarchived);
 

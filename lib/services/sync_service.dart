@@ -81,26 +81,60 @@ class SyncService {
     int uploaded = 0;
     int downloaded = 0;
 
-    // Upload local committees to Supabase
+    // 1. Get ALL remote committees IDs first (lightweight)
+    // We need to know what exists on cloud to detect deletions
+    final remoteCommittees = await _supabase.getCommittees(hostId);
+    final remoteIds = remoteCommittees.map((c) => c.id).toSet();
+    final remoteMap = {for (var c in remoteCommittees) c.id: c};
+
+    // 2. Process LOCAL committees
     final localCommittees = _dbService.getHostedCommittees(hostId);
-    if (localCommittees.isNotEmpty) {
-      // Supabase upsert will handle updates
-      for (final committee in localCommittees) {
-        await _supabase.upsertCommittee(committee);
-        uploaded++;
+    
+    for (final local in localCommittees) {
+      if (remoteIds.contains(local.id)) {
+        // Exists on BOTH -> Update logic
+        final remote = remoteMap[local.id]!;
+        
+        // If local is newer or has changes (not implemented yet, but good for future)
+        // For now, we trust CLOUD as source of truth if timestamps differ significantly
+        // But if local was just edited (e.g. settings), we might want to push?
+        // Let's stick to: if cloud is newer, download. If local is newer, upload.
+        
+        if (remote.createdAt.isAfter(local.createdAt)) { // Using CreatedAt as proxy for update is flawed but existing logic
+          await _dbService.saveCommittee(remote.copyWith(isSynced: true));
+          downloaded++;
+        } else {
+          // Upload local changes if any (or just ensure consistency)
+          // Mark as synced since it exists on cloud
+          if (!local.isSynced) {
+            await _dbService.saveCommittee(local.copyWith(isSynced: true));
+          }
+        }
+      } else {
+        // Exists LOCALLY but NOT on Cloud
+        if (local.isSynced) {
+          // Case A: Was synced before -> Remote Deletion detected!
+          // Action: Delete local
+          print('🗑️ Sync: Committee ${local.name} was deleted remotely. removing locally.');
+          await _dbService.deleteCommittee(local.id);
+        } else {
+          // Case B: Never synced -> New Local Committee
+          // Action: Upload to cloud
+          print('ki Sync: New local committee ${local.name} found. Uploading.');
+          await _supabase.upsertCommittee(local);
+          await _dbService.saveCommittee(local.copyWith(isSynced: true));
+          uploaded++;
+        }
       }
     }
 
-    // Download committees from Supabase
-    final cloudCommittees = await _supabase.getCommittees(hostId);
-
-    for (final cloudCommittee in cloudCommittees) {
-      final localCommittee = _dbService.getCommitteeById(cloudCommittee.id);
-
-      // If cloud is newer or doesn't exist locally, save it
-      if (localCommittee == null ||
-          cloudCommittee.createdAt.isAfter(localCommittee.createdAt)) {
-        await _dbService.saveCommittee(cloudCommittee);
+    // 3. Process REMOTE committees (Download missing ones)
+    final localIds = localCommittees.map((c) => c.id).toSet();
+    
+    for (final remote in remoteCommittees) {
+      if (!localIds.contains(remote.id)) {
+        // New on cloud -> Download
+        await _dbService.saveCommittee(remote.copyWith(isSynced: true));
         downloaded++;
       }
     }

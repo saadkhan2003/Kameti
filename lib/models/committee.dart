@@ -46,6 +46,9 @@ class Committee extends HiveObject {
   @HiveField(13)
   int totalCycles; // Total number of cycles (rounds) for the committee
 
+  @HiveField(14)
+  bool isSynced; // Local flag to track if committee is synced to cloud
+
   Committee({
     required this.id,
     required this.code,
@@ -61,6 +64,7 @@ class Committee extends HiveObject {
     this.isArchived = false,
     this.archivedAt,
     this.totalCycles = 0, // Default to 0
+    this.isSynced = true, // Default to true for backward compatibility with existing data
   });
 
   Map<String, dynamic> toJson() {
@@ -79,6 +83,7 @@ class Committee extends HiveObject {
       'is_archived': isArchived,
       'archived_at': archivedAt?.toIso8601String(),
       'total_cycles': totalCycles,
+      'is_synced': isSynced,
     };
   }
 
@@ -101,6 +106,7 @@ class Committee extends HiveObject {
           ? DateTime.tryParse(json['archived_at'] ?? json['archivedAt'])
           : null,
       totalCycles: json['total_cycles'] ?? json['totalCycles'] ?? 0,
+      isSynced: json['is_synced'] ?? true, // Assume synced if coming from JSON (DB/Cloud)
     );
   }
 
@@ -116,6 +122,7 @@ class Committee extends HiveObject {
     bool? isArchived,
     DateTime? archivedAt,
     int? totalCycles,
+    bool? isSynced,
   }) {
     return Committee(
       id: id,
@@ -132,6 +139,7 @@ class Committee extends HiveObject {
       isArchived: isArchived ?? this.isArchived,
       archivedAt: archivedAt ?? this.archivedAt,
       totalCycles: totalCycles ?? this.totalCycles,
+      isSynced: isSynced ?? this.isSynced,
     );
   }
 }

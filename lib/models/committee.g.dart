@@ -31,13 +31,14 @@ class CommitteeAdapter extends TypeAdapter<Committee> {
       isArchived: fields[11] as bool,
       archivedAt: fields[12] as DateTime?,
       totalCycles: fields[13] as int,
+      isSynced: fields[14] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, Committee obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -65,7 +66,9 @@ class CommitteeAdapter extends TypeAdapter<Committee> {
       ..writeByte(12)
       ..write(obj.archivedAt)
       ..writeByte(13)
-      ..write(obj.totalCycles);
+      ..write(obj.totalCycles)
+      ..writeByte(14)
+      ..write(obj.isSynced);
   }
 
   @override
