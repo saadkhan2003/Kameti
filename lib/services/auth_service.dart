@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'database_service.dart';
 
 class AuthService {
@@ -68,7 +69,10 @@ class AuthService {
       } else {
         // Mobile: Native Google Sign In (Better UX)
         // 1. Sign in with Google
-        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+        final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
+        final GoogleSignInAccount? googleUser = await GoogleSignIn(
+          serverClientId: webClientId,
+        ).signIn();
         if (googleUser == null) return false; // User canceled
 
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
