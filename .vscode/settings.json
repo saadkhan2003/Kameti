@@ -36,7 +36,6 @@
   "python.analysis.autoImportCompletions": true,
   "python.analysis.completeFunctionParens": true,
   "python.analysis.enableAsyncProgram": true,
-
   // Jupyter settings
   "jupyter.intelliSenseTimeout": 1000,
   "jupyter.enableExtendedPythonKernelCompletions": true,
@@ -45,9 +44,8 @@
   "notebook.output.textFontFamily": "Fira Code",
   "notebook.output.fontSize": 14,
   "notebook.output.lineHeight": 1.6,
-
   // Workbench settings
-  "workbench.colorTheme": "GitHub Dark High Contrast",
+  "workbench.colorTheme": "Dracula Theme",
   "workbench.iconTheme": "material-icon-theme",
   "workbench.sideBar.location": "right",
   "workbench.startupEditor": "none",
@@ -59,7 +57,6 @@
     "editorIndentGuide.background1": "#484848",
     "editorIndentGuide.activeBackground1": "#707070"
   },
-
   // File settings
   "files.autoSave": "afterDelay",
   "files.exclude": {
@@ -73,26 +70,21 @@
     "**/node_modules/**": true,
     "**/tmp/**": true
   },
-
   // Search settings
   "search.exclude": {
     "**/node_modules": true,
     "**/dist": true
   },
-
   // Git settings
   "git.autofetch": true,
   "git.confirmSync": false,
   "git.enableSmartCommit": true,
   "git.openRepositoryInParentFolders": "never",
-
   // Terminal settings
   "terminal.integrated.inheritEnv": false,
   "terminal.integrated.allowChords": false,
-
   // Explorer settings
   "explorer.compactFolders": false,
-
   // Other settings
   "telemetry.telemetryLevel": "off",
   "extensions.ignoreRecommendations": true,
