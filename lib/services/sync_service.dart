@@ -120,7 +120,7 @@ class SyncService {
         } else {
           // Case B: Never synced -> New Local Committee
           // Action: Upload to cloud
-          print('ki Sync: New local committee ${local.name} found. Uploading.');
+          print('kameti Sync: New local committee ${local.name} found. Uploading.');
           await _supabase.upsertCommittee(local);
           await _dbService.saveCommittee(local.copyWith(isSynced: true));
           uploaded++;
