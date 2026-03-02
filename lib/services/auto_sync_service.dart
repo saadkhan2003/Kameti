@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'sync_service.dart';
+import 'sync_status_service.dart';
 import 'database_service.dart';
 import 'realtime_sync_service.dart';
 import '../models/committee.dart';
@@ -12,6 +13,7 @@ class AutoSyncService {
   final SyncService _syncService = SyncService();
   final DatabaseService _dbService = DatabaseService();
   final RealtimeSyncService _realtimeSyncService = RealtimeSyncService();
+  final SyncStatusService _syncStatusService = SyncStatusService();
 
   // ============ COMMITTEE OPERATIONS WITH AUTO-SYNC ============
 
@@ -188,10 +190,15 @@ class AutoSyncService {
     try {
       final connectivity = await Connectivity().checkConnectivity();
       if (connectivity != ConnectivityResult.none) {
+        _syncStatusService.setSyncing();
         await syncFn();
+        _syncStatusService.setSynced();
+      } else {
+        _syncStatusService.addPendingChange();
       }
     } catch (e) {
-      // Silently fail - data is saved locally and will sync on next refresh
+      // Data is saved locally and will sync on next refresh
+      _syncStatusService.setError('$e');
       print('Auto-sync failed (will retry on refresh): $e');
     }
   }

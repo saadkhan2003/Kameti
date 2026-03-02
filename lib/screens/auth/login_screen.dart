@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:async';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthChangeEvent;
 import '../../services/auth_service.dart';
 import '../../services/analytics_service.dart';
 import '../../services/toast_service.dart';
@@ -11,7 +12,7 @@ import 'email_verification_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool startInSignupMode;
-  
+
   const LoginScreen({super.key, this.startInSignupMode = false});
 
   @override
@@ -24,20 +25,47 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
   final _authService = AuthService();
-  
+
   late bool _isLogin;
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
+  StreamSubscription? _authSub;
+  // Guard: only navigate from the auth listener when Google OAuth is in progress
+  bool _isGoogleOAuthPending = false;
 
   @override
   void initState() {
     super.initState();
     _isLogin = !widget.startInSignupMode;
+
+    // Handle the OAuth redirect deep-link callback on mobile.
+    // When the user completes Google sign-in in the browser, Supabase fires
+    // AuthChangeEvent.signedIn and we navigate to the dashboard.
+    if (!kIsWeb) {
+      _authSub = _authService.authStateChanges.listen((authState) {
+        if (authState.event == AuthChangeEvent.signedIn &&
+            mounted &&
+            _isGoogleOAuthPending) {
+          _isGoogleOAuthPending = false;
+          final user = _authService.currentUser;
+          if (user != null) {
+            AnalyticsService.logLogin();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const HostDashboardScreen(),
+              ),
+            );
+          }
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _authSub?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     _nameController.dispose();
@@ -59,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text,
         );
         AnalyticsService.logLogin();
-        
+
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -77,26 +105,29 @@ class _LoginScreenState extends State<LoginScreen> {
         // Send verification email
         await _authService.sendEmailVerification();
         AnalyticsService.logSignUp();
-        
+
         if (mounted) {
           await _authService.signOut(); // Ensure no partial session
-          
+
           // Navigate to OTP Screen
           Navigator.push(
             context,
             MaterialPageRoute(
-               builder: (context) => EmailVerificationScreen(email: _emailController.text.trim()),
+              builder:
+                  (context) => EmailVerificationScreen(
+                    email: _emailController.text.trim(),
+                  ),
             ),
           );
         }
       }
     } catch (e) {
       String userFriendlyMessage = _getUserFriendlyErrorMessage(e.toString());
-      
+
       setState(() {
         _errorMessage = userFriendlyMessage;
       });
-      
+
       // If login failed with invalid credentials, suggest password reset
       if (_isLogin && e.toString().contains('Invalid')) {
         _showPasswordResetSuggestion();
@@ -112,71 +143,78 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String _getUserFriendlyErrorMessage(String error) {
     // Convert technical errors to user-friendly messages
-    if (error.contains('Invalid login credentials') || 
-        error.contains('Invalid') || 
+    if (error.contains('Invalid login credentials') ||
+        error.contains('Invalid') ||
         error.contains('credentials')) {
       return 'Incorrect email or password. Need help? Try "Forgot Password" below.';
     }
-    
+
     if (error.contains('Email not confirmed')) {
       return 'Please verify your email before logging in. Check your inbox for the verification link.';
     }
-    
+
     if (error.contains('User not found')) {
       return 'No account found with this email. Please sign up first.';
     }
-    
+
     if (error.contains('Network')) {
       return 'Connection issue. Please check your internet and try again.';
     }
-    
+
     if (error.contains('already registered')) {
       return 'This email is already registered. Please log in instead.';
     }
-    
+
     // Default: clean up the error message
-    return error.replaceAll('Sign in failed: ', '')
-               .replaceAll('Sign up failed: ', '')
-               .replaceAll('AuthException: ', '')
-               .replaceAll('Exception: ', '');
+    return error
+        .replaceAll('Sign in failed: ', '')
+        .replaceAll('Sign up failed: ', '')
+        .replaceAll('AuthException: ', '')
+        .replaceAll('Exception: ', '');
   }
 
   void _showPasswordResetSuggestion() {
     Future.delayed(const Duration(milliseconds: 500), () {
       if (!mounted) return;
-      
+
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: AppTheme.darkCard,
-          title: Row(
-            children: [
-              Icon(Icons.lock_reset, color: AppTheme.primaryColor),
-              const SizedBox(width: 12),
-              const Text('Need to Reset Password?'),
-            ],
-          ),
-          content: Text(
-            'If you\'re an existing user, you may need to reset your password after our recent update.\n\nWould you like to reset it now?',
-            style: TextStyle(color: Colors.grey[300]),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Not Now'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
+        builder:
+            (context) => AlertDialog(
+              backgroundColor: AppTheme.darkCard,
+              title: Row(
+                children: [
+                  Icon(Icons.lock_reset, color: AppTheme.primaryColor),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Need to Reset Password?',
+                      overflow: TextOverflow.visible,
+                    ),
+                  ),
+                ],
               ),
-              onPressed: () {
-                Navigator.pop(context);
-                _showForgotPasswordDialog();
-              },
-              child: const Text('Reset Password'),
+              content: Text(
+                'If you\'re an existing user, you may need to reset your password after our recent update.\n\nWould you like to reset it now?',
+                style: TextStyle(color: Colors.grey[300]),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Not Now'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showForgotPasswordDialog();
+                  },
+                  child: const Text('Reset Password'),
+                ),
+              ],
             ),
-          ],
-        ),
       );
     });
   }
@@ -185,26 +223,28 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _isGoogleOAuthPending = true;
     });
-    
+
     try {
       final success = await _authService.signInWithGoogle();
-      
+
       if (success && mounted) {
         final user = _authService.currentUser;
         if (user == null) return;
-        
+
         // Check if this is a NEW user (just created) or EXISTING user
         final createdAt = user.createdAt;
         final now = DateTime.now();
-        final isNewUser = now.difference(DateTime.parse(createdAt)).inSeconds < 30;
-        
+        final isNewUser =
+            now.difference(DateTime.parse(createdAt)).inSeconds < 30;
+
         // Check if user has password set (existing users from Firebase migration don't)
         // We can check identities - if only Google identity exists, they're new OAuth user
         final identities = user.identities ?? [];
         final hasEmailIdentity = identities.any((i) => i.provider == 'email');
         final hasGoogleIdentity = identities.any((i) => i.provider == 'google');
-        
+
         // Scenario 1: Existing email user signing in with Google for first time
         // They need to link accounts or reset password
         if (hasEmailIdentity && hasGoogleIdentity && !isNewUser) {
@@ -216,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
           }
           return;
         }
-        
+
         // Scenario 2: Check if email exists but user just linked Google
         // (First time Google sign-in for existing Firebase user)
         if (!isNewUser && identities.length > 1) {
@@ -235,11 +275,12 @@ class _LoginScreenState extends State<LoginScreen> {
               _isLoading = false;
               _errorMessage = null;
             });
-            
+
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => EmailVerificationScreen(email: user.email!),
+                builder:
+                    (context) => EmailVerificationScreen(email: user.email!),
               ),
             );
           }
@@ -248,19 +289,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // New user or verified user - go to dashboard
         if (!kIsWeb) {
-             AnalyticsService.logLogin();
-             Navigator.pushReplacement(
-               context,
-               MaterialPageRoute(
-                 builder: (context) => const HostDashboardScreen(),
-               ),
-             );
+          AnalyticsService.logLogin();
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const HostDashboardScreen(),
+            ),
+          );
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _errorMessage = _getUserFriendlyErrorMessage(e.toString());
+          _isGoogleOAuthPending = false;
         });
       }
     } finally {
@@ -276,130 +318,140 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Account Migration'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.info_outline, size: 48, color: Colors.blue),
-            const SizedBox(height: 16),
-            Text(
-              'Welcome back! We found an existing account with $email.',
-              textAlign: TextAlign.center,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Account Migration'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.info_outline, size: 48, color: Colors.blue),
+                const SizedBox(height: 16),
+                Text(
+                  'Welcome back! We found an existing account with $email.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'To complete your account migration and secure your data, please reset your password.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            const Text(
-              'To complete your account migration and secure your data, please reset your password.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              // Sign out and let them use Google directly next time
-              await _authService.signOut();
-            },
-            child: const Text('Later'),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  // Sign out and let them use Google directly next time
+                  await _authService.signOut();
+                },
+                child: const Text('Later'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  // Send password reset email
+                  try {
+                    await _authService.resetPassword(email);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Password reset email sent to $email'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error: ${e.toString()}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                  await _authService.signOut();
+                },
+                child: const Text('Reset Password'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              // Send password reset email
-              try {
-                await _authService.resetPassword(email);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Password reset email sent to $email'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: ${e.toString()}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-              await _authService.signOut();
-            },
-            child: const Text('Reset Password'),
-          ),
-        ],
-      ),
     );
   }
 
   void _showForgotPasswordDialog() {
-    final resetEmailController = TextEditingController(text: _emailController.text);
-    
+    final resetEmailController = TextEditingController(
+      text: _emailController.text,
+    );
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
-        title: const Text('Reset Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Enter your email address and we\'ll send you a link to reset your password.\n\nNote: If you\'re an existing user after our recent update, you\'ll need to check your email for the reset link.',
-              style: TextStyle(color: Colors.grey[400], fontSize: 14),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: AppTheme.darkCard,
+            title: const Text('Reset Password'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Enter your email address and we\'ll send you a link to reset your password.\n\nNote: If you\'re an existing user after our recent update, you\'ll need to check your email for the reset link.',
+                  style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: resetEmailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[600]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: AppTheme.darkSurface,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: resetEmailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                prefixIcon: const Icon(Icons.email_outlined),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[600]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
-                ),
-                filled: true,
-                fillColor: AppTheme.darkSurface,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+              ElevatedButton(
+                onPressed: () async {
+                  final email = resetEmailController.text.trim();
+                  if (email.isEmpty) {
+                    ToastService.warning(context, 'Please enter your email');
+                    return;
+                  }
+
+                  try {
+                    await _authService.resetPassword(email);
+                    if (mounted) {
+                      Navigator.pop(context);
+                      ToastService.success(
+                        context,
+                        'Password reset email sent to $email',
+                      );
+                    }
+                  } catch (e) {
+                    ToastService.error(context, e.toString());
+                  }
+                },
+                child: const Text('Send Reset Link'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final email = resetEmailController.text.trim();
-              if (email.isEmpty) {
-                ToastService.warning(context, 'Please enter your email');
-                return;
-              }
-              
-              try {
-                await _authService.resetPassword(email);
-                if (mounted) {
-                  Navigator.pop(context);
-                  ToastService.success(context, 'Password reset email sent to $email');
-                }
-              } catch (e) {
-                ToastService.error(context, e.toString());
-              }
-            },
-            child: const Text('Send Reset Link'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -415,10 +467,7 @@ class _LoginScreenState extends State<LoginScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.darkBg,
-              AppTheme.darkSurface,
-            ],
+            colors: [AppTheme.darkBg, AppTheme.darkSurface],
           ),
         ),
         child: SafeArea(
@@ -576,18 +625,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 18),
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(_isLogin ? 'Sign In' : 'Create Account'),
+                    child:
+                        _isLoading
+                            ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                            : Text(_isLogin ? 'Sign In' : 'Create Account'),
                   ),
-                  
+
                   // Forgot Password (only in login mode)
                   if (_isLogin) ...[
                     const SizedBox(height: 16),
@@ -660,18 +710,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
                       height: 24,
                       width: 24,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                        Icons.g_mobiledata,
-                        size: 24,
-                        color: Colors.white,
-                      ),
+                      errorBuilder:
+                          (context, error, stackTrace) => const Icon(
+                            Icons.g_mobiledata,
+                            size: 24,
+                            color: Colors.white,
+                          ),
                     ),
                     label: const Text(
                       'Continue with Google',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
                 ],

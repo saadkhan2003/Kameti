@@ -1,5 +1,5 @@
 /// Controllers exports - import this file to get all controllers
-library controllers;
+library;
 
 export 'dashboard_controller.dart';
 export 'payment_controller.dart';

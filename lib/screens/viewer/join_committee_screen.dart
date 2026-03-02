@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
 import '../../utils/app_theme.dart';
@@ -19,7 +18,6 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
   final _memberCodeController = TextEditingController();
   final _dbService = DatabaseService();
   final _syncService = SyncService();
-  final _authService = AuthService();
   String? _errorMessage;
   bool _isLoading = false;
 
@@ -290,7 +288,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                         ),
                       ),
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 24),
                   const Divider(color: Colors.grey),
                   const SizedBox(height: 24),
@@ -387,7 +385,8 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                     if (upper.length == 3 && !upper.contains('-')) {
                       // If exactly 3 letters and no dash, add dash
                       _memberCodeController.text = '$upper-';
-                      _memberCodeController.selection = TextSelection.fromPosition(
+                      _memberCodeController
+                          .selection = TextSelection.fromPosition(
                         TextPosition(offset: _memberCodeController.text.length),
                       );
                     } else if (upper.length > 4 && !upper.contains('-')) {
@@ -395,7 +394,8 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                       final letters = upper.substring(0, 3);
                       final numbers = upper.substring(3);
                       _memberCodeController.text = '$letters-$numbers';
-                      _memberCodeController.selection = TextSelection.fromPosition(
+                      _memberCodeController
+                          .selection = TextSelection.fromPosition(
                         TextPosition(offset: _memberCodeController.text.length),
                       );
                     }

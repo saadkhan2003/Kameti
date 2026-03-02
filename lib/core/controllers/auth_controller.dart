@@ -16,8 +16,10 @@ class AuthController extends ChangeNotifier {
   bool get isLoggedIn => _authService.currentUser != null;
   String? get userId => _authService.currentUser?.id;
   String? get email => _authService.currentUser?.email;
-  String? get displayName => _authService.currentUser?.userMetadata?['full_name'];
-  bool get isEmailVerified => _authService.currentUser?.emailConfirmedAt != null;
+  String? get displayName =>
+      _authService.currentUser?.userMetadata?['full_name'];
+  bool get isEmailVerified =>
+      _authService.currentUser?.emailConfirmedAt != null;
 
   void toggleLoginMode() {
     _isLogin = !_isLogin;
@@ -93,7 +95,7 @@ class AuthController extends ChangeNotifier {
       final credential = await _authService.signInWithGoogle();
       _isLoading = false;
       notifyListeners();
-      return credential != null;
+      return credential;
     } catch (e) {
       _errorMessage = e.toString();
       _isLoading = false;

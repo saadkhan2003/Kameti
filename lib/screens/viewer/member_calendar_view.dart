@@ -276,7 +276,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                     Flexible(
                       child: _buildStatItem(
                         'Contributed',
-                        'PKR ${_calculateCycleTotalContribution().toStringAsFixed(0)}',
+                        '${widget.committee.currency} ${_calculateCycleTotalContribution().toStringAsFixed(0)}',
                         Icons.account_balance_wallet,
                       ),
                     ),
@@ -284,7 +284,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                     Flexible(
                       child: _buildStatItem(
                         _getFrequencyLabel(),
-                        'PKR ${widget.committee.contributionAmount.toStringAsFixed(0)}',
+                        '${widget.committee.currency} ${widget.committee.contributionAmount.toStringAsFixed(0)}',
                         Icons.calendar_today,
                       ),
                     ),
@@ -309,7 +309,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            '${widget.advanceCount} advance payment${widget.advanceCount > 1 ? 's' : ''} • +PKR ${widget.advanceAmount.toStringAsFixed(0)}',
+                            '${widget.advanceCount} advance payment${widget.advanceCount > 1 ? 's' : ''} • +${widget.committee.currency} ${widget.advanceAmount.toStringAsFixed(0)}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -788,7 +788,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                 const SizedBox(height: 24),
                 _buildDetailRow(
                   'Amount',
-                  'PKR ${widget.committee.contributionAmount.toStringAsFixed(0)}',
+                  '${widget.committee.currency} ${widget.committee.contributionAmount.toStringAsFixed(0)}',
                 ),
                 _buildDetailRow(
                   _getPeriodLabel(),

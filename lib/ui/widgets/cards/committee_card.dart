@@ -120,8 +120,9 @@ class CommitteeCard extends StatelessWidget {
                       PopupMenuButton<String>(
                         icon: Icon(Icons.more_vert, color: Colors.grey[400]),
                         onSelected: (value) {
-                          if (value == 'archive') onArchive?.call();
-                          else if (value == 'delete') onDelete?.call();
+                          if (value == 'archive') {
+                            onArchive?.call();
+                          } else if (value == 'delete') onDelete?.call();
                         },
                         itemBuilder: (context) => [
                           if (onArchive != null)

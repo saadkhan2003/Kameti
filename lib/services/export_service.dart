@@ -9,7 +9,6 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/committee.dart';
-import '../models/member.dart';
 import '../models/payment.dart';
 import 'database_service.dart';
 
@@ -133,25 +132,25 @@ class ExportService {
             padding: const pw.EdgeInsets.all(20),
             decoration: pw.BoxDecoration(color: _lightBg, borderRadius: pw.BorderRadius.circular(8), border: pw.Border.all(color: PdfColors.grey300)),
             child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-              pw.Text('Summary${cycleLabel}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: _primaryColor)),
+              pw.Text('Summary$cycleLabel', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: _primaryColor)),
               pw.SizedBox(height: 12),
               pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-                _statBox('Contribution', 'Rs. ${committee.contributionAmount.toInt()}'),
+                _statBox('Contribution', '${committee.currency} ${committee.contributionAmount.toInt()}'),
                 _statBox('Frequency', committee.frequency.toUpperCase()),
                 _statBox('Members', '${members.length}'),
                 _statBox('Collection', '$collectionRate%'),
               ]),
               pw.Divider(color: PdfColors.grey300),
               pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-                _statBox('Collected', 'Rs. ${totalCollected.toInt()}', highlight: true),
+                _statBox('Collected', '${committee.currency} ${totalCollected.toInt()}', highlight: true),
                 _statBox('Payouts', '$paidMembersCount/${members.length}', highlight: true),
                 _statBox('Periods', '${dates.length}'),
-                _statBox('Pending', 'Rs. ${((totalExpected - totalPaymentsInCycle) * committee.contributionAmount).toInt()}'),
+                _statBox('Pending', '${committee.currency} ${((totalExpected - totalPaymentsInCycle) * committee.contributionAmount).toInt()}'),
               ]),
             ]),
           ),
           pw.SizedBox(height: 24),
-          pw.Text('Member Details${cycleLabel}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: _primaryColor)),
+          pw.Text('Member Details$cycleLabel', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: _primaryColor)),
           pw.SizedBox(height: 12),
           pw.Table(
             border: pw.TableBorder.all(color: PdfColors.grey400),
@@ -160,7 +159,9 @@ class ExportService {
               pw.TableRow(decoration: const pw.BoxDecoration(color: _primaryColor), children: [_th('#'), _th('Name'), _th('Phone'), _th('Paid'), _th('%'), _th('Amount'), _th('Payout')]),
               ...members.asMap().entries.map((e) {
                 int paid = 0;
-                for (var d in dates) if (_isPaymentMarked(payments, e.value.id, d)) paid++;
+                for (var d in dates) {
+                  if (_isPaymentMarked(payments, e.value.id, d)) paid++;
+                }
                 final pct = dates.isNotEmpty ? (paid / dates.length * 100).toInt() : 0;
                 return pw.TableRow(decoration: pw.BoxDecoration(color: e.key % 2 == 0 ? PdfColors.white : _lightBg), children: [
                   _td('${e.value.payoutOrder}', center: true),
@@ -168,11 +169,11 @@ class ExportService {
                   _td(e.value.phone),
                   _td('$paid/${dates.length}', center: true),
                   _td('$pct%', center: true, bg: pct >= 80 ? _lightGreen : (pct < 50 ? _lightRed : null)),
-                  _td('Rs. ${(paid * committee.contributionAmount).toInt()}'),
+                  _td('${committee.currency} ${(paid * committee.contributionAmount).toInt()}'),
                   _td(e.value.hasReceivedPayout ? 'DONE' : 'Pending', center: true, bg: e.value.hasReceivedPayout ? _lightGreen : null, bold: e.value.hasReceivedPayout),
                 ]);
               }),
-              pw.TableRow(decoration: const pw.BoxDecoration(color: _accentColor), children: [_tf(''), _tf('TOTAL'), _tf(''), _tf('$totalPaymentsInCycle/$totalExpected'), _tf('$collectionRate%'), _tf('Rs. ${totalCollected.toInt()}'), _tf('$paidMembersCount')]),
+              pw.TableRow(decoration: const pw.BoxDecoration(color: _accentColor), children: [_tf(''), _tf('TOTAL'), _tf(''), _tf('$totalPaymentsInCycle/$totalExpected'), _tf('$collectionRate%'), _tf('${committee.currency} ${totalCollected.toInt()}'), _tf('$paidMembersCount')]),
             ],
           ),
           pw.SizedBox(height: 24),
@@ -271,30 +272,34 @@ class ExportService {
     rows.add([]);
     rows.add(['------------------ SUMMARY$cycleLabel ------------------']);
     rows.add(['Field', 'Value']);
-    rows.add(['Contribution', 'Rs. ${committee.contributionAmount.toInt()}']);
+    rows.add(['Contribution', '${committee.currency} ${committee.contributionAmount.toInt()}']);
     rows.add(['Frequency', committee.frequency.toUpperCase()]);
     rows.add(['Members', members.length]);
     rows.add(['Periods', dates.length]);
-    rows.add(['Collected', 'Rs. ${totalCollected.toInt()}']);
-    rows.add(['Pending', 'Rs. ${totalPending.toInt()}']);
+    rows.add(['Collected', '${committee.currency} ${totalCollected.toInt()}']);
+    rows.add(['Pending', '${committee.currency} ${totalPending.toInt()}']);
     rows.add(['Collection Rate', '$collectionRate%']);
     rows.add(['Payouts Done', '$paidCount / ${members.length}']);
     rows.add([]);
     rows.add(['------------------ PAYOUT SCHEDULE ------------------']);
     rows.add(['Order', 'Member', 'Phone', 'Code', 'Status', 'Date']);
-    for (var m in members) rows.add([m.payoutOrder, m.name, m.phone, m.memberCode, m.hasReceivedPayout ? 'RECEIVED' : 'Pending', m.payoutDate != null ? DateFormat('dd/MM/yyyy').format(m.payoutDate!) : '-']);
+    for (var m in members) {
+      rows.add([m.payoutOrder, m.name, m.phone, m.memberCode, m.hasReceivedPayout ? 'RECEIVED' : 'Pending', m.payoutDate != null ? DateFormat('dd/MM/yyyy').format(m.payoutDate!) : '-']);
+    }
     rows.add([]);
     rows.add(['------------------ MEMBER PAYMENTS$cycleLabel ------------------']);
     rows.add(['Order', 'Member', 'Paid', 'Missed', '%', 'Amount Paid', 'Amount Due']);
     for (var m in members) {
       int paid = 0;
-      for (var d in dates) if (_isPaymentMarked(payments, m.id, d)) paid++;
+      for (var d in dates) {
+        if (_isPaymentMarked(payments, m.id, d)) paid++;
+      }
       final missed = dates.length - paid;
       final pct = dates.isNotEmpty ? (paid / dates.length * 100).toInt() : 0;
-      rows.add([m.payoutOrder, m.name, paid, missed, '$pct%', 'Rs. ${(paid * committee.contributionAmount).toInt()}', 'Rs. ${(missed * committee.contributionAmount).toInt()}']);
+      rows.add([m.payoutOrder, m.name, paid, missed, '$pct%', '${committee.currency} ${(paid * committee.contributionAmount).toInt()}', '${committee.currency} ${(missed * committee.contributionAmount).toInt()}']);
     }
     rows.add([]);
-    rows.add(['', 'TOTAL', totalPaymentsInCycle, totalExpected - totalPaymentsInCycle, '$collectionRate%', 'Rs. ${totalCollected.toInt()}', 'Rs. ${totalPending.toInt()}']);
+    rows.add(['', 'TOTAL', totalPaymentsInCycle, totalExpected - totalPaymentsInCycle, '$collectionRate%', '${committee.currency} ${totalCollected.toInt()}', '${committee.currency} ${totalPending.toInt()}']);
     rows.add([]);
     rows.add(['=========================================================']);
     rows.add(['END OF REPORT']);

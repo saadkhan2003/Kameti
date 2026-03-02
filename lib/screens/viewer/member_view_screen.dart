@@ -5,8 +5,8 @@ import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
-import '../../models/payment.dart';
 import '../../utils/app_theme.dart';
+import '../../ui/widgets/ads/banner_ad_widget.dart';
 
 class MemberViewScreen extends StatefulWidget {
   final Committee committee;
@@ -30,7 +30,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
   int _totalDays = 0;
   bool _isRefreshing = false;
   bool _isFirstLoad = true; // Track if this is initial load
-  
+
   // Cycle support
   int _selectedCycle = 1;
   int _maxCycles = 1;
@@ -48,19 +48,29 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
     // Load members to calculate max cycles
     _members = _dbService.getMembersByCommittee(widget.committee.id);
     _maxCycles = _members.isNotEmpty ? _members.length : 1;
-    
+
     debugPrint('');
-    debugPrint('╔════════════════════════════════════════════════════════════╗');
-    debugPrint('║             MEMBER VIEW DATA LOAD                          ║');
-    debugPrint('╠════════════════════════════════════════════════════════════╣');
+    debugPrint(
+      '╔════════════════════════════════════════════════════════════╗',
+    );
+    debugPrint(
+      '║             MEMBER VIEW DATA LOAD                          ║',
+    );
+    debugPrint(
+      '╠════════════════════════════════════════════════════════════╣',
+    );
     debugPrint('║ Committee: ${widget.committee.name}');
     debugPrint('║ Committee ID: ${widget.committee.id}');
     debugPrint('║ START DATE: ${widget.committee.startDate}');
     debugPrint('║ Frequency: ${widget.committee.frequency}');
-    debugPrint('║ Payout Interval: ${widget.committee.paymentIntervalDays} days');
+    debugPrint(
+      '║ Payout Interval: ${widget.committee.paymentIntervalDays} days',
+    );
     debugPrint('║ Members: ${_members.length} → MaxCycles: $_maxCycles');
-    debugPrint('╚════════════════════════════════════════════════════════════╝');
-    
+    debugPrint(
+      '╚════════════════════════════════════════════════════════════╝',
+    );
+
     // Default to ongoing cycle on first load only
     if (_isFirstLoad) {
       final ongoingCycle = _findOngoingCycle();
@@ -68,13 +78,13 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
       _selectedCycle = ongoingCycle;
       _isFirstLoad = false;
     }
-    
+
     // Keep selected cycle in valid range
     if (_selectedCycle > _maxCycles) _selectedCycle = _maxCycles;
     if (_selectedCycle < 1) _selectedCycle = 1;
-    
+
     debugPrint('🎯 Current selected cycle: $_selectedCycle / $_maxCycles');
-    
+
     _generateDates();
     _calculateStats();
     debugPrint('');
@@ -113,23 +123,30 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
       DateTime cycleEndDate;
 
       if (widget.committee.frequency == 'monthly') {
-        cycleStartDate = _addMonths(committeeStartDate, (cycle - 1) * periodsPerPayout);
+        cycleStartDate = _addMonths(
+          committeeStartDate,
+          (cycle - 1) * periodsPerPayout,
+        );
         cycleEndDate = _addMonths(cycleStartDate, periodsPerPayout);
         cycleEndDate = cycleEndDate.subtract(const Duration(days: 1));
       } else {
         final daysOffset = (cycle - 1) * payoutIntervalDays;
         cycleStartDate = committeeStartDate.add(Duration(days: daysOffset));
-        cycleEndDate = cycleStartDate.add(Duration(days: payoutIntervalDays - 1));
+        cycleEndDate = cycleStartDate.add(
+          Duration(days: payoutIntervalDays - 1),
+        );
       }
 
-      debugPrint('🔍 Cycle $cycle: ${DateFormat('yyyy-MM-dd').format(cycleStartDate)} to ${DateFormat('yyyy-MM-dd').format(cycleEndDate)}');
+      debugPrint(
+        '🔍 Cycle $cycle: ${DateFormat('yyyy-MM-dd').format(cycleStartDate)} to ${DateFormat('yyyy-MM-dd').format(cycleEndDate)}',
+      );
 
       // Check if today is within this cycle
       if (!now.isBefore(cycleStartDate) && !now.isAfter(cycleEndDate)) {
         debugPrint('🔍 ✅ Cycle $cycle is ONGOING');
         return cycle;
       }
-      
+
       // If today is before this cycle starts, return the previous cycle (or 1)
       if (now.isBefore(cycleStartDate)) {
         final result = cycle > 1 ? cycle - 1 : 1;
@@ -168,7 +185,9 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
     final committeeStartDate = widget.committee.startDate;
     final payoutIntervalDays = widget.committee.paymentIntervalDays;
 
-    debugPrint('📅 Generating dates - Start: $committeeStartDate, Interval: $payoutIntervalDays, Frequency: ${widget.committee.frequency}');
+    debugPrint(
+      '📅 Generating dates - Start: $committeeStartDate, Interval: $payoutIntervalDays, Frequency: ${widget.committee.frequency}',
+    );
 
     // Use collection frequency to determine interval between collection dates
     int collectionInterval = 30;
@@ -186,12 +205,17 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
       if (periodsPerPayout < 1) periodsPerPayout = 1;
     }
 
-    debugPrint('📅 Collection interval: $collectionInterval, Periods per payout: $periodsPerPayout');
+    debugPrint(
+      '📅 Collection interval: $collectionInterval, Periods per payout: $periodsPerPayout',
+    );
 
     // Calculate start date for the selected payout cycle
     DateTime cycleStartDate;
     if (widget.committee.frequency == 'monthly') {
-      cycleStartDate = _addMonths(committeeStartDate, (_selectedCycle - 1) * periodsPerPayout);
+      cycleStartDate = _addMonths(
+        committeeStartDate,
+        (_selectedCycle - 1) * periodsPerPayout,
+      );
     } else {
       final daysOffset = (_selectedCycle - 1) * payoutIntervalDays;
       cycleStartDate = committeeStartDate.add(Duration(days: daysOffset));
@@ -201,9 +225,11 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
 
     // Generate exactly periodsPerPayout dates for this payout cycle
     // LIMIT to 35 days (5 weeks) for daily committees to avoid calendar overflow
-    final maxDatesToShow = widget.committee.frequency == 'daily' ? 35 : periodsPerPayout;
-    final datesToGenerate = periodsPerPayout < maxDatesToShow ? periodsPerPayout : maxDatesToShow;
-    
+    final maxDatesToShow =
+        widget.committee.frequency == 'daily' ? 35 : periodsPerPayout;
+    final datesToGenerate =
+        periodsPerPayout < maxDatesToShow ? periodsPerPayout : maxDatesToShow;
+
     DateTime current = cycleStartDate;
     for (int i = 0; i < datesToGenerate; i++) {
       _dates.add(current);
@@ -213,16 +239,20 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
         current = current.add(Duration(days: collectionInterval));
       }
     }
-    
-    debugPrint('📅 Generated ${_dates.length} dates (limit: $maxDatesToShow) for cycle $_selectedCycle');
+
+    debugPrint(
+      '📅 Generated ${_dates.length} dates (limit: $maxDatesToShow) for cycle $_selectedCycle',
+    );
   }
 
   void _calculateStats() {
     _totalDays = _dates.length;
     _paidCount = 0;
 
-    debugPrint('💰 Calculating stats for CYCLE $_selectedCycle (${_dates.length} dates)');
-    
+    debugPrint(
+      '💰 Calculating stats for CYCLE $_selectedCycle (${_dates.length} dates)',
+    );
+
     for (final date in _dates) {
       final payment = _dbService.getPayment(widget.member.id, date);
       final isPaid = payment != null && payment.isPaid;
@@ -230,41 +260,54 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
         _paidCount++;
       }
     }
-    
-    debugPrint('💰 Cycle $_selectedCycle stats: $_paidCount / $_totalDays paid');
+
+    debugPrint(
+      '💰 Cycle $_selectedCycle stats: $_paidCount / $_totalDays paid',
+    );
     setState(() {});
   }
 
   /// Sync fresh data from Supabase cloud (READ-ONLY for viewers)
   Future<void> _refreshFromCloud() async {
     if (_isRefreshing) return;
-    
+
     setState(() => _isRefreshing = true);
-    
+
     try {
-      debugPrint('🔄 Starting viewer refresh for committee: ${widget.committee.id}');
-      
+      debugPrint(
+        '🔄 Starting viewer refresh for committee: ${widget.committee.id}',
+      );
+
       // Use the new read-only refresh method
       await _syncService.refreshViewerData(widget.committee.id);
-      
+
       // Reload local data
       _loadData();
-      
+
       // Debug: print payment counts and dates
-      final allPayments = _dbService.getPaymentsByCommittee(widget.committee.id);
-      final memberPayments = allPayments.where((p) => p.memberId == widget.member.id).toList();
+      final allPayments = _dbService.getPaymentsByCommittee(
+        widget.committee.id,
+      );
+      final memberPayments =
+          allPayments.where((p) => p.memberId == widget.member.id).toList();
       debugPrint('✅ Total payments for committee: ${allPayments.length}');
-      debugPrint('✅ Payments for member ${widget.member.name}: ${memberPayments.length}');
-      
+      debugPrint(
+        '✅ Payments for member ${widget.member.name}: ${memberPayments.length}',
+      );
+
       // Show sample of payment dates for this member
       if (memberPayments.isNotEmpty) {
-        final sortedPayments = memberPayments..sort((a, b) => a.date.compareTo(b.date));
-        debugPrint('✅ First 5 payment dates: ${sortedPayments.take(5).map((p) => "${DateFormat('yyyy-MM-dd').format(p.date)} (paid: ${p.isPaid})").toList()}');
-        debugPrint('✅ Last 5 payment dates: ${sortedPayments.reversed.take(5).map((p) => "${DateFormat('yyyy-MM-dd').format(p.date)} (paid: ${p.isPaid})").toList()}');
+        final sortedPayments =
+            memberPayments..sort((a, b) => a.date.compareTo(b.date));
+        debugPrint(
+          '✅ First 5 payment dates: ${sortedPayments.take(5).map((p) => "${DateFormat('yyyy-MM-dd').format(p.date)} (paid: ${p.isPaid})").toList()}',
+        );
+        debugPrint(
+          '✅ Last 5 payment dates: ${sortedPayments.reversed.take(5).map((p) => "${DateFormat('yyyy-MM-dd').format(p.date)} (paid: ${p.isPaid})").toList()}',
+        );
       }
-      
+
       debugPrint('✅ Paid count for current cycle: $_paidCount / $_totalDays');
-      
     } catch (e) {
       debugPrint('❌ Viewer sync error: $e');
     } finally {
@@ -280,7 +323,8 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
     final now = DateTime.now();
     final cycleStart = _dates.first;
     final cycleEnd = _dates.last;
-    return !now.isBefore(cycleStart) && !now.isAfter(cycleEnd.add(const Duration(days: 1)));
+    return !now.isBefore(cycleStart) &&
+        !now.isAfter(cycleEnd.add(const Duration(days: 1)));
   }
 
   bool _isPaymentMarked(DateTime date) {
@@ -301,6 +345,9 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Anchored adaptive banner — Google's recommended placement.
+      // Scaffold automatically reserves space so body content is never hidden.
+      bottomNavigationBar: const BannerAdWidget(),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,25 +355,28 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
             Text(widget.committee.name),
             Text(
               'Welcome, ${widget.member.name}',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.normal,
+              ),
             ),
           ],
         ),
         actions: [
           _isRefreshing
               ? const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : IconButton(
-                  icon: const Icon(Icons.refresh),
-                  tooltip: 'Refresh from cloud',
-                  onPressed: _refreshFromCloud,
+                padding: EdgeInsets.all(12),
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 ),
+              )
+              : IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Refresh from cloud',
+                onPressed: _refreshFromCloud,
+              ),
         ],
       ),
       body: SingleChildScrollView(
@@ -359,7 +409,11 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.refresh, color: Colors.white70, size: 20),
+                        icon: const Icon(
+                          Icons.refresh,
+                          color: Colors.white70,
+                          size: 20,
+                        ),
                         onPressed: () {
                           _selectedCycle = 1;
                           _loadData();
@@ -391,7 +445,11 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.check_circle, color: Colors.white, size: 22),
+                              Icon(
+                                Icons.check_circle,
+                                color: Colors.white,
+                                size: 22,
+                              ),
                               const SizedBox(height: 4),
                               Text(
                                 '$_paidCount / $_totalDays',
@@ -423,10 +481,14 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.payments, color: Colors.white, size: 22),
+                              Icon(
+                                Icons.payments,
+                                color: Colors.white,
+                                size: 22,
+                              ),
                               const SizedBox(height: 4),
                               Text(
-                                'PKR ${(_paidCount * widget.committee.contributionAmount).toInt()}',
+                                '${widget.committee.currency} ${(_paidCount * widget.committee.contributionAmount).toInt()}',
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -455,10 +517,14 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.calendar_today, color: Colors.white, size: 22),
+                              Icon(
+                                Icons.calendar_today,
+                                color: Colors.white,
+                                size: 22,
+                              ),
                               const SizedBox(height: 4),
                               Text(
-                                'PKR ${widget.committee.contributionAmount.toInt()}',
+                                '${widget.committee.currency} ${widget.committee.contributionAmount.toInt()}',
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -466,7 +532,11 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                                 ),
                               ),
                               Text(
-                                'Per ${widget.committee.frequency == 'daily' ? 'Day' : widget.committee.frequency == 'weekly' ? 'Week' : 'Month'}',
+                                'Per ${widget.committee.frequency == 'daily'
+                                    ? 'Day'
+                                    : widget.committee.frequency == 'weekly'
+                                    ? 'Week'
+                                    : 'Month'}',
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
                                   color: Colors.white70,
@@ -507,14 +577,14 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
               itemBuilder: (context, index) {
                 final date = _dates[index];
                 final isPaid = _isPaymentMarked(date);
-                final format = widget.committee.frequency == 'monthly'
-                    ? DateFormat('MMM')
-                    : DateFormat('d');
+                final format =
+                    widget.committee.frequency == 'monthly'
+                        ? DateFormat('MMM')
+                        : DateFormat('d');
 
                 return Container(
                   decoration: BoxDecoration(
-                    color:
-                        isPaid ? AppTheme.secondaryColor : Colors.grey[800],
+                    color: isPaid ? AppTheme.secondaryColor : Colors.grey[800],
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -545,16 +615,20 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
               decoration: BoxDecoration(
                 color: AppTheme.darkCard,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+                border: Border.all(
+                  color: AppTheme.primaryColor.withOpacity(0.3),
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    onPressed: _selectedCycle > 1 ? () => _changeCycle(-1) : null,
+                    onPressed:
+                        _selectedCycle > 1 ? () => _changeCycle(-1) : null,
                     icon: Icon(
                       Icons.chevron_left,
-                      color: _selectedCycle > 1 ? Colors.white : Colors.grey[600],
+                      color:
+                          _selectedCycle > 1 ? Colors.white : Colors.grey[600],
                     ),
                   ),
                   Column(
@@ -573,11 +647,16 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                           if (_isCurrentCycleOngoing()) ...[
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.orange.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: Colors.orange.withOpacity(0.5)),
+                                border: Border.all(
+                                  color: Colors.orange.withOpacity(0.5),
+                                ),
                               ),
                               child: Text(
                                 'ONGOING',
@@ -602,10 +681,16 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                     ],
                   ),
                   IconButton(
-                    onPressed: _selectedCycle < _maxCycles ? () => _changeCycle(1) : null,
+                    onPressed:
+                        _selectedCycle < _maxCycles
+                            ? () => _changeCycle(1)
+                            : null,
                     icon: Icon(
                       Icons.chevron_right,
-                      color: _selectedCycle < _maxCycles ? Colors.white : Colors.grey[600],
+                      color:
+                          _selectedCycle < _maxCycles
+                              ? Colors.white
+                              : Colors.grey[600],
                     ),
                   ),
                 ],
@@ -640,13 +725,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[500],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
       ],
     );
   }

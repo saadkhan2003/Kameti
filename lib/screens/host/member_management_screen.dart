@@ -10,6 +10,7 @@ import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/code_generator.dart';
+import '../../ui/widgets/ads/banner_ad_widget.dart';
 
 class MemberManagementScreen extends StatefulWidget {
   final Committee committee;
@@ -51,15 +52,16 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
     if (_searchQuery.isEmpty) {
       _filteredMembers = _allMembers;
     } else {
-      _filteredMembers = _allMembers.where((member) {
-        final nameLower = member.name.toLowerCase();
-        final codeLower = member.memberCode.toLowerCase();
-        final phoneLower = member.phone.toLowerCase();
-        final queryLower = _searchQuery.toLowerCase();
-        return nameLower.contains(queryLower) ||
-            codeLower.contains(queryLower) ||
-            phoneLower.contains(queryLower);
-      }).toList();
+      _filteredMembers =
+          _allMembers.where((member) {
+            final nameLower = member.name.toLowerCase();
+            final codeLower = member.memberCode.toLowerCase();
+            final phoneLower = member.phone.toLowerCase();
+            final queryLower = _searchQuery.toLowerCase();
+            return nameLower.contains(queryLower) ||
+                codeLower.contains(queryLower) ||
+                phoneLower.contains(queryLower);
+          }).toList();
     }
   }
 
@@ -71,7 +73,8 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
   }
 
   void _shareMemberCode(Member member) {
-    String message = '📋 *${widget.committee.name}*\n\n'
+    String message =
+        '📋 *${widget.committee.name}*\n\n'
         'Hi ${member.name}! 👋\n\n'
         '*Committee Code:* ${widget.committee.code}\n'
         '*Your Member Code:* ${member.memberCode}\n\n'
@@ -80,10 +83,12 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
   }
 
   void _showAddMemberDialog({Member? existingMember}) {
-    final nameController =
-        TextEditingController(text: existingMember?.name ?? '');
-    final phoneController =
-        TextEditingController(text: existingMember?.phone ?? '');
+    final nameController = TextEditingController(
+      text: existingMember?.name ?? '',
+    );
+    final phoneController = TextEditingController(
+      text: existingMember?.phone ?? '',
+    );
     final isEditing = existingMember != null;
 
     showModalBottomSheet(
@@ -149,8 +154,9 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                     await _autoSyncService.saveMember(updatedMember);
                   } else {
                     // Calculate the next payout order
-                    final existingMembers = _dbService
-                        .getMembersByCommittee(widget.committee.id);
+                    final existingMembers = _dbService.getMembersByCommittee(
+                      widget.committee.id,
+                    );
                     int maxOrder = 0;
                     for (final m in existingMembers) {
                       if (m.payoutOrder > maxOrder) {
@@ -189,35 +195,41 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
   void _deleteMember(Member member) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Delete Member?',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: Text(
-          'Are you sure you want to delete ${member.name}? This will also delete all their payment records.',
-          style: TextStyle(color: Colors.grey[400]),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await _autoSyncService.deleteMember(member.id, widget.committee.id);
-              Navigator.pop(context);
-              _loadMembers();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.errorColor,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: AppTheme.darkCard,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Text('Delete'),
+            title: const Text(
+              'Delete Member?',
+              style: TextStyle(color: Colors.white),
+            ),
+            content: Text(
+              'Are you sure you want to delete ${member.name}? This will also delete all their payment records.',
+              style: TextStyle(color: Colors.grey[400]),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await _autoSyncService.deleteMember(
+                    member.id,
+                    widget.committee.id,
+                  );
+                  Navigator.pop(context);
+                  _loadMembers();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.errorColor,
+                ),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -247,76 +259,86 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
           ),
         ],
       ),
-      body: _allMembers.isEmpty
-          ? _buildEmptyState()
-          : Column(
-              children: [
-                // Search Bar
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _onSearchChanged,
-                    decoration: InputDecoration(
-                      hintText: 'Search by name, code, or phone...',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                _onSearchChanged('');
-                              },
-                            )
-                          : null,
-                      filled: true,
-                      fillColor: AppTheme.darkCard,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
+      body:
+          _allMembers.isEmpty
+              ? _buildEmptyState()
+              : Column(
+                children: [
+                  // Search Bar
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _onSearchChanged,
+                      decoration: InputDecoration(
+                        hintText: 'Search by name, code, or phone...',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon:
+                            _searchQuery.isNotEmpty
+                                ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _onSearchChanged('');
+                                  },
+                                )
+                                : null,
+                        filled: true,
+                        fillColor: AppTheme.darkCard,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                // Members List
-                Expanded(
-                  child: _filteredMembers.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.search_off, size: 60, color: Colors.grey[700]),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No members found',
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  color: Colors.grey[500],
-                                ),
+                  // Members List
+                  Expanded(
+                    child:
+                        _filteredMembers.isEmpty
+                            ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.search_off,
+                                    size: 60,
+                                    color: Colors.grey[700],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No members found',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 16,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _filteredMembers.length,
-                          itemBuilder: (context, index) {
-                            final member = _filteredMembers[index];
-                            return _buildMemberCard(member, index);
-                          },
-                        ),
-                ),
-              ],
-            ),
+                            )
+                            : ListView.builder(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              itemCount: _filteredMembers.length,
+                              itemBuilder: (context, index) {
+                                final member = _filteredMembers[index];
+                                return _buildMemberCard(member, index);
+                              },
+                            ),
+                  ),
+                ],
+              ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddMemberDialog(),
         icon: const Icon(Icons.person_add),
         label: const Text('Add Member'),
       ),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 
@@ -325,11 +347,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.people_outline,
-            size: 80,
-            color: Colors.grey[700],
-          ),
+          Icon(Icons.people_outline, size: 80, color: Colors.grey[700]),
           const SizedBox(height: 16),
           Text(
             'No Members Yet',
@@ -342,10 +360,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
           const SizedBox(height: 8),
           Text(
             'Add members to your committee',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -374,9 +389,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
               ),
               child: Center(
                 child: Text(
-                  member.name.isNotEmpty
-                      ? member.name[0].toUpperCase()
-                      : '?',
+                  member.name.isNotEmpty ? member.name[0].toUpperCase() : '?',
                   style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -445,11 +458,15 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
             ),
             if (member.payoutOrder > 0)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: member.hasReceivedPayout
-                      ? AppTheme.secondaryColor.withOpacity(0.1)
-                      : AppTheme.warningColor.withOpacity(0.1),
+                  color:
+                      member.hasReceivedPayout
+                          ? AppTheme.secondaryColor.withOpacity(0.1)
+                          : AppTheme.warningColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -457,9 +474,10 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: member.hasReceivedPayout
-                        ? AppTheme.secondaryColor
-                        : AppTheme.warningColor,
+                    color:
+                        member.hasReceivedPayout
+                            ? AppTheme.secondaryColor
+                            : AppTheme.warningColor,
                   ),
                 ),
               ),
@@ -474,38 +492,50 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                   _shareMemberCode(member);
                 }
               },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'share',
-                  child: Row(
-                    children: [
-                      Icon(Icons.share, size: 18, color: AppTheme.primaryColor),
-                      SizedBox(width: 8),
-                      Text('Share Code'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, size: 18),
-                      SizedBox(width: 8),
-                      Text('Edit'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, size: 18, color: AppTheme.errorColor),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: AppTheme.errorColor)),
-                    ],
-                  ),
-                ),
-              ],
+              itemBuilder:
+                  (context) => [
+                    const PopupMenuItem(
+                      value: 'share',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.share,
+                            size: 18,
+                            color: AppTheme.primaryColor,
+                          ),
+                          SizedBox(width: 8),
+                          Text('Share Code'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 18),
+                          SizedBox(width: 8),
+                          Text('Edit'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete,
+                            size: 18,
+                            color: AppTheme.errorColor,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Delete',
+                            style: TextStyle(color: AppTheme.errorColor),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
             ),
           ],
         ),

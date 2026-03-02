@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/app_theme.dart';
+import '../utils/page_transitions.dart';
+import '../services/haptic_service.dart';
 import 'auth/login_screen.dart';
 import 'viewer/join_committee_screen.dart';
 
@@ -97,11 +99,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             onPressed: () {
+                              HapticService.lightTap();
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) => const JoinCommitteeScreen(),
+                                SlidePageRoute(
+                                  page: const JoinCommitteeScreen(),
                                 ),
                               );
                             },
@@ -154,11 +156,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: double.infinity,
                                 child: OutlinedButton.icon(
                                   onPressed: () {
+                                    HapticService.lightTap();
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (context) => const LoginScreen(startInSignupMode: true),
+                                      SlidePageRoute(
+                                        page: const LoginScreen(startInSignupMode: true),
                                       ),
                                     );
                                   },
@@ -185,11 +187,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   GestureDetector(
                                     onTap: () {
+                                      HapticService.lightTap();
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) => const LoginScreen(),
+                                        SlidePageRoute(
+                                          page: const LoginScreen(),
                                         ),
                                       );
                                     },

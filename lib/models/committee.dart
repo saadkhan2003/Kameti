@@ -49,6 +49,9 @@ class Committee extends HiveObject {
   @HiveField(14)
   bool isSynced; // Local flag to track if committee is synced to cloud
 
+  @HiveField(15)
+  String currency; // Currency code (PKR, INR, USD, AED, etc.)
+
   Committee({
     required this.id,
     required this.code,
@@ -65,6 +68,7 @@ class Committee extends HiveObject {
     this.archivedAt,
     this.totalCycles = 0, // Default to 0
     this.isSynced = true, // Default to true for backward compatibility with existing data
+    this.currency = 'PKR', // Default to PKR for backward compatibility
   });
 
   Map<String, dynamic> toJson() {
@@ -84,6 +88,7 @@ class Committee extends HiveObject {
       'archived_at': archivedAt?.toIso8601String(),
       'total_cycles': totalCycles,
       'is_synced': isSynced,
+      'currency': currency,
     };
   }
 
@@ -107,6 +112,7 @@ class Committee extends HiveObject {
           : null,
       totalCycles: json['total_cycles'] ?? json['totalCycles'] ?? 0,
       isSynced: json['is_synced'] ?? true, // Assume synced if coming from JSON (DB/Cloud)
+      currency: json['currency'] ?? 'PKR',
     );
   }
 
@@ -123,6 +129,7 @@ class Committee extends HiveObject {
     DateTime? archivedAt,
     int? totalCycles,
     bool? isSynced,
+    String? currency,
   }) {
     return Committee(
       id: id,
@@ -140,6 +147,7 @@ class Committee extends HiveObject {
       archivedAt: archivedAt ?? this.archivedAt,
       totalCycles: totalCycles ?? this.totalCycles,
       isSynced: isSynced ?? this.isSynced,
+      currency: currency ?? this.currency,
     );
   }
 }

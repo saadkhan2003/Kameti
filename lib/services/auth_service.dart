@@ -1,7 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'database_service.dart';
 
 class AuthService {
@@ -40,12 +38,9 @@ class AuthService {
     required String password,
   }) async {
     try {
-      return await _auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+      return await _auth.signInWithPassword(email: email, password: password);
     } catch (e) {
-       throw 'Sign in failed: ${e.toString()}';
+      throw 'Sign in failed: ${e.toString()}';
     }
   }
 
@@ -60,35 +55,26 @@ class AuthService {
         // Use the main app URL, NOT the password reset URL
         await _auth.signInWithOAuth(
           OAuthProvider.google,
-          redirectTo: 'https://kameti.netlify.app/', // Main app URL, not reset page
+          redirectTo:
+              'https://kameti.netlify.app/', // Main app URL, not reset page
           queryParams: {
-            'prompt': 'select_account', // Shows account picker with existing accounts
+            'prompt':
+                'select_account', // Shows account picker with existing accounts
           },
         );
         return true; // Web flow redirects, so this might not be reached immediately
       } else {
-        // Mobile: Native Google Sign In (Better UX)
-        // 1. Sign in with Google
-        final webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'];
-        final GoogleSignInAccount? googleUser = await GoogleSignIn(
-          serverClientId: webClientId,
-        ).signIn();
-        if (googleUser == null) return false; // User canceled
-
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-        final accessToken = googleAuth.accessToken;
-        final idToken = googleAuth.idToken;
-
-        if (accessToken == null) throw 'No Access Token found.';
-        if (idToken == null) throw 'No ID Token found.';
-
-        // 2. Sign in to Supabase with ID Token
-        await _auth.signInWithIdToken(
-          provider: OAuthProvider.google,
-          idToken: idToken,
-          accessToken: accessToken,
+        // Mobile: Browser-based OAuth via Supabase.
+        // This bypasses the Android SHA-1 certificate fingerprint requirement,
+        // so no Google Cloud Console registration is needed for the signing key.
+        await _auth.signInWithOAuth(
+          OAuthProvider.google,
+          redirectTo: 'io.supabase.flutter://login-callback',
+          queryParams: {'prompt': 'select_account'},
         );
-        return true;
+        // Returns false because the session is established asynchronously
+        // via the deep link callback, not immediately here.
+        return false;
       }
     } catch (e) {
       print('Google sign in error: $e');
@@ -110,11 +96,11 @@ class AuthService {
 
     // Clear local data
     await DatabaseService.clearAllData();
-    
-    // Delete Supabase user account (requires Admin API or Edge Function usually, 
+
+    // Delete Supabase user account (requires Admin API or Edge Function usually,
     // but users can delete themselves if configured in Supabase settings)
     // For now, we'll just sign out as client SDK cannot easily delete users without configuration
-    await _auth.signOut(); 
+    await _auth.signOut();
     // Note: To implement true delete, you'd call a Supabase Edge Function
   }
 
@@ -150,22 +136,17 @@ class AuthService {
   }
 
   // Verify Email OTP (6-digit code)
-  Future<void> verifyEmailOtp({required String email, required String token}) async {
+  Future<void> verifyEmailOtp({
+    required String email,
+    required String token,
+  }) async {
     try {
       // Try both 'signup' and 'email' types as context varies
       try {
-        await _auth.verifyOTP(
-          token: token,
-          type: OtpType.signup,
-          email: email,
-        );
+        await _auth.verifyOTP(token: token, type: OtpType.signup, email: email);
       } catch (_) {
         // Fallback if not a new signup
-        await _auth.verifyOTP(
-          token: token,
-          type: OtpType.email,
-          email: email,
-        );
+        await _auth.verifyOTP(token: token, type: OtpType.email, email: email);
       }
     } catch (e) {
       throw 'Invalid code. Please check and try again.';
@@ -175,7 +156,7 @@ class AuthService {
   // Resend OTP
   Future<void> resendVerificationCode(String email) async {
     try {
-       await _auth.resend(type: OtpType.signup, email: email);
+      await _auth.resend(type: OtpType.signup, email: email);
     } catch (e) {
       throw 'Failed to resend code: ${e.toString()}';
     }

@@ -271,4 +271,17 @@ class DatabaseService {
     final box = Hive.box(settingsBox);
     await box.put('language', languageCode);
   }
+
+  // Default Currency
+  Future<String> getDefaultCurrency() async {
+    await _ensureSettingsBox();
+    final box = Hive.box(settingsBox);
+    return box.get('defaultCurrency', defaultValue: 'PKR') as String;
+  }
+
+  Future<void> setDefaultCurrency(String currencyCode) async {
+    await _ensureSettingsBox();
+    final box = Hive.box(settingsBox);
+    await box.put('defaultCurrency', currencyCode);
+  }
 }

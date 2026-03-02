@@ -1,5 +1,5 @@
 /// Theme exports - import this file to get all theme components
-library theme;
+library;
 
 export 'app_colors.dart';
 export 'app_typography.dart';

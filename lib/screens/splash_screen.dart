@@ -6,13 +6,13 @@ import '../services/auth_service.dart';
 import '../services/sync_service.dart';
 import '../services/database_service.dart';
 import '../services/biometric_service.dart';
+import '../services/app_open_ad_service.dart';
 import '../screens/home_screen.dart';
 import '../screens/host/host_dashboard_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/lock_screen.dart';
 import '../screens/force_update_screen.dart';
 import '../services/remote_config_service.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../screens/auth/reset_password_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -22,11 +22,12 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
-  
+
   String _status = 'Initializing...';
   bool _isComplete = false;
 
@@ -37,15 +38,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
-    
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
-    
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
+
     _controller.forward();
     _setupAuthListener();
     _initializeApp();
@@ -55,19 +58,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final event = data.event;
       final session = data.session;
-      
+
       debugPrint('Auth event: $event, session: ${session != null}');
-      
+
       if (event == AuthChangeEvent.passwordRecovery) {
         if (mounted) {
-           WidgetsBinding.instance.addPostFrameCallback((_) {
-             Navigator.of(context).pushReplacement(
-               MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
-             );
-           });
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
+            );
+          });
         }
       }
-      
+
       // Handle OAuth sign-in completion on Web
       if (event == AuthChangeEvent.signedIn && session != null && kIsWeb) {
         debugPrint('OAuth sign-in completed on web');
@@ -98,21 +101,27 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       // Step 1: Database
       setState(() => _status = 'Loading database...');
       await Future.delayed(const Duration(milliseconds: 300));
-      
+
       // Step 1.5: Check if first launch (show onboarding)
       final dbService = DatabaseService();
       final isFirstLaunch = await dbService.isFirstLaunch();
-      
+
       if (isFirstLaunch) {
         setState(() => _status = 'Welcome!');
         await Future.delayed(const Duration(milliseconds: 500));
-        
+
         if (mounted) {
           Navigator.of(context).pushReplacement(
             PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  const OnboardingScreen(),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              pageBuilder:
+                  (context, animation, secondaryAnimation) =>
+                      const OnboardingScreen(),
+              transitionsBuilder: (
+                context,
+                animation,
+                secondaryAnimation,
+                child,
+              ) {
                 return FadeTransition(opacity: animation, child: child);
               },
               transitionDuration: const Duration(milliseconds: 500),
@@ -121,13 +130,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         }
         return;
       }
-      
+
       // Step 2: Check auth
       setState(() => _status = 'Checking authentication...');
       await Future.delayed(const Duration(milliseconds: 300));
-      
+
       final authService = AuthService();
-      
+
       // Refresh session to ensure token is valid (Supabase)
       try {
         if (authService.currentUser != null) {
@@ -138,10 +147,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       }
 
       final user = authService.currentUser;
-      
+
       // Step 3: Validate Email Verification
       bool isRealHost = user != null && !user.isAnonymous && user.email != null;
-      
+
       if (isRealHost && user.emailConfirmedAt == null) {
         debugPrint('User is unverified. Signing out override.');
         await authService.signOut();
@@ -149,39 +158,48 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       }
 
       // Step 3.5: Sync if logged in AND is a real host (and verified)
-      
+
       if (isRealHost) {
         setState(() => _status = 'Syncing data...');
         try {
           final syncService = SyncService();
-          await syncService.syncAll(user!.id).timeout(
-            const Duration(seconds: 5),
-            onTimeout: () => SyncResult(success: true, message: 'Timeout'),
-          );
+          await syncService
+              .syncAll(user!.id)
+              .timeout(
+                const Duration(seconds: 5),
+                onTimeout: () => SyncResult(success: true, message: 'Timeout'),
+              );
         } catch (e) {
           debugPrint('Sync error: $e');
         }
       }
-      
+
       // Step 4: Ready
       setState(() {
         _status = 'Ready!';
         _isComplete = true;
       });
-      
+
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       if (mounted) {
         // Check if biometric lock is enabled
-        final isBiometricEnabled = await BiometricService.isBiometricLockEnabled();
-        
+        final isBiometricEnabled =
+            await BiometricService.isBiometricLockEnabled();
+
         if (isBiometricEnabled) {
           // Show lock screen
           Navigator.of(context).pushReplacement(
             PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  LockScreen(isHost: isRealHost),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              pageBuilder:
+                  (context, animation, secondaryAnimation) =>
+                      LockScreen(isHost: isRealHost),
+              transitionsBuilder: (
+                context,
+                animation,
+                secondaryAnimation,
+                child,
+              ) {
                 return FadeTransition(opacity: animation, child: child);
               },
               transitionDuration: const Duration(milliseconds: 500),
@@ -189,21 +207,35 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           );
           return;
         }
-        
+
         // Navigate: Real hosts go to Dashboard, everyone else goes to HomeScreen
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                isRealHost ? const HostDashboardScreen() : const HomeScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            pageBuilder:
+                (context, animation, secondaryAnimation) =>
+                    isRealHost
+                        ? const HostDashboardScreen()
+                        : const HomeScreen(),
+            transitionsBuilder: (
+              context,
+              animation,
+              secondaryAnimation,
+              child,
+            ) {
               return FadeTransition(opacity: animation, child: child);
             },
             transitionDuration: const Duration(milliseconds: 500),
           ),
         );
-        
-        // Check for updates after navigation (for real hosts only)
 
+        // Show App Open Ad on cold start (mobile only).
+        // Delayed by 600ms so the destination screen is fully painted
+        // behind the ad overlay before it appears.
+        if (!kIsWeb) {
+          Future.delayed(const Duration(milliseconds: 600), () {
+            AppOpenAdService.instance.showColdStartAd();
+          });
+        }
       }
     } catch (e) {
       debugPrint('Splash init error: $e');
@@ -261,7 +293,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       ),
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // App Name
                     const Text(
                       'Kameti',
@@ -282,7 +314,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       ),
                     ),
                     const SizedBox(height: 60),
-                    
+
                     // Loading indicator
                     if (!_isComplete)
                       SizedBox(

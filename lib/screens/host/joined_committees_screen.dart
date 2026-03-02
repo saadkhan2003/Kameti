@@ -4,9 +4,7 @@ import '../../services/database_service.dart';
 import '../../services/toast_service.dart';
 import '../../utils/app_theme.dart';
 import '../viewer/join_committee_screen.dart';
-import '../viewer/member_view_screen.dart';
 import 'payment_sheet_screen.dart';
-
 
 class JoinedCommitteesScreen extends StatefulWidget {
   const JoinedCommitteesScreen({super.key});
@@ -50,9 +48,7 @@ class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PaymentSheetScreen(
-          committee: committee,
-        ),
+        builder: (context) => PaymentSheetScreen(committee: committee),
       ),
     );
   }
@@ -65,19 +61,14 @@ class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Joined Committees'),
-      ),
-      body: _joinedCommittees.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _joinedCommittees.length,
-              itemBuilder: (context, index) {
-                final joined = _joinedCommittees[index];
-                return _buildCommitteeCard(joined);
-              },
-            ),
+      appBar: AppBar(title: const Text('Joined Committees')),
+      body:
+          _joinedCommittees.isEmpty
+              ? _buildEmptyState()
+              : ListView(
+                padding: const EdgeInsets.all(16),
+                children: _buildListItems(),
+              ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await Navigator.push(
@@ -99,11 +90,7 @@ class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.group_off_outlined,
-            size: 80,
-            color: Colors.grey[700],
-          ),
+          Icon(Icons.group_off_outlined, size: 80, color: Colors.grey[700]),
           const SizedBox(height: 16),
           Text(
             'No Joined Committees',
@@ -116,14 +103,17 @@ class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
           const SizedBox(height: 8),
           Text(
             'Join a committee to view your payments',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
           ),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildListItems() {
+    return _joinedCommittees
+        .map((joined) => _buildCommitteeCard(joined))
+        .toList();
   }
 
   Widget _buildCommitteeCard(Map joined) {
@@ -181,29 +171,30 @@ class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
                 onPressed: () {
                   showDialog(
                     context: context,
-                    builder: (context) => AlertDialog(
-                      backgroundColor: AppTheme.darkCard,
-                      title: const Text('Remove?'),
-                      content: const Text(
-                        'Remove this committee from your list?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _removeCommittee(committeeCode);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.errorColor,
+                    builder:
+                        (context) => AlertDialog(
+                          backgroundColor: AppTheme.darkCard,
+                          title: const Text('Remove?'),
+                          content: const Text(
+                            'Remove this committee from your list?',
                           ),
-                          child: const Text('Remove'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _removeCommittee(committeeCode);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.errorColor,
+                              ),
+                              child: const Text('Remove'),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
                   );
                 },
               ),

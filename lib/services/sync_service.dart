@@ -13,11 +13,7 @@ class SyncService {
   Future<bool> isOnline() async {
     final result = await Connectivity().checkConnectivity();
     // connectivity_plus returns List<ConnectivityResult>
-    if (result is List) {
-      return !(result as List).contains(ConnectivityResult.none);
-    }
-    // Fallback for older versions
-    return result != ConnectivityResult.none;
+    return !(result as List).contains(ConnectivityResult.none);
   }
 
   // ============ SYNC ALL DATA ============
@@ -41,22 +37,26 @@ class SyncService {
 
       // Get all committees to sync
       final committees = _dbService.getHostedCommittees(hostId);
-      
+
       // Sync all members and payments in PARALLEL for speed
       // Wrap in try-catch blocks to prevent one failure from stopping others
       final futures = <Future<SyncCounts>>[];
       for (final committee in committees) {
-        futures.add(syncMembers(committee.id).catchError((e) {
-          print('⚠️ Sync members failed for ${committee.id}: $e');
-          return SyncCounts();
-        }));
-        
-        futures.add(syncPayments(committee.id).catchError((e) {
-          print('⚠️ Sync payments failed for ${committee.id}: $e');
-          return SyncCounts();
-        }));
+        futures.add(
+          syncMembers(committee.id).catchError((e) {
+            print('⚠️ Sync members failed for ${committee.id}: $e');
+            return SyncCounts();
+          }),
+        );
+
+        futures.add(
+          syncPayments(committee.id).catchError((e) {
+            print('⚠️ Sync payments failed for ${committee.id}: $e');
+            return SyncCounts();
+          }),
+        );
       }
-      
+
       // Wait for all parallel syncs to complete
       final results = await Future.wait(futures);
       for (final result in results) {
@@ -89,18 +89,19 @@ class SyncService {
 
     // 2. Process LOCAL committees
     final localCommittees = _dbService.getHostedCommittees(hostId);
-    
+
     for (final local in localCommittees) {
       if (remoteIds.contains(local.id)) {
         // Exists on BOTH -> Update logic
         final remote = remoteMap[local.id]!;
-        
+
         // If local is newer or has changes (not implemented yet, but good for future)
         // For now, we trust CLOUD as source of truth if timestamps differ significantly
         // But if local was just edited (e.g. settings), we might want to push?
         // Let's stick to: if cloud is newer, download. If local is newer, upload.
-        
-        if (remote.createdAt.isAfter(local.createdAt)) { // Using CreatedAt as proxy for update is flawed but existing logic
+
+        if (remote.createdAt.isAfter(local.createdAt)) {
+          // Using CreatedAt as proxy for update is flawed but existing logic
           await _dbService.saveCommittee(remote.copyWith(isSynced: true));
           downloaded++;
         } else {
@@ -115,12 +116,14 @@ class SyncService {
         if (local.isSynced) {
           // Case A: Was synced before -> Remote Deletion detected!
           // Action: Delete local
-          print('🗑️ Sync: Committee ${local.name} was deleted remotely. removing locally.');
+          print(
+            '🗑️ Sync: Committee ${local.name} was deleted remotely. removing locally.',
+          );
           await _dbService.deleteCommittee(local.id);
         } else {
           // Case B: Never synced -> New Local Committee
           // Action: Upload to cloud
-          print('ki Sync: New local committee ${local.name} found. Uploading.');
+          print('kameti Sync: New local committee ${local.name} found. Uploading.');
           await _supabase.upsertCommittee(local);
           await _dbService.saveCommittee(local.copyWith(isSynced: true));
           uploaded++;
@@ -130,7 +133,7 @@ class SyncService {
 
     // 3. Process REMOTE committees (Download missing ones)
     final localIds = localCommittees.map((c) => c.id).toSet();
-    
+
     for (final remote in remoteCommittees) {
       if (!localIds.contains(remote.id)) {
         // New on cloud -> Download
@@ -163,25 +166,31 @@ class SyncService {
 
       // Check if cloud is newer - compare payout status
       bool shouldDownload = false;
-      
+
       if (localMember == null) {
         shouldDownload = true;
       } else {
         // Compare payout status
         if (cloudMember.hasReceivedPayout != localMember.hasReceivedPayout) {
           // Payout status differs - use timestamps to decide
-          if (cloudMember.payoutDate != null && localMember.payoutDate != null) {
+          if (cloudMember.payoutDate != null &&
+              localMember.payoutDate != null) {
             // Both have dates - take newer
-            shouldDownload = cloudMember.payoutDate!.isAfter(localMember.payoutDate!);
-          } else if (cloudMember.payoutDate != null && localMember.payoutDate == null) {
+            shouldDownload = cloudMember.payoutDate!.isAfter(
+              localMember.payoutDate!,
+            );
+          } else if (cloudMember.payoutDate != null &&
+              localMember.payoutDate == null) {
             // Cloud has payout, local doesn't - cloud marked payout
             shouldDownload = true;
-          } else if (cloudMember.payoutDate == null && localMember.payoutDate != null) {
+          } else if (cloudMember.payoutDate == null &&
+              localMember.payoutDate != null) {
             // Cloud was REVERTED - download the reverted state
             shouldDownload = true;
           } else {
             // Both null - compare hasReceivedPayout directly
-            shouldDownload = cloudMember.hasReceivedPayout != localMember.hasReceivedPayout;
+            shouldDownload =
+                cloudMember.hasReceivedPayout != localMember.hasReceivedPayout;
           }
         }
         // Also check for payoutOrder changes
@@ -189,7 +198,8 @@ class SyncService {
           shouldDownload = true;
         }
         // Also check for name/phone changes
-        if (cloudMember.name != localMember.name || cloudMember.phone != localMember.phone) {
+        if (cloudMember.name != localMember.name ||
+            cloudMember.phone != localMember.phone) {
           shouldDownload = true;
         }
       }
@@ -212,7 +222,7 @@ class SyncService {
     // Upload local payments to Supabase using batch (faster)
     final localPayments = _dbService.getPaymentsByCommittee(committeeId);
     print('📦 Local payments to upload: ${localPayments.length}');
-    
+
     if (localPayments.isNotEmpty) {
       // Use Supabase Service's batch upsert
       await _supabase.upsertPayments(localPayments);
@@ -229,19 +239,24 @@ class SyncService {
       );
 
       bool shouldDownload = false;
-      
+
       if (existingPayment == null) {
         shouldDownload = true;
       } else if (cloudPayment.isPaid != existingPayment.isPaid) {
         // Payment status changed - compare timestamps
         if (cloudPayment.markedAt != null && existingPayment.markedAt != null) {
-          shouldDownload = cloudPayment.markedAt!.isAfter(existingPayment.markedAt!);
+          shouldDownload = cloudPayment.markedAt!.isAfter(
+            existingPayment.markedAt!,
+          );
         } else if (cloudPayment.markedAt != null) {
           shouldDownload = true;
         }
-      } else if (cloudPayment.markedAt != null && existingPayment.markedAt != null) {
+      } else if (cloudPayment.markedAt != null &&
+          existingPayment.markedAt != null) {
         // Same status but check if cloud is newer
-        shouldDownload = cloudPayment.markedAt!.isAfter(existingPayment.markedAt!);
+        shouldDownload = cloudPayment.markedAt!.isAfter(
+          existingPayment.markedAt!,
+        );
       }
 
       if (shouldDownload) {
@@ -294,12 +309,13 @@ class SyncService {
 
     try {
       // 1. Fetch Committee by its 'code' field (6-digit sharing code)
-      final response = await _supabase.client
-          .from(SupabaseService.committeesTable)
-          .select()
-          .eq('code', code) // Query by the 'code' field, not 'id'
-          .maybeSingle();
-      
+      final response =
+          await _supabase.client
+              .from(SupabaseService.committeesTable)
+              .select()
+              .eq('code', code) // Query by the 'code' field, not 'id'
+              .maybeSingle();
+
       if (response == null) return null;
 
       final committee = Committee.fromJson(response);
@@ -324,7 +340,7 @@ class SyncService {
     try {
       final cloudMembers = await _supabase.getMembers(committeeId);
       print('📥 Downloaded ${cloudMembers.length} members from cloud');
-      
+
       for (final cloudMember in cloudMembers) {
         await _dbService.saveMember(cloudMember);
         downloaded++;
@@ -341,7 +357,7 @@ class SyncService {
     try {
       final cloudPayments = await _supabase.getPayments(committeeId);
       print('📥 Downloaded ${cloudPayments.length} payments from cloud');
-      
+
       for (final payment in cloudPayments) {
         await _dbService.savePayment(payment);
         downloaded++;
@@ -357,7 +373,7 @@ class SyncService {
     if (!await isOnline()) {
       throw Exception('No internet connection');
     }
-    
+
     print('🔄 Refreshing viewer data for committee: $committeeId');
     await _downloadMembersOnly(committeeId);
     await _downloadPaymentsOnly(committeeId);
@@ -391,7 +407,7 @@ class SyncService {
   /// Push a single payment to Supabase immediately
   Future<void> pushPaymentToCloud(Payment payment) async {
     print('🔥 pushPaymentToCloud: ${payment.id}');
-    
+
     if (!await isOnline()) {
       throw Exception('No internet connection');
     }
@@ -413,13 +429,15 @@ class SyncService {
         // OR simply if we have local data that isn't ours but we are the only user logged in...
         // Let's stick to the length check to be safe + ensuring it's not just another user's data.
         // Firebase UIDs are 28 chars. Supabase UUIDs are 36 chars.
-        
+
         bool isLegacyHost = committee.hostId.length == 28;
         bool isNewHost = currentHostId.length == 36;
 
         if (committee.hostId != currentHostId && isLegacyHost && isNewHost) {
-          print('🔄 Migrating committee ${committee.name} from ${committee.hostId} to $currentHostId');
-          
+          print(
+            '🔄 Migrating committee ${committee.name} from ${committee.hostId} to $currentHostId',
+          );
+
           final updatedCommittee = committee.copyWith(hostId: currentHostId);
           await _dbService.saveCommittee(updatedCommittee);
           migrationOccurred = true;

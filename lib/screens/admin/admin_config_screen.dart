@@ -28,7 +28,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
   bool _forceUpdateEnabled = false;
   bool _isLoading = true;
   bool _isSaving = false;
-  bool _isChangingPin = false;
+  final bool _isChangingPin = false;
 
   @override
   void initState() {
@@ -179,7 +179,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
                         ),
                       ),
                       value: _forceUpdateEnabled,
-                      activeColor: Colors.red,
+                      activeThumbColor: Colors.red,
                       onChanged: (value) {
                         setState(() => _forceUpdateEnabled = value);
                       },

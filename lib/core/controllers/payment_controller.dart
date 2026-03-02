@@ -8,7 +8,7 @@ import '../../models/member.dart';
 import '../../models/payment.dart';
 
 /// Controller for payment sheet business logic
-/// 
+///
 /// Separates payment calculations, date generation, and grid management from UI.
 class PaymentController extends ChangeNotifier {
   final Committee committee;
@@ -27,7 +27,6 @@ class PaymentController extends ChangeNotifier {
   int _maxCycles = 1;
   DateTime? _filterStartDate;
   DateTime? _filterEndDate;
-  int _extraPeriods = 1;
   List<Payment> _cloudPayments = []; // Payments fetched from cloud
   String? errorMessage;
 
@@ -52,14 +51,14 @@ class PaymentController extends ChangeNotifier {
     _isLoading = true;
     errorMessage = null;
     notifyListeners();
-    
+
     try {
       // Fetch directly from cloud (pure internet-based)
       _members = await _syncService.fetchMembersFromCloud(committee.id);
       _members.sort((a, b) => a.payoutOrder.compareTo(b.payoutOrder));
-      
+
       _cloudPayments = await _syncService.fetchPaymentsFromCloud(committee.id);
-      
+
       // Save to local for other parts of app
       for (final member in _members) {
         await _dbService.saveMember(member);
@@ -67,7 +66,7 @@ class PaymentController extends ChangeNotifier {
       for (final payment in _cloudPayments) {
         await _dbService.savePayment(payment);
       }
-      
+
       _maxCycles = _computeMaxCycles(_cloudPayments);
       _selectedCycle = _dbService.getSelectedCycle(committee.id);
       if (_selectedCycle < 1) _selectedCycle = 1;
@@ -75,10 +74,10 @@ class PaymentController extends ChangeNotifier {
         _selectedCycle = _maxCycles;
         _dbService.setSelectedCycle(committee.id, _selectedCycle);
       }
-      
+
       _generateDates();
       _loadPaymentsFromCloudData();
-      
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -131,10 +130,15 @@ class PaymentController extends ChangeNotifier {
 
     try {
       final hostId = _authService.currentUser?.id ?? '';
-      
+
       // Use cloud-first toggle
-      await _autoSyncService.togglePaymentCloudFirst(memberId, committee.id, date, hostId);
-      
+      await _autoSyncService.togglePaymentCloudFirst(
+        memberId,
+        committee.id,
+        date,
+        hostId,
+      );
+
       // Reload from cloud
       _cloudPayments = await _syncService.fetchPaymentsFromCloud(committee.id);
       _loadPaymentsFromCloudData();
@@ -143,7 +147,9 @@ class PaymentController extends ChangeNotifier {
     } catch (e) {
       // Revert on error
       try {
-        _cloudPayments = await _syncService.fetchPaymentsFromCloud(committee.id);
+        _cloudPayments = await _syncService.fetchPaymentsFromCloud(
+          committee.id,
+        );
         _loadPaymentsFromCloudData();
       } catch (_) {
         _paymentGrid[memberId]![dateKey] = currentStatus;
@@ -183,7 +189,8 @@ class PaymentController extends ChangeNotifier {
       'unpaidCount': unpaidCount,
       'debtAmount': debtAmount,
       'isDefaulter': unpaidCount > 0,
-      'severity': unpaidCount >= 3 ? 'high' : (unpaidCount >= 1 ? 'medium' : 'none'),
+      'severity':
+          unpaidCount >= 3 ? 'high' : (unpaidCount >= 1 ? 'medium' : 'none'),
     };
   }
 
@@ -203,7 +210,8 @@ class PaymentController extends ChangeNotifier {
     final startDate = committee.startDate;
 
     final daysElapsed = now.difference(startDate).inDays;
-    final currentPayoutCycle = payoutInterval > 0 ? (daysElapsed ~/ payoutInterval) : 0;
+    final currentPayoutCycle =
+        payoutInterval > 0 ? (daysElapsed ~/ payoutInterval) : 0;
 
     int currentCyclePaid = 0;
     int currentCycleDue = 0;
@@ -217,7 +225,8 @@ class PaymentController extends ChangeNotifier {
           if (isPaymentMarked(member.id, date)) totalPaid++;
 
           final dateDaysElapsed = date.difference(startDate).inDays;
-          final datePayoutCycle = payoutInterval > 0 ? (dateDaysElapsed ~/ payoutInterval) : 0;
+          final datePayoutCycle =
+              payoutInterval > 0 ? (dateDaysElapsed ~/ payoutInterval) : 0;
 
           if (datePayoutCycle == currentPayoutCycle) {
             currentCycleDue++;
@@ -227,9 +236,16 @@ class PaymentController extends ChangeNotifier {
       }
     }
 
-    final collectionInterval = committee.frequency == 'daily' ? 1 : committee.frequency == 'weekly' ? 7 : 30;
-    final collectionsPerPayout = payoutInterval > 0 ? payoutInterval ~/ collectionInterval : 1;
-    final totalPayoutAmount = _members.length * amountPerCell * collectionsPerPayout;
+    final collectionInterval =
+        committee.frequency == 'daily'
+            ? 1
+            : committee.frequency == 'weekly'
+            ? 7
+            : 30;
+    final collectionsPerPayout =
+        payoutInterval > 0 ? payoutInterval ~/ collectionInterval : 1;
+    final totalPayoutAmount =
+        _members.length * amountPerCell * collectionsPerPayout;
 
     return {
       'totalPaid': totalPaid,
@@ -286,20 +302,28 @@ class PaymentController extends ChangeNotifier {
       if (periodsPerPayout < 1) periodsPerPayout = 1;
     }
 
-    final numMembers = _members.isNotEmpty ? _members.length : (committee.totalMembers > 0 ? committee.totalMembers : 0);
+    final numMembers =
+        _members.isNotEmpty
+            ? _members.length
+            : (committee.totalMembers > 0 ? committee.totalMembers : 0);
 
     if (numMembers > 0) {
       DateTime cycleStartDate;
       if (committee.frequency == 'monthly') {
-        cycleStartDate = _addMonths(committeeStartDate, (_selectedCycle - 1) * periodsPerPayout);
+        cycleStartDate = _addMonths(
+          committeeStartDate,
+          (_selectedCycle - 1) * periodsPerPayout,
+        );
       } else {
         final daysOffset = (_selectedCycle - 1) * payoutIntervalDays;
         cycleStartDate = committeeStartDate.add(Duration(days: daysOffset));
       }
 
-      final effectiveStartDate = (_filterStartDate != null && _filterStartDate!.isAfter(cycleStartDate))
-          ? _filterStartDate!
-          : cycleStartDate;
+      final effectiveStartDate =
+          (_filterStartDate != null &&
+                  _filterStartDate!.isAfter(cycleStartDate))
+              ? _filterStartDate!
+              : cycleStartDate;
 
       DateTime current = effectiveStartDate;
       for (int i = 0; i < periodsPerPayout; i++) {
@@ -333,10 +357,15 @@ class PaymentController extends ChangeNotifier {
   DateTime _addMonths(DateTime date, int monthsToAdd) {
     var newYear = date.year;
     var newMonth = date.month + monthsToAdd;
-    while (newMonth > 12) { newYear++; newMonth -= 12; }
+    while (newMonth > 12) {
+      newYear++;
+      newMonth -= 12;
+    }
     final firstDayOfNextMonth = DateTime(newYear, newMonth + 1, 1);
-    final lastDayOfTargetMonth = firstDayOfNextMonth.subtract(const Duration(days: 1)).day;
-    final newDay = (date.day > lastDayOfTargetMonth) ? lastDayOfTargetMonth : date.day;
+    final lastDayOfTargetMonth =
+        firstDayOfNextMonth.subtract(const Duration(days: 1)).day;
+    final newDay =
+        (date.day > lastDayOfTargetMonth) ? lastDayOfTargetMonth : date.day;
     return DateTime(newYear, newMonth, newDay);
   }
 

@@ -416,7 +416,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                           ? 'Tomorrow'
                           : DateFormat('EEEE, MMM d').format(_nextPaymentDate!)
                   : 'N/A',
-              subtitle: 'Amount: PKR ${NumberFormat('#,###').format(widget.committee.contributionAmount.toInt())}',
+              subtitle: 'Amount: ${widget.committee.currency} ${NumberFormat('#,###').format(widget.committee.contributionAmount.toInt())}',
               color: AppTheme.primaryColor,
             ),
             const SizedBox(height: 16),
@@ -447,7 +447,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                   _buildDetailRow('Collection', _capitalize(widget.committee.frequency)),
                   _buildDetailRow(
                     'Contribution',
-                    'PKR ${NumberFormat('#,###').format(widget.committee.contributionAmount.toInt())}',
+                    '${widget.committee.currency} ${NumberFormat('#,###').format(widget.committee.contributionAmount.toInt())}',
                   ),
                 ],
               ),

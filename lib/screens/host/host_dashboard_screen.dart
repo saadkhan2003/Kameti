@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
@@ -9,8 +8,16 @@ import '../../services/auto_sync_service.dart';
 import '../../services/realtime_sync_service.dart';
 import '../../services/localization_service.dart';
 import '../../services/toast_service.dart';
+import '../../services/review_service.dart';
+import '../../services/haptic_service.dart';
 import '../../models/committee.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/page_transitions.dart';
+import '../../ui/widgets/ads/native_ad_widget.dart';
+import '../../ui/widgets/empty_state_widget.dart';
+import '../../ui/widgets/shimmer_loading.dart';
+import '../../ui/widgets/sync_status_widget.dart';
+import '../../services/sync_status_service.dart';
 import '../settings_screen.dart';
 import '../home_screen.dart';
 import 'create_committee_screen.dart';
@@ -23,7 +30,6 @@ import 'privacy_policy_screen.dart';
 import 'terms_screen.dart';
 import '../admin/admin_config_screen.dart';
 import '../../services/remote_config_service.dart';
-
 
 class HostDashboardScreen extends StatefulWidget {
   const HostDashboardScreen({super.key});
@@ -44,25 +50,32 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
   bool _isSyncing = false;
   late TabController _tabController;
   Timer? _emailVerificationTimer;
+  final _syncStatusService = SyncStatusService();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadCommittees();
-    
+
     // Start real-time sync listener
     final userId = _authService.currentUser?.id ?? '';
     if (userId.isNotEmpty) {
       _realtimeSyncService.onDataChanged = _loadCommittees;
       _realtimeSyncService.startListening(userId);
     }
-    
+
     // Trigger silent sync on load to fetch fresh data
     _syncDataSilent();
-    
 
-    
+    // Schedule in-app review prompt after dashboard renders.
+    // ReviewService internally checks whether all conditions are met.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) ReviewService().maybeShowReview(context);
+      });
+    });
+
     // Start email verification check timer
     _startEmailVerificationCheck();
   }
@@ -71,7 +84,9 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     final user = _authService.currentUser;
     // Check if email confirmed (Supabase uses emailConfirmedAt)
     if (user != null && user.emailConfirmedAt == null) {
-      _emailVerificationTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
+      _emailVerificationTimer = Timer.periodic(const Duration(seconds: 3), (
+        timer,
+      ) async {
         await _authService.reloadUser();
         if (_authService.isEmailVerified) {
           timer.cancel();
@@ -102,67 +117,46 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     });
   }
 
-  // Silent sync for initState (no SnackBar)
+  // Silent sync for initState (no toast)
   Future<void> _syncDataSilent() async {
     if (_isSyncing) return;
 
-    setState(() {
-      _isSyncing = true;
-    });
+    setState(() => _isSyncing = true);
+    _syncStatusService.setSyncing();
 
     final hostId = _authService.currentUser?.id ?? '';
     final result = await _syncService.syncAll(hostId);
 
     if (mounted) {
-      setState(() {
-        _isSyncing = false;
-      });
-
+      setState(() => _isSyncing = false);
       if (result.success) {
+        _syncStatusService.setSynced();
         _loadCommittees();
+      } else {
+        _syncStatusService.setError(result.message);
       }
     }
   }
 
-  // Sync with SnackBar feedback (for manual sync button)
+  // Sync with feedback (for manual sync tap)
   Future<void> _syncData() async {
     if (_isSyncing) return;
 
-    setState(() {
-      _isSyncing = true;
-    });
-
-    // Save reference before async operation
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    setState(() => _isSyncing = true);
+    _syncStatusService.setSyncing();
 
     final hostId = _authService.currentUser?.id ?? '';
     final result = await _syncService.syncAll(hostId);
 
     if (mounted) {
-      setState(() {
-        _isSyncing = false;
-      });
-
-      // Only show error toast, not success
-      if (!result.success) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.cloud_off, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Text(result.message),
-              ],
-            ),
-            backgroundColor: AppTheme.errorColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
+      setState(() => _isSyncing = false);
 
       if (result.success) {
+        _syncStatusService.setSynced();
         _loadCommittees();
+      } else {
+        _syncStatusService.setError(result.message);
+        ToastService.error(context, result.message);
       }
     }
   }
@@ -357,293 +351,310 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
   Widget build(BuildContext context) {
     final user = _authService.currentUser;
     final displayName =
-        user?.userMetadata?['full_name'] as String? ?? user?.email?.split('@')[0] ?? 'Host';
+        user?.userMetadata?['full_name'] as String? ??
+        user?.email?.split('@')[0] ??
+        'Host';
 
     return PopScope(
       canPop: false,
       child: Scaffold(
-      appBar: AppBar(
-        title: const Text('My Kametis'),
-        automaticallyImplyLeading: false,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu),
-            tooltip: 'Menu',
-            onPressed: () => Scaffold.of(context).openDrawer(),
+        appBar: AppBar(
+          title: const Text('My Kametis'),
+          automaticallyImplyLeading: false,
+          leading: Builder(
+            builder:
+                (context) => IconButton(
+                  icon: const Icon(Icons.menu),
+                  tooltip: 'Menu',
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
           ),
+          actions: [
+            SyncStatusWidget(
+              compact: true,
+              onTap: _syncData,
+            ),
+          ],
         ),
-      ),
-      drawer: _buildDrawer(context),
-      body: RefreshIndicator(
-        onRefresh: _syncData,
-        color: AppTheme.primaryColor,
-        backgroundColor: AppTheme.darkCard,
-        child: ListView(
-          padding: const EdgeInsets.only(bottom: 80), // Fab space
-          physics: const AlwaysScrollableScrollPhysics(), // Required for Web
-          children: [
-            // Email Verification Banner
-            if (user != null && user.emailConfirmedAt == null)
+        drawer: _buildDrawer(context),
+        body: RefreshIndicator(
+          onRefresh: _syncData,
+          color: AppTheme.primaryColor,
+          backgroundColor: AppTheme.darkCard,
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 80), // Fab space
+            physics: const AlwaysScrollableScrollPhysics(), // Required for Web
+            children: [
+              // Email Verification Banner
+              if (user != null && user.emailConfirmedAt == null)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFF59E0B).withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.mark_email_unread_outlined,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Confirm Your Email',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Please verify your email address',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              await _authService.sendEmailVerification();
+                              if (mounted) {
+                                ToastService.success(
+                                  context,
+                                  'Verification link sent!',
+                                );
+                              }
+                            },
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFFD97706),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: const Text('Confirm'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              // Welcome Header
               Container(
-                margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                margin: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFF59E0B).withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      color: AppTheme.primaryColor.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$displayName!',
+                      style: GoogleFonts.inter(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_activeCommittees.length} active kametis',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // View Payments Action Card
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Material(
                   color: Colors.transparent,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.mark_email_unread_outlined,
-                            color: Colors.white,
-                            size: 20,
-                          ),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const JoinCommitteeScreen(),
                         ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Confirm Your Email',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Please verify your email address',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkCard,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppTheme.secondaryColor.withOpacity(0.3),
                         ),
-                        TextButton(
-                          onPressed: () async {
-                            await _authService.sendEmailVerification();
-                            if (mounted) {
-                              ToastService.success(context, 'Verification link sent!');
-                            }
-                          },
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFFD97706),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.secondaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.receipt_long_rounded,
+                              color: AppTheme.secondaryColor,
+                              size: 24,
                             ),
                           ),
-                          child: const Text('Confirm'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            // Welcome Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppTheme.primaryColor, AppTheme.primaryDark],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${displayName}!',
-                    style: GoogleFonts.inter(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${_activeCommittees.length} active kametis',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // View Payments Action Card
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const JoinCommitteeScreen(),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.darkCard,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppTheme.secondaryColor.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppTheme.secondaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.receipt_long_rounded,
-                            color: AppTheme.secondaryColor,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Joined a Kameti?',
-                                style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  color: Colors.grey[400],
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Joined a Kameti?',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    color: Colors.grey[400],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'View Kameti Payments',
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                const SizedBox(height: 2),
+                                Text(
+                                  'View Kameti Payments',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Colors.grey,
-                        ),
-                      ],
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Colors.grey,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Your Hosted Kametis',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                  if (_archivedCommittees.isNotEmpty)
-                    TextButton.icon(
-                      onPressed: () => _showArchivedSheet(),
-                      icon: const Icon(Icons.archive_outlined, size: 18),
-                      label: Text('Archived (${_archivedCommittees.length})'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.grey[400],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-            // Committees List
-            if (_activeCommittees.isEmpty)
               Padding(
-                padding: const EdgeInsets.only(top: 40),
-                child: _buildEmptyState(),
-              )
-            else
-              ..._activeCommittees
-                  .map(
-                    (committee) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _buildCommitteeCard(committee),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Your Hosted Kametis',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[400],
+                      ),
                     ),
-                  )
-                  .toList(),
-          ],
+                    if (_archivedCommittees.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: () => _showArchivedSheet(),
+                        icon: const Icon(Icons.archive_outlined, size: 18),
+                        label: Text('Archived (${_archivedCommittees.length})'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.grey[400],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              // Committees List
+              if (_activeCommittees.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: _buildEmptyState(),
+                )
+              else
+                ..._buildCommitteeListItems(),
+            ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+              ScalePageRoute(page: const CreateCommitteeScreen()),
+            );
+            if (result == true) {
+              _loadCommittees();
+            }
+          },
+          icon: const Icon(Icons.add),
+          label: const Text('New Committee'),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CreateCommitteeScreen(),
-            ),
-          );
-          if (result == true) {
-            _loadCommittees();
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('New Committee'),
-      ),
-    ),
     );
   }
 
-
   Widget _buildDrawer(BuildContext context) {
     final user = _authService.currentUser;
-    final displayName = user?.userMetadata?['full_name'] as String? ?? user?.email?.split('@')[0] ?? 'Guest';
+    final displayName =
+        user?.userMetadata?['full_name'] as String? ??
+        user?.email?.split('@')[0] ??
+        'Guest';
     final email = user?.email ?? 'Anonymous User';
 
     return Drawer(
@@ -671,7 +682,11 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                     color: Colors.white.withAlpha(51),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person, color: Colors.white, size: 32),
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 32,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -684,10 +699,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                 ),
                 Text(
                   email,
-                  style: GoogleFonts.inter(
-                    color: Colors.white70,
-                    fontSize: 13,
-                  ),
+                  style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
                 ),
               ],
             ),
@@ -696,7 +708,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           // Profile
           ListTile(
             leading: const Icon(Icons.person_outline, color: Colors.white70),
-            title: Text('profile'.tr, style: const TextStyle(color: Colors.white)),
+            title: Text(
+              'profile'.tr,
+              style: const TextStyle(color: Colors.white),
+            ),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -711,7 +726,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           // About
           ListTile(
             leading: const Icon(Icons.info_outline, color: Colors.white70),
-            title: Text('about'.tr, style: const TextStyle(color: Colors.white)),
+            title: Text(
+              'about'.tr,
+              style: const TextStyle(color: Colors.white),
+            ),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -724,7 +742,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           // Settings (Long-press for Admin Panel)
           ListTile(
             leading: const Icon(Icons.settings_outlined, color: Colors.white70),
-            title: Text('settings'.tr, style: const TextStyle(color: Colors.white)),
+            title: Text(
+              'settings'.tr,
+              style: const TextStyle(color: Colors.white),
+            ),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -742,7 +763,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           // Terms & Conditions
           ListTile(
             leading: const Icon(Icons.article_outlined, color: Colors.white70),
-            title: Text('terms_conditions'.tr, style: const TextStyle(color: Colors.white)),
+            title: Text(
+              'terms_conditions'.tr,
+              style: const TextStyle(color: Colors.white),
+            ),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -754,13 +778,21 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
           // Privacy Policy
           ListTile(
-            leading: const Icon(Icons.privacy_tip_outlined, color: Colors.white70),
-            title: Text('privacy_policy'.tr, style: const TextStyle(color: Colors.white)),
+            leading: const Icon(
+              Icons.privacy_tip_outlined,
+              color: Colors.white70,
+            ),
+            title: Text(
+              'privacy_policy'.tr,
+              style: const TextStyle(color: Colors.white),
+            ),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const PrivacyPolicyScreen(),
+                ),
               );
             },
           ),
@@ -768,7 +800,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           // Contact Us
           ListTile(
             leading: const Icon(Icons.mail_outline, color: Colors.white70),
-            title: Text('contact_us'.tr, style: const TextStyle(color: Colors.white)),
+            title: Text(
+              'contact_us'.tr,
+              style: const TextStyle(color: Colors.white),
+            ),
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -783,7 +818,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           // Logout
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.redAccent),
-            title: Text('logout'.tr, style: const TextStyle(color: Colors.redAccent)),
+            title: Text(
+              'logout'.tr,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
             onTap: () async {
               Navigator.pop(context);
               await _logout();
@@ -794,28 +832,47 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     );
   }
 
+  /// Builds the committee cards list with a native ad injected after the
+  /// 2nd card (index 1). If there are 2 or fewer committees the ad appears
+  /// at the end of the list. The ad is shown only once per screen.
+  List<Widget> _buildCommitteeListItems() {
+    // Inject the ad after the 2nd card; fall back to end of list
+    const adInsertIndex = 2;
+    final insertAt =
+        _activeCommittees.length >= adInsertIndex
+            ? adInsertIndex
+            : _activeCommittees.length;
+
+    final items = <Widget>[];
+    for (var i = 0; i < _activeCommittees.length; i++) {
+      items.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildCommitteeCard(_activeCommittees[i]),
+        ),
+      );
+      // Insert native ad at the designated position
+      if (i + 1 == insertAt) {
+        items.add(const NativeAdWidget());
+      }
+    }
+    return items;
+  }
+
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.group_off_outlined, size: 80, color: Colors.grey[700]),
-          const SizedBox(height: 16),
-          Text(
-            'No Committees Yet',
-            style: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[400],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Create your first committee to get started',
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
-          ),
-        ],
-      ),
+    return EmptyStateWidget(
+      icon: Icons.group_off_rounded,
+      title: 'No Kametis Yet',
+      subtitle: 'Create your first committee to get started and manage your savings groups',
+      actionLabel: 'Create Kameti',
+      actionIcon: Icons.add_rounded,
+      onAction: () async {
+        final result = await Navigator.push(
+          context,
+          ScalePageRoute(page: const CreateCommitteeScreen()),
+        );
+        if (result == true) _loadCommittees();
+      },
     );
   }
 
@@ -920,7 +977,11 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                            Icon(
+                              Icons.delete_outline,
+                              size: 20,
+                              color: Colors.red,
+                            ),
                             SizedBox(width: 8),
                             Text('Delete', style: TextStyle(color: Colors.red)),
                           ],
@@ -937,86 +998,93 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
   void _showAdminPinDialog(BuildContext context) async {
     final pinController = TextEditingController();
-    
+
     // Fetch PIN from remote config (or use default)
     final remoteConfig = RemoteConfigService();
-    final correctPin = remoteConfig.getString('admin_pin', defaultValue: '1234');
-    
+    final correctPin = remoteConfig.getString(
+      'admin_pin',
+      defaultValue: '1234',
+    );
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
-        title: Row(
-          children: [
-            Icon(Icons.admin_panel_settings, color: AppTheme.primaryColor),
-            const SizedBox(width: 12),
-            const Text('Admin Access'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Enter admin PIN to continue',
-              style: TextStyle(color: Colors.grey[400]),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: AppTheme.darkCard,
+            title: Row(
+              children: [
+                Icon(Icons.admin_panel_settings, color: AppTheme.primaryColor),
+                const SizedBox(width: 12),
+                const Text('Admin Access'),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: pinController,
-              keyboardType: TextInputType.number,
-              obscureText: true,
-              maxLength: 4,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 24, letterSpacing: 16),
-              decoration: InputDecoration(
-                counterText: '',
-                hintText: '••••',
-                filled: true,
-                fillColor: AppTheme.darkSurface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Enter admin PIN to continue',
+                  style: TextStyle(color: Colors.grey[400]),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Contact admin if you forgot the PIN',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-            ),
-            onPressed: () {
-              if (pinController.text == correctPin) {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AdminConfigScreen(),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: pinController,
+                  keyboardType: TextInputType.number,
+                  obscureText: true,
+                  maxLength: 4,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 24, letterSpacing: 16),
+                  decoration: InputDecoration(
+                    counterText: '',
+                    hintText: '••••',
+                    filled: true,
+                    fillColor: AppTheme.darkSurface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryColor,
+                        width: 2,
+                      ),
+                    ),
                   ),
-                );
-                ToastService.success(context, '🔧 Admin Panel Unlocked');
-              } else {
-                ToastService.error(context, '❌ Incorrect PIN');
-                pinController.clear();
-              }
-            },
-            child: const Text('Unlock'),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Contact admin if you forgot the PIN',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                ),
+                onPressed: () {
+                  if (pinController.text == correctPin) {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminConfigScreen(),
+                      ),
+                    );
+                    ToastService.success(context, '🔧 Admin Panel Unlocked');
+                  } else {
+                    ToastService.error(context, '❌ Incorrect PIN');
+                    pinController.clear();
+                  }
+                },
+                child: const Text('Unlock'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

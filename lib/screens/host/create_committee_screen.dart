@@ -5,9 +5,12 @@ import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/analytics_service.dart';
+import '../../services/currency_service.dart';
+import '../../services/haptic_service.dart';
 import '../../models/committee.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/code_generator.dart';
+import '../../ui/widgets/micro_animations.dart';
 
 class CreateCommitteeScreen extends StatefulWidget {
   const CreateCommitteeScreen({super.key});
@@ -30,9 +33,23 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
   String _payoutFrequency = 'monthly';
   DateTime _startDate = DateTime.now();
   bool _isLoading = false;
+  String _selectedCurrency = CurrencyService.defaultCurrency;
 
   final List<String> _collectionFrequencies = ['daily', 'weekly', 'monthly'];
   final List<String> _payoutFrequencies = ['daily', 'weekly', 'monthly', 'custom'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDefaultCurrency();
+  }
+
+  Future<void> _loadDefaultCurrency() async {
+    final currency = await CurrencyService().initialize().then((_) => CurrencyService().appDefaultCurrency);
+    if (mounted) {
+      setState(() => _selectedCurrency = currency);
+    }
+  }
 
   @override
   void dispose() {
@@ -78,8 +95,9 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
 
     try {
       int intervalDays = 30;
-      if (_payoutFrequency == 'daily') intervalDays = 1;
-      else if (_payoutFrequency == 'weekly') intervalDays = 7;
+      if (_payoutFrequency == 'daily') {
+        intervalDays = 1;
+      } else if (_payoutFrequency == 'weekly') intervalDays = 7;
       else if (_payoutFrequency == 'monthly') intervalDays = 30;
       else if (_payoutFrequency == 'custom') {
         intervalDays = int.tryParse(_intervalController.text) ?? 30;
@@ -98,6 +116,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
         paymentIntervalDays: intervalDays,
         totalCycles: 0,
         isSynced: false,
+        currency: _selectedCurrency,
       );
 
       await _dbService.saveCommittee(committee);
@@ -113,87 +132,11 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
       await _syncService.syncCommittees(committee.hostId);
 
       if (mounted) {
-        // ... (success dialog remains same)
-        await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            backgroundColor: AppTheme.darkCard,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.secondaryColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_circle_rounded,
-                    color: AppTheme.secondaryColor,
-                    size: 48,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Kameti Created!',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Your committee code is:',
-                  style: TextStyle(color: Colors.grey[400]),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppTheme.primaryColor.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Text(
-                    committee.code,
-                    style: GoogleFonts.inter(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
-                      letterSpacing: 4,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Share this code with your members',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context, true); // Return to dashboard
-                },
-                child: const Text('Got it!'),
-              ),
-            ],
-          ),
-        );
+        HapticService.success();
+        await SuccessAnimation.show(context, message: 'Kameti Created!');
+        if (mounted) {
+          Navigator.pop(context, true); // Return to dashboard
+        }
       }
     } finally {
       if (mounted) {
@@ -245,7 +188,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                     alignment: Alignment.center,
                     width: 60,
                     child: Text(
-                      'PKR',
+                      _selectedCurrency,
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
                         color: Colors.grey[400],
@@ -388,6 +331,57 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
               ],
               const SizedBox(height: 24),
 
+              // Currency Selection
+              Text(
+                'Currency',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: Colors.grey[400],
+                ),
+              ),
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: () => _showCurrencyPicker(),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.darkCard,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        CurrencyService.getCurrencyInfo(_selectedCurrency).flag,
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$_selectedCurrency — ${CurrencyService.getCurrencyInfo(_selectedCurrency).name}',
+                              style: GoogleFonts.inter(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              'Symbol: ${CurrencyService.getCurrencyInfo(_selectedCurrency).symbol}',
+                              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
               // Start Date
               Text(
                 'Start Date',
@@ -450,6 +444,74 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showCurrencyPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.darkCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.currency_exchange, color: AppTheme.primaryColor),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Select Currency',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Colors.white10),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: CurrencyService.supportedCurrencies.length,
+                itemBuilder: (context, index) {
+                  final currency = CurrencyService.supportedCurrencies[index];
+                  final isSelected = currency.code == _selectedCurrency;
+                  return ListTile(
+                    leading: Text(currency.flag, style: const TextStyle(fontSize: 24)),
+                    title: Text(
+                      '${currency.code} — ${currency.name}',
+                      style: TextStyle(
+                        color: isSelected ? AppTheme.primaryColor : Colors.white,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Symbol: ${currency.symbol}',
+                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(Icons.check_circle, color: AppTheme.primaryColor)
+                        : null,
+                    onTap: () {
+                      HapticService.selectionTick();
+                      setState(() => _selectedCurrency = currency.code);
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

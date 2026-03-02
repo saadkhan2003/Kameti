@@ -41,7 +41,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   List<Member> _members = [];
   List<DateTime> _dates = [];
   Map<String, Map<String, bool>> _paymentGrid = {};
-  List<Payment> _cloudPayments = []; // Payments fetched from cloud
+  final List<Payment> _cloudPayments = []; // Payments fetched from cloud
   bool _isLoading = true;
   int _selectedCycle = 1;
   int _maxCycles = 1;
@@ -51,7 +51,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   DateTime? _filterEndDate;
 
   // Number of extra future periods to show (for advance payments)
-  int _extraPeriods = 1;
+  final int _extraPeriods = 1;
 
   @override
   void initState() {
@@ -858,7 +858,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                     icon: Icons.today,
                                     color: Colors.blue[400]!,
                                     value:
-                                        'PKR ${(stats['currentCycleCollected'] as double).toInt()}',
+                                        '${widget.committee.currency} ${(stats['currentCycleCollected'] as double).toInt()}',
                                     label: 'Amount of\n(${stats['daysElapsed']} days)',
                                   ),
                                 ),
@@ -893,7 +893,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                   Text(
                                     (stats['totalPending'] as double) == 0
                                         ? 'No Pending ✓'
-                                        : 'PKR ${(stats['totalPending'] as double).toInt()}',
+                                        : '${widget.committee.currency} ${(stats['totalPending'] as double).toInt()}',
                                     style: TextStyle(
                                       color:
                                           (stats['totalPending'] as double) == 0
@@ -1293,7 +1293,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                     children: [
                       if (isDefaulter) ...[
                         Text(
-                          'PKR ${(unpaidCount * widget.committee.contributionAmount).toInt()}',
+                          '${widget.committee.currency} ${(unpaidCount * widget.committee.contributionAmount).toInt()}',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -1372,7 +1372,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                 ),
                 child: Text(
                   _calculateTotalDebt() > 0
-                      ? 'PKR ${_calculateTotalDebt().toInt()}'
+                      ? '${widget.committee.currency} ${_calculateTotalDebt().toInt()}'
                       : 'All Paid ✓',
                   style: TextStyle(
                     fontSize: 11,

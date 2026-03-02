@@ -10,6 +10,8 @@ import '../../utils/app_theme.dart';
 import 'member_management_screen.dart';
 import 'payment_sheet_screen.dart';
 import 'shuffle_members_screen.dart';
+import 'committee_analytics_screen.dart';
+import '../../ui/widgets/sync_status_widget.dart';
 
 class CommitteeDetailScreen extends StatefulWidget {
   final Committee committee;
@@ -73,7 +75,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
     // Share committee info only (no member codes)
     String message = '📋 *${_committee.name}*\n\n'
         '*Committee Code:* ${_committee.code}\n'
-        '*Contribution:* Rs. ${_committee.contributionAmount.toInt()}\n'
+        '*Contribution:* ${_committee.currency} ${_committee.contributionAmount.toInt()}\n'
         '*Duration:* ${_members.length} months\n\n'
         '_Download Committee App to view payments!_';
     Share.share(message, subject: '${_committee.name} - Committee Details');
@@ -131,7 +133,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     alignment: Alignment.center,
                     width: 60,
                     child: Text(
-                      'Rs.',
+                      _committee.currency,
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.bold,
                         color: Colors.grey[400],
@@ -285,7 +287,12 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
       appBar: AppBar(
         title: Text(_committee.name),
         actions: [
-          IconButton(
+            SyncStatusWidget(
+              compact: true,
+              onTap: _refreshCommittee,
+            ),
+            const SizedBox(width: 4),
+            IconButton(
             icon: const Icon(Icons.share_rounded),
             onPressed: _showShareOptions,
             tooltip: 'Share Code',
@@ -424,13 +431,13 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                       const SizedBox(width: 16),
                       _buildStatItem(
                         'Amount',
-                        'Rs. ${_committee.contributionAmount.toInt()}',
+                        '${_committee.currency} ${_committee.contributionAmount.toInt()}',
                         Icons.payments_outlined,
                       ),
                       const SizedBox(width: 16),
                       _buildStatItem(
                         'Per Cycle',
-                        'Rs. ${totalAmount.toInt()}',
+                        '${_committee.currency} ${totalAmount.toInt()}',
                         Icons.account_balance_wallet_outlined,
                       ),
                     ],
@@ -538,7 +545,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                                 ],
                               ),
                               Text(
-                                'Rs. ${currentCycleCollected.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
+                                '${_committee.currency} ${currentCycleCollected.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
                                 style: GoogleFonts.inter(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -573,7 +580,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                                 ),
                               ),
                               Text(
-                                'Rs. ${totalCollected.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
+                                '${_committee.currency} ${totalCollected.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -664,6 +671,23 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                   ),
                 );
                 _loadMembers();
+              },
+            ),
+            const SizedBox(height: 12),
+
+            _buildActionCard(
+              icon: Icons.analytics_rounded,
+              title: 'Analytics',
+              subtitle: 'View charts, trends & member insights',
+              color: const Color(0xFF7C4DFF),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        CommitteeAnalyticsScreen(committee: _committee),
+                  ),
+                );
               },
             ),
           ],
