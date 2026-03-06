@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/auth_service.dart';
 import '../../services/database_service.dart';
@@ -9,13 +10,11 @@ import '../../services/realtime_sync_service.dart';
 import '../../services/localization_service.dart';
 import '../../services/toast_service.dart';
 import '../../services/review_service.dart';
-import '../../services/haptic_service.dart';
 import '../../models/committee.dart';
-import '../../utils/app_theme.dart';
+import '../../models/member.dart';
 import '../../utils/page_transitions.dart';
 import '../../ui/widgets/ads/native_ad_widget.dart';
 import '../../ui/widgets/empty_state_widget.dart';
-import '../../ui/widgets/shimmer_loading.dart';
 import '../../ui/widgets/sync_status_widget.dart';
 import '../../services/sync_status_service.dart';
 import '../settings_screen.dart';
@@ -40,6 +39,15 @@ class HostDashboardScreen extends StatefulWidget {
 
 class _HostDashboardScreenState extends State<HostDashboardScreen>
     with SingleTickerProviderStateMixin {
+  static const Color _bgTop = Color(0xFFF7F8FC);
+  static const Color _bgBottom = Color(0xFFEEF1F8);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _success = Color(0xFF059669);
+  static const Color _danger = Color(0xFFDC2626);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+
   final _authService = AuthService();
   final _dbService = DatabaseService();
   final _syncService = SyncService();
@@ -175,7 +183,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
   void _showArchivedSheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.darkCard,
+      backgroundColor: _surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -188,14 +196,26 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.archive, color: AppTheme.primaryColor),
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE9EEFC),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.archive_rounded,
+                        color: _primary,
+                        size: 18,
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     Text(
                       'Archived Kametis',
                       style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: _textPrimary,
                       ),
                     ),
                   ],
@@ -207,7 +227,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                     child: Center(
                       child: Text(
                         'No archived kametis',
-                        style: TextStyle(color: Colors.grey[500]),
+                        style: const TextStyle(color: _textSecondary),
                       ),
                     ),
                   )
@@ -218,19 +238,22 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                           leading: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.grey[800],
+                              color: const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(Icons.group, color: Colors.grey),
+                            child: const Icon(
+                              Icons.group,
+                              color: _textSecondary,
+                            ),
                           ),
                           title: Text(
                             committee.name,
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: _textPrimary),
                           ),
                           subtitle: Text(
                             'Archived on ${committee.archivedAt != null ? "${committee.archivedAt!.day}/${committee.archivedAt!.month}/${committee.archivedAt!.year}" : "Unknown"}',
-                            style: TextStyle(
-                              color: Colors.grey[500],
+                            style: const TextStyle(
+                              color: _textSecondary,
                               fontSize: 12,
                             ),
                           ),
@@ -270,20 +293,28 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: AppTheme.darkCard,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            backgroundColor: _surface,
             title: const Text('Archive Kameti?'),
             content: Text(
               'This will move "${committee.name}" to the archived section. You can restore it later.',
+              style: const TextStyle(color: _textSecondary),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: _textSecondary),
+                ),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
+                  backgroundColor: _primary,
+                  foregroundColor: Colors.white,
                 ),
                 child: const Text('Archive'),
               ),
@@ -316,20 +347,28 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: AppTheme.darkCard,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            backgroundColor: _surface,
             title: const Text('Delete Kameti?'),
             content: Text(
               'This will permanently delete "${committee.name}" and all its data. This cannot be undone.',
+              style: const TextStyle(color: _textSecondary),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: _textSecondary),
+                ),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.errorColor,
+                  backgroundColor: _danger,
+                  foregroundColor: Colors.white,
                 ),
                 child: const Text('Delete'),
               ),
@@ -358,278 +397,382 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     return PopScope(
       canPop: false,
       child: Scaffold(
+        backgroundColor: _bgTop,
         appBar: AppBar(
-          title: const Text('My Kametis'),
+          backgroundColor: _bgTop,
+          surfaceTintColor: Colors.transparent,
+          scrolledUnderElevation: 0,
+          title: Text(
+            'My Kametis',
+            style: GoogleFonts.inter(
+              color: _textPrimary,
+              fontWeight: FontWeight.w800,
+              fontSize: 24,
+            ),
+          ),
+          elevation: 0,
           automaticallyImplyLeading: false,
           leading: Builder(
             builder:
                 (context) => IconButton(
-                  icon: const Icon(Icons.menu),
+                  icon: const Icon(Icons.menu_rounded, color: _primary),
                   tooltip: 'Menu',
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
           ),
           actions: [
-            SyncStatusWidget(
-              compact: true,
-              onTap: _syncData,
-            ),
+            if (_archivedCommittees.isNotEmpty)
+              TextButton.icon(
+                onPressed: _showArchivedSheet,
+                icon: const Icon(
+                  Icons.archive_outlined,
+                  size: 18,
+                  color: _textSecondary,
+                ),
+                label: Text(
+                  '${_archivedCommittees.length}',
+                  style: const TextStyle(
+                    color: _textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            SyncStatusWidget(compact: true, onTap: _syncData),
+            const SizedBox(width: 8),
           ],
         ),
         drawer: _buildDrawer(context),
-        body: RefreshIndicator(
-          onRefresh: _syncData,
-          color: AppTheme.primaryColor,
-          backgroundColor: AppTheme.darkCard,
-          child: ListView(
-            padding: const EdgeInsets.only(bottom: 80), // Fab space
-            physics: const AlwaysScrollableScrollPhysics(), // Required for Web
-            children: [
-              // Email Verification Banner
-              if (user != null && user.emailConfirmedAt == null)
-                Container(
-                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [_bgTop, _bgBottom],
+            ),
+          ),
+          child: RefreshIndicator(
+            onRefresh: _syncData,
+            color: _primary,
+            backgroundColor: _surface,
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 96),
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                // Email Verification Banner
+                if (user != null && user.emailConfirmedAt == null)
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFFED7AA)),
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFED7AA),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.mark_email_unread_outlined,
+                                color: Color(0xFFB45309),
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Confirm Your Email',
+                                    style: TextStyle(
+                                      color: Color(0xFF9A3412),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Please verify your email address',
+                                    style: TextStyle(
+                                      color: Color(0xFFB45309),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                await _authService.sendEmailVerification();
+                                if (mounted) {
+                                  ToastService.success(
+                                    context,
+                                    'Verification link sent!',
+                                  );
+                                }
+                              },
+                              style: TextButton.styleFrom(
+                                backgroundColor: const Color(0xFF9A3412),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              child: const Text('Confirm'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                // Welcome Header
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  margin: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _surface,
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFF59E0B).withOpacity(0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: const Color(0xFF0F172A).withOpacity(0.08),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(8),
+                            width: 48,
+                            height: 48,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
+                              color: const Color(0xFFE9EEFC),
+                              borderRadius: BorderRadius.circular(14),
                             ),
                             child: const Icon(
-                              Icons.mark_email_unread_outlined,
-                              color: Colors.white,
-                              size: 20,
+                              Icons.waving_hand_rounded,
+                              color: _primary,
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Confirm Your Email',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  'Please verify your email address',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              await _authService.sendEmailVerification();
-                              if (mounted) {
-                                ToastService.success(
-                                  context,
-                                  'Verification link sent!',
-                                );
-                              }
-                            },
-                            style: TextButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: const Color(0xFFD97706),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                            child: const Text('Confirm'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              // Welcome Header
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppTheme.primaryColor, AppTheme.primaryDark],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$displayName!',
-                      style: GoogleFonts.inter(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_activeCommittees.length} active kametis',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // View Payments Action Card
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const JoinCommitteeScreen(),
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.darkCard,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppTheme.secondaryColor.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppTheme.secondaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.receipt_long_rounded,
-                              color: AppTheme.secondaryColor,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Joined a Kameti?',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    color: Colors.grey[400],
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'View Kameti Payments',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              'Welcome, $displayName',
+                              style: GoogleFonts.inter(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: _textPrimary,
+                              ),
                             ),
                           ),
-                          const Icon(
-                            Icons.chevron_right_rounded,
-                            color: Colors.grey,
-                          ),
                         ],
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFF),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFD0D9EE)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildHeaderStat(
+                                value: '${_activeCommittees.length}',
+                                label: 'Active',
+                              ),
+                            ),
+                            Container(
+                              width: 1,
+                              height: 28,
+                              color: const Color(0xFFD0D9EE),
+                            ),
+                            Expanded(
+                              child: _buildHeaderStat(
+                                value:
+                                    '${_activeCommittees.fold<int>(0, (sum, c) => sum + _dbService.getMembersByCommittee(c.id).length)}',
+                                label: 'Members',
+                              ),
+                            ),
+                            Container(
+                              width: 1,
+                              height: 28,
+                              color: const Color(0xFFD0D9EE),
+                            ),
+                            Expanded(
+                              child: _buildHeaderStat(
+                                value:
+                                    _archivedCommittees.isEmpty
+                                        ? '0'
+                                        : '${_archivedCommittees.length}',
+                                label: 'Archived',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickAction(
+                          icon: Icons.add_circle_outline_rounded,
+                          title: 'Create New',
+                          subtitle: 'Start committee',
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              ScalePageRoute(
+                                page: const CreateCommitteeScreen(),
+                              ),
+                            );
+                            if (result == true) _loadCommittees();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildQuickAction(
+                          icon: Icons.archive_outlined,
+                          title: 'Archived',
+                          subtitle: '${_archivedCommittees.length} items',
+                          onTap: _showArchivedSheet,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                // View Payments Action Card
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const JoinCommitteeScreen(),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: _surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFCCE6D8)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECFDF3),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.visibility_rounded,
+                                color: _success,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Joined a Kameti?',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      color: _textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'View Kameti Payments',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: _textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: _textSecondary,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Your Hosted Kametis',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[400],
-                      ),
-                    ),
-                    if (_archivedCommittees.isNotEmpty)
-                      TextButton.icon(
-                        onPressed: () => _showArchivedSheet(),
-                        icon: const Icon(Icons.archive_outlined, size: 18),
-                        label: Text('Archived (${_archivedCommittees.length})'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.grey[400],
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Your Hosted Kametis',
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: _textPrimary,
                         ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              // Committees List
-              if (_activeCommittees.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 40),
-                  child: _buildEmptyState(),
-                )
-              else
-                ..._buildCommitteeListItems(),
-            ],
+                // Committees List
+                if (_activeCommittees.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 40),
+                    child: _buildEmptyState(),
+                  )
+                else
+                  ..._buildCommitteeListItems(),
+              ],
+            ),
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
@@ -642,11 +785,183 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
               _loadCommittees();
             }
           },
-          icon: const Icon(Icons.add),
+          backgroundColor: _primary,
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.add_rounded),
           label: const Text('New Committee'),
         ),
       ),
     );
+  }
+
+  Widget _buildHeaderStat({required String value, required String label}) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: _textPrimary,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            color: _textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickAction({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFDCE4F7)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE9EEFC),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: _primary),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: _textPrimary,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: _textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatAmount(double amount) {
+    final intValue = amount.toInt().toString();
+    return intValue.replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]},',
+    );
+  }
+
+  String _frequencyLabel(String frequency) {
+    if (frequency.isEmpty) return 'Cycle';
+    return '${frequency[0].toUpperCase()}${frequency.substring(1).toLowerCase()}';
+  }
+
+  int _calculateDuePeriods(Committee committee, DateTime now) {
+    final start = committee.startDate;
+    if (now.isBefore(start)) return 0;
+
+    if (committee.frequency == 'daily') {
+      return now.difference(start).inDays + 1;
+    }
+
+    if (committee.frequency == 'weekly') {
+      return (now.difference(start).inDays ~/ 7) + 1;
+    }
+
+    if (committee.frequency == 'monthly') {
+      final monthsDiff =
+          (now.year - start.year) * 12 + (now.month - start.month);
+      final adjusted = now.day >= start.day ? monthsDiff + 1 : monthsDiff;
+      return adjusted < 0 ? 0 : adjusted;
+    }
+
+    return (now.difference(start).inDays ~/ 30) + 1;
+  }
+
+  Map<String, dynamic> _calculateCommitteePaymentProgress(
+    Committee committee,
+    List<Member> members,
+  ) {
+    if (members.isEmpty) {
+      return {
+        'progress': 1.0,
+        'pendingAmount': 0.0,
+        'pendingCount': 0,
+        'expectedDueCount': 0,
+      };
+    }
+
+    final now = DateTime.now();
+    final duePeriods = _calculateDuePeriods(committee, now);
+    final expectedDueCount = duePeriods * members.length;
+
+    if (expectedDueCount <= 0) {
+      return {
+        'progress': 1.0,
+        'pendingAmount': 0.0,
+        'pendingCount': 0,
+        'expectedDueCount': 0,
+      };
+    }
+
+    final paidCount =
+        _dbService
+            .getPaymentsByCommittee(committee.id)
+            .where((payment) => payment.isPaid && !payment.date.isAfter(now))
+            .length;
+
+    final boundedPaid = paidCount.clamp(0, expectedDueCount);
+    final pendingCount = (expectedDueCount - boundedPaid).clamp(
+      0,
+      expectedDueCount,
+    );
+    final pendingAmount = pendingCount * committee.contributionAmount;
+    final progress =
+        ((expectedDueCount - pendingCount) / expectedDueCount)
+            .clamp(0.0, 1.0)
+            .toDouble();
+
+    return {
+      'progress': progress,
+      'pendingAmount': pendingAmount,
+      'pendingCount': pendingCount,
+      'expectedDueCount': expectedDueCount,
+    };
   }
 
   Widget _buildDrawer(BuildContext context) {
@@ -658,17 +973,16 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     final email = user?.email ?? 'Anonymous User';
 
     return Drawer(
-      backgroundColor: AppTheme.darkCard,
+      backgroundColor: _surface,
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           // Drawer Header
           DrawerHeader(
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppTheme.primaryColor, AppTheme.primaryDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(color: Color(0xFFDDE5F6), width: 1),
               ),
             ),
             child: Column(
@@ -679,27 +993,23 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(51),
+                    color: Color(0xFFE9EEFC),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 32,
-                  ),
+                  child: const Icon(Icons.person, color: _primary, size: 32),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   displayName,
                   style: GoogleFonts.inter(
-                    color: Colors.white,
+                    color: _textPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
                   email,
-                  style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+                  style: GoogleFonts.inter(color: _textSecondary, fontSize: 13),
                 ),
               ],
             ),
@@ -707,10 +1017,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
           // Profile
           ListTile(
-            leading: const Icon(Icons.person_outline, color: Colors.white70),
+            leading: const Icon(Icons.person_outline, color: _textSecondary),
             title: Text(
               'profile'.tr,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: _textPrimary),
             ),
             onTap: () {
               Navigator.pop(context);
@@ -721,14 +1031,14 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
             },
           ),
 
-          const Divider(color: Colors.white10),
+          const Divider(color: Color(0xFFE2E8F0)),
 
           // About
           ListTile(
-            leading: const Icon(Icons.info_outline, color: Colors.white70),
+            leading: const Icon(Icons.info_outline, color: _textSecondary),
             title: Text(
               'about'.tr,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: _textPrimary),
             ),
             onTap: () {
               Navigator.pop(context);
@@ -741,10 +1051,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
           // Settings (Long-press for Admin Panel)
           ListTile(
-            leading: const Icon(Icons.settings_outlined, color: Colors.white70),
+            leading: const Icon(Icons.settings_outlined, color: _textSecondary),
             title: Text(
               'settings'.tr,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: _textPrimary),
             ),
             onTap: () {
               Navigator.pop(context);
@@ -762,10 +1072,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
           // Terms & Conditions
           ListTile(
-            leading: const Icon(Icons.article_outlined, color: Colors.white70),
+            leading: const Icon(Icons.article_outlined, color: _textSecondary),
             title: Text(
               'terms_conditions'.tr,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: _textPrimary),
             ),
             onTap: () {
               Navigator.pop(context);
@@ -780,11 +1090,11 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           ListTile(
             leading: const Icon(
               Icons.privacy_tip_outlined,
-              color: Colors.white70,
+              color: _textSecondary,
             ),
             title: Text(
               'privacy_policy'.tr,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: _textPrimary),
             ),
             onTap: () {
               Navigator.pop(context);
@@ -799,10 +1109,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
           // Contact Us
           ListTile(
-            leading: const Icon(Icons.mail_outline, color: Colors.white70),
+            leading: const Icon(Icons.mail_outline, color: _textSecondary),
             title: Text(
               'contact_us'.tr,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: _textPrimary),
             ),
             onTap: () {
               Navigator.pop(context);
@@ -813,15 +1123,12 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
             },
           ),
 
-          const Divider(color: Colors.white10),
+          const Divider(color: Color(0xFFE2E8F0)),
 
           // Logout
           ListTile(
-            leading: const Icon(Icons.logout, color: Colors.redAccent),
-            title: Text(
-              'logout'.tr,
-              style: const TextStyle(color: Colors.redAccent),
-            ),
+            leading: const Icon(Icons.logout, color: _danger),
+            title: Text('logout'.tr, style: const TextStyle(color: _danger)),
             onTap: () async {
               Navigator.pop(context);
               await _logout();
@@ -863,7 +1170,8 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     return EmptyStateWidget(
       icon: Icons.group_off_rounded,
       title: 'No Kametis Yet',
-      subtitle: 'Create your first committee to get started and manage your savings groups',
+      subtitle:
+          'Create your first committee to get started and manage your savings groups',
       actionLabel: 'Create Kameti',
       actionIcon: Icons.add_rounded,
       onAction: () async {
@@ -878,8 +1186,19 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
   Widget _buildCommitteeCard(Committee committee) {
     final members = _dbService.getMembersByCommittee(committee.id);
+    final targetMembers =
+        committee.totalMembers > 0 ? committee.totalMembers : members.length;
+    final totalPool = committee.contributionAmount * targetMembers;
+    final paymentProgress = _calculateCommitteePaymentProgress(
+      committee,
+      members,
+    );
+    final progressValue = paymentProgress['progress'] as double;
+    final pendingAmount = paymentProgress['pendingAmount'] as double;
 
     return Card(
+      color: _surface,
+      elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () async {
@@ -893,101 +1212,290 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.group_rounded,
-                  color: AppTheme.primaryColor,
-                  size: 28,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE9EEFC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.group_rounded,
+                      color: _primary,
+                      size: 25,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          committee.name,
+                          style: GoogleFonts.inter(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: _textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${_frequencyLabel(committee.frequency)} cycle • ${members.length}/$targetMembers members',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: _textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: _textSecondary),
+                    color: _surface,
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: Color(0xFFDCE5F6)),
+                    ),
+                    onSelected: (value) {
+                      if (value == 'archive') {
+                        _archiveCommittee(committee);
+                      } else if (value == 'delete') {
+                        _deleteCommittee(committee);
+                      }
+                    },
+                    itemBuilder:
+                        (context) => [
+                          PopupMenuItem(
+                            value: 'archive',
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.archive_outlined,
+                                  size: 20,
+                                  color: _textSecondary,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Archive',
+                                  style: TextStyle(color: _textPrimary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                  color: _danger,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Delete',
+                                  style: TextStyle(color: _danger),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      committee.name,
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${members.length} members • ${committee.frequency}',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: Colors.grey[400],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 10,
+                        vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.secondaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
+                        color: const Color(0xFFF8FAFF),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFD0D9EE)),
                       ),
-                      child: Text(
-                        'Code: ${committee.code}',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.secondaryColor,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Per Cycle',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              color: _textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${committee.currency} ${_formatAmount(committee.contributionAmount)}',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: _textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, color: Colors.grey),
-                onSelected: (value) {
-                  if (value == 'archive') {
-                    _archiveCommittee(committee);
-                  } else if (value == 'delete') {
-                    _deleteCommittee(committee);
-                  }
-                },
-                itemBuilder:
-                    (context) => [
-                      const PopupMenuItem(
-                        value: 'archive',
-                        child: Row(
-                          children: [
-                            Icon(Icons.archive_outlined, size: 20),
-                            SizedBox(width: 8),
-                            Text('Archive'),
-                          ],
-                        ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
                       ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.delete_outline,
-                              size: 20,
-                              color: Colors.red,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFF),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFD0D9EE)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Total Pool',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              color: _textSecondary,
+                              fontWeight: FontWeight.w600,
                             ),
-                            SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: Colors.red)),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${committee.currency} ${_formatAmount(totalPool)}',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: _textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        minHeight: 6,
+                        backgroundColor: const Color(0xFFE2E8F0),
+                        color: pendingAmount <= 0 ? _success : _primary,
+                        value: progressValue,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          pendingAmount <= 0
+                              ? const Color(0xFFECFDF3)
+                              : const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      pendingAmount <= 0
+                          ? 'No Pending ✓'
+                          : 'Pending ${committee.currency} ${_formatAmount(pendingAmount)}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color:
+                            pendingAmount <= 0
+                                ? const Color(0xFF047857)
+                                : const Color(0xFFB91C1C),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE9EEFC),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(999),
+                      onTap: () async {
+                        await Clipboard.setData(
+                          ClipboardData(text: committee.code),
+                        );
+                        if (mounted) {
+                          ToastService.success(
+                            context,
+                            'Committee code copied',
+                          );
+                        }
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Code: ${committee.code}',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              color: _primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.copy_rounded,
+                            size: 12,
+                            color: _primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${committee.totalCycles} cycles',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        color: _textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1010,20 +1518,26 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: AppTheme.darkCard,
+            backgroundColor: _surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
             title: Row(
               children: [
-                Icon(Icons.admin_panel_settings, color: AppTheme.primaryColor),
+                const Icon(Icons.admin_panel_settings, color: _primary),
                 const SizedBox(width: 12),
-                const Text('Admin Access'),
+                const Text(
+                  'Admin Access',
+                  style: TextStyle(color: _textPrimary),
+                ),
               ],
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
+                const Text(
                   'Enter admin PIN to continue',
-                  style: TextStyle(color: Colors.grey[400]),
+                  style: TextStyle(color: _textSecondary),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -1037,34 +1551,35 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                     counterText: '',
                     hintText: '••••',
                     filled: true,
-                    fillColor: AppTheme.darkSurface,
+                    fillColor: const Color(0xFFF8FAFF),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppTheme.primaryColor,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: _primary, width: 2),
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Contact admin if you forgot the PIN',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  style: TextStyle(color: _textSecondary, fontSize: 12),
                 ),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: _textSecondary),
+                ),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
+                  backgroundColor: _primary,
+                  foregroundColor: Colors.white,
                 ),
                 onPressed: () {
                   if (pinController.text == correctPin) {

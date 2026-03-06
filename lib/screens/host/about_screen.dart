@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../../utils/app_theme.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -10,6 +10,13 @@ class AboutScreen extends StatefulWidget {
 }
 
 class _AboutScreenState extends State<AboutScreen> {
+  static const Color _bg = Color(0xFFF7F8FC);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _success = Color(0xFF059669);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+
   String _version = '';
 
   @override
@@ -27,97 +34,155 @@ class _AboutScreenState extends State<AboutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final versionLabel = _version.isEmpty ? '...' : _version;
+
     return Scaffold(
-      backgroundColor: AppTheme.darkBg,
+      backgroundColor: _bg,
       appBar: AppBar(
-        title: const Text('About'),
-        backgroundColor: AppTheme.darkCard,
+        backgroundColor: _bg,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        foregroundColor: _textPrimary,
+        iconTheme: const IconThemeData(color: _textPrimary),
+        elevation: 0,
+        title: Text(
+          'About',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w800,
+            color: _textPrimary,
+          ),
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         children: [
-          // App Logo & Name
           Container(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                colors: [_primary, Color(0xFF5B6FD6)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: _primary.withOpacity(0.26),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
             child: Column(
               children: [
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: 72,
+                  height: 72,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(18),
                   ),
                   child: const Icon(
                     Icons.groups_rounded,
-                    color: AppTheme.primaryColor,
-                    size: 48,
+                    color: _primary,
+                    size: 42,
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Kameti',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                const Text(
-                  'Committee Manager',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
-                ),
-                const SizedBox(height: 8),
                 Text(
-                  'Version ${_version.isEmpty ? "..." : _version}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 14),
+                  'Committee Manager',
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Colors.white.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    'Version $versionLabel',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildTopMetric(
+                      icon: Icons.shield_rounded,
+                      title: 'Secure',
+                      value: 'Cloud Sync',
+                    ),
+                    const SizedBox(width: 8),
+                    _buildTopMetric(
+                      icon: Icons.bolt_rounded,
+                      title: 'Fast',
+                      value: 'Real-time',
+                    ),
+                    const SizedBox(width: 8),
+                    _buildTopMetric(
+                      icon: Icons.groups_rounded,
+                      title: 'Built For',
+                      value: 'Committees',
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
-          // Description
           _buildSection(
-            'About the App',
-            'Kameti is your all-in-one solution for managing rotating savings committees (ROSCA). '
-            'Whether you\'re a host organizing multiple committees or a member tracking your payments, '
-            'our app makes it simple to stay organized.',
+            title: 'About the App',
+            icon: Icons.info_outline_rounded,
+            content:
+                'Kameti is your all-in-one solution for managing rotating savings committees (ROSCA). Whether you are a host organizing multiple committees or a member tracking payments, the app keeps everything structured and transparent.',
           ),
 
-          // Features
-          _buildSection(
-            'Key Features',
-            '• Create and manage multiple committees\n'
-            '• Track member payments with visual calendar\n'
-            '• Record partial and advance payments\n'
-            '• Cloud sync across all your devices\n'
-            '• Share committee codes with members\n'
-            '• View payout schedules and history\n'
-            '• Export data to PDF',
-          ),
-          const SizedBox(height: 24),
+          _buildFeatureSection(),
+          const SizedBox(height: 8),
 
-          // Copyright
-          Center(
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFDCE4F7)),
+            ),
             child: Column(
               children: [
-                const Text(
+                Text(
                   'Made with ❤️ in Pakistan',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  style: GoogleFonts.inter(
+                    color: _textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   '© 2026 Kameti. All rights reserved.',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  style: GoogleFonts.inter(color: _textSecondary, fontSize: 12),
                 ),
               ],
             ),
@@ -127,82 +192,177 @@ class _AboutScreenState extends State<AboutScreen> {
     );
   }
 
-  Widget _buildSection(String title, String content) {
+  Widget _buildTopMetric({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.14),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.2)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: Colors.white, size: 16),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              value,
+              style: GoogleFonts.inter(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 9,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSection({
+    required String title,
+    required IconData icon,
+    required String content,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.darkCard,
+        color: _surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(13)),
+        border: Border.all(color: const Color(0xFFDCE4F7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: _primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(icon, color: _primary, size: 17),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  color: _textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Text(
             content,
-            style: TextStyle(color: Colors.grey[300], height: 1.6),
+            style: GoogleFonts.inter(
+              color: _textSecondary,
+              height: 1.6,
+              fontSize: 13,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCard({
-    required IconData icon,
-    required String title,
-    required List<Widget> children,
-  }) {
+  Widget _buildFeatureSection() {
+    const features = [
+      'Create and manage multiple committees',
+      'Track member payments with visual calendar',
+      'Record partial and advance payments',
+      'Cloud sync across all your devices',
+      'Share committee codes with members',
+      'View payout schedules and history',
+      'Export data to PDF',
+    ];
+
     return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.darkCard,
+        color: _surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(13)),
+        border: Border.all(color: const Color(0xFFDCE4F7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Icon(icon, color: AppTheme.primaryColor, size: 24),
-                const SizedBox(width: 12),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+          Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: _success.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(9),
                 ),
-              ],
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: _success,
+                  size: 17,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Key Features',
+                style: GoogleFonts.inter(
+                  color: _textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...features.map(
+            (feature) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 3),
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: _primary,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: GoogleFonts.inter(
+                        color: _textSecondary,
+                        height: 1.4,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const Divider(height: 1, color: Colors.white10),
-          ...children,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(color: Colors.grey[400])),
-          Text(value, style: const TextStyle(color: Colors.white)),
         ],
       ),
     );

@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../utils/app_theme.dart';
 import '../services/biometric_service.dart';
 import 'home_screen.dart';
 import 'host/host_dashboard_screen.dart';
 
-
 class LockScreen extends StatefulWidget {
   final bool isHost;
   static bool isShown = false;
-  
+
   const LockScreen({super.key, required this.isHost});
 
   @override
@@ -17,6 +15,13 @@ class LockScreen extends StatefulWidget {
 }
 
 class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
+  static const Color _bgTop = Color(0xFFF7F8FC);
+  static const Color _bgBottom = Color(0xFFEEF1F8);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+
   bool _isAuthenticating = false;
   String _error = '';
   String _biometricType = 'Biometric';
@@ -56,7 +61,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
 
   Future<void> _authenticate() async {
     if (_isAuthenticating) return;
-    
+
     setState(() {
       _isAuthenticating = true;
       _error = '';
@@ -88,135 +93,276 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
   void _navigateToApp() {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => widget.isHost 
-            ? const HostDashboardScreen() 
-            : const HomeScreen(),
+        builder:
+            (_) =>
+                widget.isHost
+                    ? const HostDashboardScreen()
+                    : const HomeScreen(),
       ),
     );
+  }
+
+  IconData _biometricIcon() {
+    return _biometricType == 'Face ID'
+        ? Icons.face_rounded
+        : Icons.fingerprint_rounded;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBg,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // App Icon
-                Container(
-                  width: 100,
-                  height: 100,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [_bgTop, _bgBottom],
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Positioned(
+                top: -90,
+                right: -30,
+                child: Container(
+                  width: 220,
+                  height: 220,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppTheme.primaryColor, AppTheme.primaryDark],
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryColor.withAlpha(80),
-                        blurRadius: 20,
-                        spreadRadius: 2,
+                    shape: BoxShape.circle,
+                    color: _primary.withValues(alpha: 0.08),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -100,
+                left: -40,
+                child: Container(
+                  width: 240,
+                  height: 240,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _primary.withValues(alpha: 0.06),
+                  ),
+                ),
+              ),
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 76,
+                        height: 30,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE9EEFC),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'SECURE',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
+                            color: _primary,
+                          ),
+                        ),
                       ),
+                      const SizedBox(height: 14),
+                      Container(
+                        width: 88,
+                        height: 88,
+                        decoration: BoxDecoration(
+                          color: _surface,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFF3347A8,
+                              ).withValues(alpha: 0.15),
+                              blurRadius: 24,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_wallet_rounded,
+                          size: 42,
+                          color: _primary,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Kameti is locked',
+                        style: GoogleFonts.inter(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                          color: _textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _isAuthenticating
+                            ? 'Verifying with $_biometricType...'
+                            : 'Authenticate to continue to your dashboard',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          height: 1.45,
+                          color: _textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Container(
+                        width: double.infinity,
+                        constraints: const BoxConstraints(maxWidth: 340),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: _surface,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFF0F172A,
+                              ).withValues(alpha: 0.08),
+                              blurRadius: 22,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 92,
+                              height: 92,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(0xFFE9EEFC),
+                                border: Border.all(
+                                  color:
+                                      _isAuthenticating
+                                          ? _primary
+                                          : const Color(0xFFC9D4EE),
+                                  width: 1.6,
+                                ),
+                              ),
+                              child:
+                                  _isAuthenticating
+                                      ? const Padding(
+                                        padding: EdgeInsets.all(26),
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.8,
+                                          color: _primary,
+                                        ),
+                                      )
+                                      : Icon(
+                                        _biometricIcon(),
+                                        size: 44,
+                                        color: _primary,
+                                      ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _biometricType,
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: _textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _isAuthenticating
+                                  ? 'Please wait while we verify your identity'
+                                  : 'Use your $_biometricType to unlock securely',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: _textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed:
+                                    _isAuthenticating ? null : _authenticate,
+                                style: ElevatedButton.styleFrom(
+                                  elevation: 0,
+                                  backgroundColor: _primary,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                ),
+                                icon: Icon(
+                                  _isAuthenticating
+                                      ? Icons.hourglass_top_rounded
+                                      : _biometricIcon(),
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  _isAuthenticating
+                                      ? 'Authenticating...'
+                                      : 'Unlock with $_biometricType',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_error.isNotEmpty) ...[
+                        const SizedBox(height: 14),
+                        Container(
+                          width: double.infinity,
+                          constraints: const BoxConstraints(maxWidth: 340),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF1F2),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFFECACA)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.error_outline_rounded,
+                                size: 18,
+                                color: Color(0xFFB91C1C),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _error,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: const Color(0xFFB91C1C),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
-                  child: const Icon(
-                    Icons.account_balance_wallet_rounded,
-                    size: 50,
-                    color: Colors.white,
-                  ),
                 ),
-                const SizedBox(height: 32),
-                
-                // Title
-                Text(
-                  'Kameti',
-                  style: GoogleFonts.inter(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Locked',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    color: Colors.grey[500],
-                  ),
-                ),
-                const SizedBox(height: 60),
-                
-                // Biometric Button
-                GestureDetector(
-                  onTap: _isAuthenticating ? null : _authenticate,
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppTheme.darkCard,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: _isAuthenticating 
-                            ? AppTheme.primaryColor 
-                            : Colors.grey[700]!,
-                        width: 2,
-                      ),
-                    ),
-                    child: _isAuthenticating
-                        ? const Padding(
-                            padding: EdgeInsets.all(20),
-                            child: CircularProgressIndicator(
-                              color: AppTheme.primaryColor,
-                              strokeWidth: 3,
-                            ),
-                          )
-                        : Icon(
-                            _biometricType == 'Face ID' 
-                                ? Icons.face_rounded 
-                                : Icons.fingerprint_rounded,
-                            size: 40,
-                            color: AppTheme.primaryColor,
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                Text(
-                  _isAuthenticating 
-                      ? 'Authenticating...' 
-                      : 'Tap to unlock with $_biometricType',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: Colors.grey[400],
-                  ),
-                ),
-                
-                // Error Message
-                if (_error.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withAlpha(30),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.red.withAlpha(50)),
-                    ),
-                    child: Text(
-                      _error,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: Colors.red[300],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

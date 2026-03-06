@@ -89,7 +89,7 @@ Kameti (کمیٹی) is a comprehensive committee management system that helps yo
    flutter run
 
    # For web
-   flutter run -d chrome
+   flutter run -d chrome --web-renderer html
 
    # For Android release
    flutter build appbundle --release
@@ -226,7 +226,7 @@ flutter run
 flutter run -d ios
 
 # Web
-flutter run -d chrome
+flutter run -d chrome --web-renderer html
 ```
 
 ### Production Build
@@ -239,7 +239,7 @@ flutter build appbundle --release
 flutter build ipa --release
 
 # Web
-flutter build web --release
+flutter build web --release --web-renderer html
 ```
 
 ### Release Configuration

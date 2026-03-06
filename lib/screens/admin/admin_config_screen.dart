@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../services/remote_config_service.dart';
 import '../../services/toast_service.dart';
 import '../../utils/app_theme.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Admin Panel for Remote Config Management
-/// Allows updating force update settings without SQL
 class AdminConfigScreen extends StatefulWidget {
   const AdminConfigScreen({super.key});
 
@@ -14,21 +14,25 @@ class AdminConfigScreen extends StatefulWidget {
 }
 
 class _AdminConfigScreenState extends State<AdminConfigScreen> {
+  static const Color _bg = Color(0xFFF5F8FF);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _primaryDark = Color(0xFF25348A);
+  static const Color _danger = Color(0xFFDC2626);
+  static const Color _success = Color(0xFF059669);
+  static const Color _warning = Color(0xFFD97706);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+
   final _supabase = Supabase.instance.client;
   final _minVersionController = TextEditingController();
   final _updateTitleController = TextEditingController();
   final _updateMessageController = TextEditingController();
   final _playStoreUrlController = TextEditingController();
-  
-  // PIN change controllers
-  final _currentPinController = TextEditingController();
-  final _newPinController = TextEditingController();
-  final _confirmPinController = TextEditingController();
-  
+
   bool _forceUpdateEnabled = false;
   bool _isLoading = true;
   bool _isSaving = false;
-  final bool _isChangingPin = false;
 
   @override
   void initState() {
@@ -42,69 +46,78 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
     _updateTitleController.dispose();
     _updateMessageController.dispose();
     _playStoreUrlController.dispose();
-    _currentPinController.dispose();
-    _newPinController.dispose();
-    _confirmPinController.dispose();
     super.dispose();
   }
 
   Future<void> _loadCurrentConfig() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final response = await _supabase
           .from('app_config')
           .select('config_key, config_value');
 
       final config = {
-        for (var item in response as List)
-          item['config_key'] as String: item['config_value'] as String
+        for (final item in response as List)
+          item['config_key'] as String: item['config_value'] as String,
       };
 
       setState(() {
         _minVersionController.text = config['min_android_version'] ?? '1.0.0';
-        _updateTitleController.text = config['update_message_title'] ?? 'Update Required';
-        _updateMessageController.text = config['update_message_body'] ?? 
+        _updateTitleController.text =
+            config['update_message_title'] ?? 'Update Required';
+        _updateMessageController.text =
+            config['update_message_body'] ??
             'Please update to the latest version to continue using the app.';
         _playStoreUrlController.text = config['playstore_url'] ?? '';
-        _forceUpdateEnabled = config['force_update_enabled']?.toLowerCase() == 'true';
+        _forceUpdateEnabled =
+            config['force_update_enabled']?.toLowerCase() == 'true';
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (error) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ToastService.error(context, 'Failed to load config: $e');
+        ToastService.error(context, 'Failed to load config: $error');
       }
     }
   }
 
   Future<void> _saveConfig() async {
-    // Show confirmation dialog first
     final confirmed = await _showConfirmationDialog();
     if (!confirmed) return;
 
     setState(() => _isSaving = true);
 
     try {
-      // Update all config values
-      await _updateConfigValue('min_android_version', _minVersionController.text);
-      await _updateConfigValue('force_update_enabled', _forceUpdateEnabled.toString());
-      await _updateConfigValue('update_message_title', _updateTitleController.text);
-      await _updateConfigValue('update_message_body', _updateMessageController.text);
+      await _updateConfigValue(
+        'min_android_version',
+        _minVersionController.text,
+      );
+      await _updateConfigValue(
+        'force_update_enabled',
+        _forceUpdateEnabled.toString(),
+      );
+      await _updateConfigValue(
+        'update_message_title',
+        _updateTitleController.text,
+      );
+      await _updateConfigValue(
+        'update_message_body',
+        _updateMessageController.text,
+      );
       await _updateConfigValue('playstore_url', _playStoreUrlController.text);
 
-      setState(() => _isSaving = false);
-      
       if (mounted) {
         ToastService.success(context, '✅ Config saved successfully!');
-        
-        // Refresh remote config
         await RemoteConfigService().refresh();
       }
-    } catch (e) {
-      setState(() => _isSaving = false);
+    } catch (error) {
       if (mounted) {
-        ToastService.error(context, 'Failed to save: $e');
+        ToastService.error(context, 'Failed to save: $error');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
       }
     }
   }
@@ -112,224 +125,371 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
   Future<void> _updateConfigValue(String key, String value) async {
     await _supabase
         .from('app_config')
-        .update({'config_value': value, 'updated_at': DateTime.now().toIso8601String()})
+        .update({
+          'config_value': value,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
         .eq('config_key', key);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBg,
+      backgroundColor: _bg,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkCard,
-        title: const Text('Admin: Remote Config'),
-        actions: _isLoading
-            ? null
-            : [
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: _loadCurrentConfig,
-                  tooltip: 'Refresh',
-                ),
-              ],
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'Remote Config Admin',
+          style: GoogleFonts.inter(
+            color: _textPrimary,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
+        actions: [
+          if (!_isLoading)
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: _textSecondary),
+              onPressed: _loadCurrentConfig,
+              tooltip: 'Refresh',
+            ),
+        ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Warning Banner
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.orange.withOpacity(0.3)),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeroCard(),
+                    const SizedBox(height: 14),
+                    _buildWarningBanner(),
+                    const SizedBox(height: 14),
+                    _buildSectionCard(
+                      title: 'Force Update Control',
+                      subtitle: 'Enable or disable mandatory app updates.',
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7FAFF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFDCE5F6)),
+                        ),
+                        child: SwitchListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 2,
+                          ),
+                          title: Text(
+                            'Enable Force Update',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w700,
+                              color: _textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                          subtitle: Text(
+                            _forceUpdateEnabled
+                                ? 'Blocking old versions from running'
+                                : 'All versions allowed',
+                            style: GoogleFonts.inter(
+                              color: _forceUpdateEnabled ? _danger : _success,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          value: _forceUpdateEnabled,
+                          activeColor: _danger,
+                          onChanged: (value) {
+                            setState(() => _forceUpdateEnabled = value);
+                          },
+                        ),
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.warning_amber_rounded, color: Colors.orange[300]),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Changes take effect immediately for all users on next app launch.',
-                            style: TextStyle(color: Colors.orange[200]),
+                    const SizedBox(height: 14),
+                    _buildSectionCard(
+                      title: 'Version Requirement',
+                      subtitle: 'Set minimum supported Android app version.',
+                      child: _buildTextField(
+                        controller: _minVersionController,
+                        label: 'Minimum Android Version',
+                        hint: 'e.g., 2.0.0',
+                        icon: Icons.phone_android_rounded,
+                        helperText: 'Users below this version will be blocked.',
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _buildSectionCard(
+                      title: 'Update Prompt Message',
+                      subtitle:
+                          'Customize the title and body shown to blocked users.',
+                      child: Column(
+                        children: [
+                          _buildTextField(
+                            controller: _updateTitleController,
+                            label: 'Dialog Title',
+                            hint: 'Update Required',
+                            icon: Icons.title_rounded,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildTextField(
+                            controller: _updateMessageController,
+                            label: 'Dialog Message',
+                            hint: 'Please update to the latest version...',
+                            icon: Icons.message_rounded,
+                            maxLines: 3,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _buildSectionCard(
+                      title: 'Store Links',
+                      subtitle: 'Where users are redirected to update the app.',
+                      child: _buildTextField(
+                        controller: _playStoreUrlController,
+                        label: 'Play Store URL',
+                        hint:
+                            'https://play.google.com/store/apps/details?id=...',
+                        icon: Icons.storefront_rounded,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _buildSectionCard(
+                      title: 'Security Settings',
+                      subtitle: 'Manage admin access credentials.',
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: _showChangePinDialog,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7FAFF),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFDCE5F6)),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: _primary.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.lock_reset_rounded,
+                                  color: _primary,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Change Admin PIN',
+                                      style: GoogleFonts.inter(
+                                        color: _textPrimary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Update your 4-digit admin access PIN',
+                                      style: GoogleFonts.inter(
+                                        color: _textSecondary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 14,
+                                color: _textSecondary,
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Force Update Toggle
-                  _buildSectionTitle('Force Update Control'),
-                  Card(
-                    color: AppTheme.darkCard,
-                    child: SwitchListTile(
-                      title: const Text('Enable Force Update'),
-                      subtitle: Text(
-                        _forceUpdateEnabled 
-                            ? 'Blocking old versions from running' 
-                            : 'All versions allowed',
-                        style: TextStyle(
-                          color: _forceUpdateEnabled ? Colors.red[300] : Colors.green[300],
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          textStyle: GoogleFonts.inter(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                        onPressed: _isSaving ? null : _saveConfig,
+                        icon:
+                            _isSaving
+                                ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                                : const Icon(Icons.save_rounded),
+                        label: Text(
+                          _isSaving ? 'Saving...' : 'Save Configuration',
                         ),
                       ),
-                      value: _forceUpdateEnabled,
-                      activeThumbColor: Colors.red,
-                      onChanged: (value) {
-                        setState(() => _forceUpdateEnabled = value);
-                      },
                     ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Minimum Version
-                  _buildSectionTitle('Version Requirement'),
-                  _buildTextField(
-                    controller: _minVersionController,
-                    label: 'Minimum Android Version',
-                    hint: 'e.g., 2.0.0',
-                    icon: Icons.phone_android,
-                    helperText: 'Users below this version will be blocked',
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Update Message
-                  _buildSectionTitle('Update Prompt Message'),
-                  _buildTextField(
-                    controller: _updateTitleController,
-                    label: 'Dialog Title',
-                    hint: 'Update Required',
-                    icon: Icons.title,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTextField(
-                    controller: _updateMessageController,
-                    label: 'Dialog Message',
-                    hint: 'Please update to the latest version...',
-                    icon: Icons.message,
-                    maxLines: 3,
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Play Store URL
-                  _buildSectionTitle('Store Links'),
-                  _buildTextField(
-                    controller: _playStoreUrlController,
-                    label: 'Play Store URL',
-                    hint: 'https://play.google.com/store/apps/details?id=...',
-                    icon: Icons.store,
-                  ),
-                  const SizedBox(height: 24),
-                  const Divider(color: Colors.white10),
-                  const SizedBox(height: 24),
-                  
-                  // Security Settings - PIN Change Button
-                  _buildSectionTitle('Security Settings'),
-                  Card(
-                    color: AppTheme.darkCard,
-                    child: ListTile(
-                      leading: Icon(Icons.lock_outline, color: AppTheme.primaryColor),
-                      title: const Text(
-                        'Change Admin PIN',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        'Update your 4-digit admin access PIN',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                      ),
-                      trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey[600], size: 16),
-                      onTap: _showChangePinDialog,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Save Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: _isSaving ? null : _saveConfig,
-                      child: _isSaving
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text(
-                              'Save Configuration',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Info Card
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.darkCard,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[800]!),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.info_outline, color: Colors.blue[300], size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              'How It Works',
-                              style: TextStyle(
-                                color: Colors.blue[300],
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildInfoPoint('Enable toggle → Old versions get blocked immediately'),
-                        _buildInfoPoint('Set minimum version → e.g., 2.0.0 blocks all v1.x users'),
-                        _buildInfoPoint('Disable toggle → Allow all versions (emergency rollback)'),
-                        _buildInfoPoint('Changes sync instantly → No app update needed'),
-                      ],
-                    ),
-                  ),
-                ],
+                    const SizedBox(height: 14),
+                    _buildInfoCard(),
+                  ],
+                ),
               ),
-            ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
+  Widget _buildHeroCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF3347A8), Color(0xFF4F46E5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withOpacity(0.24),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.tune_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Remote Config Control',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Manage force update policy, app version rules, and message content for all users in real time.',
+            style: GoogleFonts.inter(
+              color: Colors.white.withOpacity(0.92),
+              fontSize: 13,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWarningBanner() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _warning.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _warning.withOpacity(0.28)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: _warning, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Changes apply on next app launch for all users.',
+              style: GoogleFonts.inter(
+                color: _warning,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({
+    required String title,
+    required String subtitle,
+    required Widget child,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDDE6F7)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: _textPrimary,
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: GoogleFonts.inter(color: _textSecondary, fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
       ),
     );
   }
@@ -345,26 +505,72 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      style: const TextStyle(color: Colors.white),
+      style: GoogleFonts.inter(color: _textPrimary),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
         helperText: helperText,
-        prefixIcon: Icon(icon, color: AppTheme.primaryColor),
+        prefixIcon: Icon(icon, color: _primary),
+        labelStyle: GoogleFonts.inter(color: _textSecondary),
+        hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8)),
+        helperStyle: GoogleFonts.inter(color: _textSecondary, fontSize: 11),
         filled: true,
-        fillColor: AppTheme.darkCard,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[700]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[700]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
-        ),
+        fillColor: const Color(0xFFF8FAFF),
+        border: _inputBorder(),
+        enabledBorder: _inputBorder(),
+        focusedBorder: _inputBorder(color: _primary, width: 2),
+      ),
+    );
+  }
+
+  OutlineInputBorder _inputBorder({Color? color, double width = 1}) {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(
+        color: color ?? const Color(0xFFD7E1F5),
+        width: width,
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDDE6F7)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.info_outline_rounded, color: _primary, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'How It Works',
+                style: GoogleFonts.inter(
+                  color: _primaryDark,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _buildInfoPoint(
+            'Enable toggle → old versions get blocked immediately.',
+          ),
+          _buildInfoPoint(
+            'Set minimum version → e.g., 2.0.0 blocks all 1.x users.',
+          ),
+          _buildInfoPoint(
+            'Disable toggle → allow all versions as emergency rollback.',
+          ),
+          _buildInfoPoint('Changes sync instantly, no app update needed.'),
+        ],
       ),
     );
   }
@@ -375,49 +581,18 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('• ', style: TextStyle(color: Colors.grey[400])),
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.circle, size: 6, color: _textSecondary),
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(color: Colors.grey[400], fontSize: 13),
+              style: GoogleFonts.inter(color: _textSecondary, fontSize: 12),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPinField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      obscureText: true,
-      maxLength: 4,
-      style: const TextStyle(color: Colors.white, letterSpacing: 8, fontSize: 18),
-      textAlign: TextAlign.center,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        counterText: '',
-        prefixIcon: const Icon(Icons.pin, color: Colors.orange),
-        filled: true,
-        fillColor: AppTheme.darkSurface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[700]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[700]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.orange, width: 2),
-        ),
       ),
     );
   }
@@ -425,129 +600,114 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
   void _showChangePinDialog() {
     showDialog(
       context: context,
-      builder: (dialogContext) => _ChangePinDialog(
-        supabase: _supabase,
-        onPinChanged: () async {
-          // Use the screen context, not the dialog context
-          if (mounted) {
-            await RemoteConfigService().refresh();
-            ToastService.success(context, '✅ PIN changed successfully!');
-          }
-        },
-      ),
+      builder:
+          (_) => _ChangePinDialog(
+            supabase: _supabase,
+            onPinChanged: () async {
+              if (mounted) {
+                await RemoteConfigService().refresh();
+                ToastService.success(context, '✅ PIN changed successfully!');
+              }
+            },
+          ),
     );
   }
 
   Future<bool> _showConfirmationDialog() async {
     return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
-        title: Row(
-          children: [
-            Icon(Icons.warning_amber, color: Colors.orange[300]),
-            const SizedBox(width: 12),
-            const Text('Confirm Changes'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Are you sure you want to save these changes?',
-              style: TextStyle(color: Colors.grey[300], fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            if (_forceUpdateEnabled) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.withOpacity(0.3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.block, color: Colors.red[300], size: 16),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Force Update: ENABLED',
-                          style: TextStyle(
-                            color: Colors.red[300],
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '⚠️ Users below v${_minVersionController.text} will be blocked immediately',
-                      style: TextStyle(color: Colors.red[200], fontSize: 12),
-                    ),
-                  ],
-                ),
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              backgroundColor: _surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-            ] else ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.green[300], size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Force Update: DISABLED',
-                      style: TextStyle(
-                        color: Colors.green[300],
-                        fontWeight: FontWeight.bold,
+              title: Row(
+                children: [
+                  Icon(
+                    _forceUpdateEnabled
+                        ? Icons.warning_amber_rounded
+                        : Icons.check_circle_rounded,
+                    color: _forceUpdateEnabled ? _danger : _success,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Confirm Changes',
+                    style: GoogleFonts.inter(
+                      color: _textPrimary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Are you sure you want to save these changes?',
+                    style: GoogleFonts.inter(
+                      color: _textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: (_forceUpdateEnabled ? _danger : _success)
+                          .withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: (_forceUpdateEnabled ? _danger : _success)
+                            .withOpacity(0.3),
                       ),
                     ),
-                  ],
-                ),
+                    child: Text(
+                      _forceUpdateEnabled
+                          ? '⚠️ Force update enabled: users below v${_minVersionController.text} will be blocked.'
+                          : '✅ Force update disabled: all versions are allowed.',
+                      style: GoogleFonts.inter(
+                        color: _forceUpdateEnabled ? _danger : _success,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-            const SizedBox(height: 12),
-            Text(
-              'Changes will apply to all users on their next app launch.',
-              style: TextStyle(color: Colors.grey[500], fontSize: 12),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _forceUpdateEnabled ? Colors.red : AppTheme.primaryColor,
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Confirm & Save'),
-          ),
-        ],
-      ),
-    ) ?? false;
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.inter(color: _textSecondary),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _forceUpdateEnabled ? _danger : _primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Confirm & Save'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 }
 
-// Separate dialog widget for changing PIN
 class _ChangePinDialog extends StatefulWidget {
   final SupabaseClient supabase;
   final Future<void> Function() onPinChanged;
 
-  const _ChangePinDialog({
-    required this.supabase,
-    required this.onPinChanged,
-  });
+  const _ChangePinDialog({required this.supabase, required this.onPinChanged});
 
   @override
   State<_ChangePinDialog> createState() => _ChangePinDialogState();
@@ -568,16 +728,15 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
   }
 
   Future<void> _changePin() async {
-    // Validate inputs
-    if (_currentPinController.text.isEmpty || 
-        _newPinController.text.isEmpty || 
+    if (_currentPinController.text.isEmpty ||
+        _newPinController.text.isEmpty ||
         _confirmPinController.text.isEmpty) {
       ToastService.error(context, 'Please fill all PIN fields');
       return;
     }
 
-    if (_currentPinController.text.length != 4 || 
-        _newPinController.text.length != 4 || 
+    if (_currentPinController.text.length != 4 ||
+        _newPinController.text.length != 4 ||
         _confirmPinController.text.length != 4) {
       ToastService.error(context, 'PIN must be exactly 4 digits');
       return;
@@ -596,40 +755,41 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
     setState(() => _isChanging = true);
 
     try {
-      // Verify current PIN
-      final response = await widget.supabase
-          .from('app_config')
-          .select('config_value')
-          .eq('config_key', 'admin_pin')
-          .single();
+      final response =
+          await widget.supabase
+              .from('app_config')
+              .select('config_value')
+              .eq('config_key', 'admin_pin')
+              .single();
 
       final currentPin = response['config_value'] as String;
 
       if (currentPin != _currentPinController.text) {
-        setState(() => _isChanging = false);
-        ToastService.error(context, '❌ Current PIN is incorrect');
-        _currentPinController.clear();
+        if (mounted) {
+          setState(() => _isChanging = false);
+          ToastService.error(context, '❌ Current PIN is incorrect');
+          _currentPinController.clear();
+        }
         return;
       }
 
-      // Update to new PIN
       await widget.supabase
           .from('app_config')
-          .update({'config_value': _newPinController.text, 'updated_at': DateTime.now().toIso8601String()})
+          .update({
+            'config_value': _newPinController.text,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
           .eq('config_key', 'admin_pin');
 
-      setState(() => _isChanging = false);
-
       if (mounted) {
-        // Close dialog first
+        setState(() => _isChanging = false);
         Navigator.pop(context);
-        // Then trigger callback (which will show toast in parent screen)
         await widget.onPinChanged();
       }
-    } catch (e) {
-      setState(() => _isChanging = false);
+    } catch (error) {
       if (mounted) {
-        ToastService.error(context, 'Failed to change PIN: $e');
+        setState(() => _isChanging = false);
+        ToastService.error(context, 'Failed to change PIN: $error');
       }
     }
   }
@@ -638,11 +798,19 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppTheme.darkCard,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Row(
         children: [
-          Icon(Icons.lock_reset, color: AppTheme.primaryColor),
-          const SizedBox(width: 12),
-          const Text('Change Admin PIN'),
+          const Icon(Icons.lock_reset_rounded, color: Colors.orange),
+          const SizedBox(width: 10),
+          Text(
+            'Change Admin PIN',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
         ],
       ),
       content: SingleChildScrollView(
@@ -650,26 +818,26 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Enter your current PIN and choose a new one',
-              style: TextStyle(color: Colors.grey[400], fontSize: 13),
+              'Enter your current PIN and choose a new one.',
+              style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             _buildPinField(
               controller: _currentPinController,
               label: 'Current PIN',
-              icon: Icons.lock_outline,
+              icon: Icons.lock_outline_rounded,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _buildPinField(
               controller: _newPinController,
               label: 'New PIN',
-              icon: Icons.lock_open,
+              icon: Icons.lock_open_rounded,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _buildPinField(
               controller: _confirmPinController,
               label: 'Confirm New PIN',
-              icon: Icons.check_circle_outline,
+              icon: Icons.check_circle_outline_rounded,
             ),
           ],
         ),
@@ -680,20 +848,19 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange,
-          ),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
           onPressed: _isChanging ? null : _changePin,
-          child: _isChanging
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-              : const Text('Change PIN'),
+          child:
+              _isChanging
+                  ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                  : const Text('Change PIN'),
         ),
       ],
     );
@@ -709,7 +876,11 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
       keyboardType: TextInputType.number,
       obscureText: true,
       maxLength: 4,
-      style: const TextStyle(color: Colors.white, letterSpacing: 8, fontSize: 18),
+      style: const TextStyle(
+        color: Colors.white,
+        letterSpacing: 8,
+        fontSize: 18,
+      ),
       textAlign: TextAlign.center,
       decoration: InputDecoration(
         labelText: label,
@@ -718,9 +889,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
         prefixIcon: Icon(icon, color: Colors.orange),
         filled: true,
         fillColor: AppTheme.darkSurface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.orange, width: 2),

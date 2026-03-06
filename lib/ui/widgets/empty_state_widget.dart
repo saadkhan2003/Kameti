@@ -71,10 +71,9 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.15),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
+    );
   }
 
   @override
@@ -116,7 +115,7 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
                   style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: const Color(0xFF0F172A),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -126,7 +125,7 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 14,
-                    color: Colors.grey[500],
+                    color: const Color(0xFF64748B),
                     height: 1.4,
                   ),
                 ),
@@ -135,12 +134,13 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
                   const SizedBox(height: 28),
                   ElevatedButton.icon(
                     onPressed: widget.onAction,
-                    icon: Icon(widget.actionIcon ?? Icons.add_rounded, size: 20),
+                    icon: Icon(
+                      widget.actionIcon ?? Icons.add_rounded,
+                      size: 20,
+                    ),
                     label: Text(
                       widget.actionLabel!,
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
                     ),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(

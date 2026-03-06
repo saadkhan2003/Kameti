@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../../utils/app_theme.dart';
 
 class LegalInfoScreen extends StatefulWidget {
   const LegalInfoScreen({super.key});
@@ -10,6 +10,14 @@ class LegalInfoScreen extends StatefulWidget {
 }
 
 class _LegalInfoScreenState extends State<LegalInfoScreen> {
+  static const Color _bg = Color(0xFFF7F8FC);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _success = Color(0xFF059669);
+  static const Color _warning = Color(0xFFD97706);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+
   String _version = '';
 
   @override
@@ -28,28 +36,103 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBg,
+      backgroundColor: _bg,
       appBar: AppBar(
-        title: const Text('About & Legal'),
-        backgroundColor: AppTheme.darkCard,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'About & Legal',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w800,
+            color: _textPrimary,
+          ),
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         children: [
-          // App Info Card
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_primary, Color(0xFF5B6FD6)],
+              ),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: _primary.withOpacity(0.24),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                const Icon(Icons.policy_rounded, color: Colors.white, size: 40),
+                const SizedBox(height: 10),
+                Text(
+                  'Trust & Legal Center',
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Everything about your rights, data and app terms',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.9),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildTopStat(
+                  icon: Icons.verified_user_rounded,
+                  label: 'Privacy',
+                  value: 'Protected',
+                  tone: _success,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildTopStat(
+                  icon: Icons.rule_folder_outlined,
+                  label: 'Terms',
+                  value: 'Transparent',
+                  tone: _warning,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
           _buildCard(
             icon: Icons.info_outline,
             title: 'App Information',
             children: [
               _buildInfoRow('App Name', 'Kameti - Committee Manager'),
-              _buildInfoRow('Version', _version.isEmpty ? 'Loading...' : _version),
+              _buildInfoRow(
+                'Version',
+                _version.isEmpty ? 'Loading...' : _version,
+              ),
               _buildInfoRow('Category', 'Finance'),
               _buildInfoRow('Developer', 'Saad Khan'),
             ],
           ),
           const SizedBox(height: 16),
 
-          // Legal Section
           _buildCard(
             icon: Icons.gavel,
             title: 'Legal',
@@ -57,23 +140,33 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
               _buildLinkTile(
                 icon: Icons.privacy_tip_outlined,
                 title: 'Privacy Policy',
-                onTap: () => _showLegalPage(context, 'Privacy Policy', _privacyPolicy),
+                onTap:
+                    () => _showLegalPage(
+                      context,
+                      'Privacy Policy',
+                      _privacyPolicy,
+                    ),
               ),
               _buildLinkTile(
                 icon: Icons.article_outlined,
                 title: 'Terms of Service',
-                onTap: () => _showLegalPage(context, 'Terms of Service', _termsOfService),
+                onTap:
+                    () => _showLegalPage(
+                      context,
+                      'Terms of Service',
+                      _termsOfService,
+                    ),
               ),
               _buildLinkTile(
                 icon: Icons.security_outlined,
                 title: 'Data Safety',
-                onTap: () => _showLegalPage(context, 'Data Safety', _dataSafety),
+                onTap:
+                    () => _showLegalPage(context, 'Data Safety', _dataSafety),
               ),
             ],
           ),
           const SizedBox(height: 16),
 
-          // Credits
           _buildCard(
             icon: Icons.favorite_outline,
             title: 'Credits',
@@ -85,11 +178,63 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
           ),
           const SizedBox(height: 24),
 
-          // Copyright
           Center(
             child: Text(
               '© 2024 Committee App. All rights reserved.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              style: GoogleFonts.inter(color: _textSecondary, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopStat({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color tone,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDCE4F7)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: tone.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(icon, size: 16, color: tone),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: _textPrimary,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: _textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -104,9 +249,9 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.darkCard,
+        color: _surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(13)),
+        border: Border.all(color: const Color(0xFFDCE4F7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,20 +260,28 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(icon, color: AppTheme.primaryColor, size: 24),
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: _primary.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(icon, color: _primary, size: 17),
+                ),
                 const SizedBox(width: 12),
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  style: GoogleFonts.inter(
+                    color: _textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, color: Colors.white10),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
           ...children,
         ],
       ),
@@ -141,8 +294,14 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Colors.grey[400])),
-          Text(value, style: const TextStyle(color: Colors.white)),
+          Text(label, style: GoogleFonts.inter(color: _textSecondary)),
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              color: _textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -155,16 +314,23 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
   }) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            Icon(icon, color: Colors.grey[400], size: 20),
+            Icon(icon, color: _textSecondary, size: 20),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(title, style: const TextStyle(color: Colors.white)),
+              child: Text(
+                title,
+                style: GoogleFonts.inter(
+                  color: _textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey[600]),
+            const Icon(Icons.chevron_right_rounded, color: _textSecondary),
           ],
         ),
       ),
@@ -175,20 +341,40 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          backgroundColor: AppTheme.darkBg,
-          appBar: AppBar(
-            title: Text(title),
-            backgroundColor: AppTheme.darkCard,
-          ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Text(
-              content,
-              style: TextStyle(color: Colors.grey[300], height: 1.6),
+        builder:
+            (context) => Scaffold(
+              backgroundColor: _bg,
+              appBar: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                title: Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    color: _textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              body: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFDCE4F7)),
+                  ),
+                  child: Text(
+                    content,
+                    style: GoogleFonts.inter(
+                      color: _textSecondary,
+                      height: 1.65,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
       ),
     );
   }

@@ -1,161 +1,469 @@
 import 'package:flutter/material.dart';
-import 'package:introduction_screen/introduction_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../utils/app_theme.dart';
+
 import '../services/database_service.dart';
 import 'home_screen.dart';
 
-class OnboardingScreen extends StatelessWidget {
+class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return IntroductionScreen(
-      globalBackgroundColor: AppTheme.darkBg,
-      pages: [
-        _buildPage(
-          title: 'Welcome to Kameti',
-          body: 'Manage your committee payments with ease. Track collections, payouts, and member contributions all in one place.',
-          icon: Icons.group_rounded,
-          color: AppTheme.primaryColor,
-        ),
-        _buildPage(
-          title: 'Create Kametis',
-          body: 'Set up daily, weekly, or monthly committees. Invite members with a simple code and start tracking.',
-          icon: Icons.add_circle_outline_rounded,
-          color: AppTheme.secondaryColor,
-        ),
-        _buildPage(
-          title: 'Track Payments',
-          body: 'Mark payments with a single tap. See who paid, who owes, and export reports as PDF or CSV.',
-          icon: Icons.payments_rounded,
-          color: Colors.blue,
-        ),
-        _buildPage(
-          title: 'Get Payout Updates',
-          body: 'Know exactly when each member receives their payout. Everything is organized and transparent.',
-          icon: Icons.celebration_rounded,
-          color: Colors.orange,
-        ),
-      ],
-      showSkipButton: true,
-      skip: Text(
-        'Skip',
-        style: GoogleFonts.inter(color: Colors.grey[400]),
-      ),
-      next: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withAlpha(30),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Icon(
-          Icons.arrow_forward_rounded,
-          color: AppTheme.primaryColor,
-        ),
-      ),
-      done: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppTheme.primaryColor, AppTheme.primaryDark],
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          'Get Started',
-          style: GoogleFonts.inter(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      onDone: () => _completeOnboarding(context),
-      onSkip: () => _completeOnboarding(context),
-      dotsDecorator: DotsDecorator(
-        size: const Size(10, 10),
-        activeSize: const Size(22, 10),
-        activeColor: AppTheme.primaryColor,
-        color: Colors.grey[700]!,
-        activeShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(5),
-        ),
-      ),
-      curve: Curves.easeInOut,
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  static const Color _bg = Color(0xFFF4F7FF);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _primaryDark = Color(0xFF25348A);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+
+  final PageController _pageController = PageController();
+  int _currentIndex = 0;
+
+  final List<_OnboardingStep> _steps = const [
+    _OnboardingStep(
+      title: 'Welcome to Kameti',
+      description:
+          'Run your committee smoothly with one place for members, collections, and payout tracking.',
+      icon: Icons.groups_rounded,
+      accent: Color(0xFF3347A8),
+      label: 'Overview',
+      points: ['Structured committee flow', 'Smart status visibility'],
+    ),
+    _OnboardingStep(
+      title: 'Create in Minutes',
+      description:
+          'Set amount, cycle, and member count, then share the join code with your group instantly.',
+      icon: Icons.add_task_rounded,
+      accent: Color(0xFF2563EB),
+      label: 'Setup',
+      points: ['Fast configuration', 'Instant join-code sharing'],
+    ),
+    _OnboardingStep(
+      title: 'Track Every Payment',
+      description:
+          'Mark paid and pending contributions quickly, and always know each cycle status clearly.',
+      icon: Icons.payments_rounded,
+      accent: Color(0xFF059669),
+      label: 'Payments',
+      points: ['Daily/weekly/monthly support', 'Member-level transparency'],
+    ),
+    _OnboardingStep(
+      title: 'Clear Payout Visibility',
+      description:
+          'Keep payout order transparent for everyone, with updates your members can trust.',
+      icon: Icons.emoji_events_rounded,
+      accent: Color(0xFFF59E0B),
+      label: 'Payouts',
+      points: ['Predictable payout timeline', 'Trust through clarity'],
+    ),
+  ];
+
+  bool get _isLastPage => _currentIndex == _steps.length - 1;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _nextPage() async {
+    if (_isLastPage) {
+      _completeOnboarding(context);
+      return;
+    }
+
+    await _pageController.nextPage(
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOut,
     );
   }
 
-  PageViewModel _buildPage({
-    required String title,
-    required String body,
+  Future<void> _previousPage() async {
+    if (_currentIndex == 0) return;
+
+    await _pageController.previousPage(
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOut,
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE9EEFC),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFD8E2F8)),
+          ),
+          child: Text(
+            '${_currentIndex + 1}/${_steps.length}',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: _primary,
+            ),
+          ),
+        ),
+        const Spacer(),
+        TextButton(
+          onPressed: () => _completeOnboarding(context),
+          child: Text(
+            'Skip',
+            style: GoogleFonts.inter(
+              color: _textSecondary,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgressBar() {
+    return Row(
+      children: List.generate(_steps.length, (index) {
+        final bool active = index == _currentIndex;
+        final bool passed = index < _currentIndex;
+        final Color tone = _steps[_currentIndex].accent;
+
+        return Expanded(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            margin: EdgeInsets.only(right: index == _steps.length - 1 ? 0 : 8),
+            height: 6,
+            decoration: BoxDecoration(
+              color: active || passed ? tone : const Color(0xFFD7DEEE),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildHero() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF3347A8), Color(0xFF4F46E5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withOpacity(0.24),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.16),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.auto_awesome_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome to Kameti',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Set up, track, and manage committee cycles with confidence.',
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepCard(_OnboardingStep step) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFDDE6F7)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: step.accent.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                step.label,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: step.accent,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: 82,
+              height: 82,
+              decoration: BoxDecoration(
+                color: step.accent.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(step.icon, size: 38, color: step.accent),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              step.title,
+              style: GoogleFonts.inter(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: _textPrimary,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              step.description,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: _textSecondary,
+                height: 1.45,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 14),
+            ...step.points.map(
+              (point) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      size: 14,
+                      color: step.accent,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        point,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFF475569),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                _buildMiniPoint(
+                  icon: Icons.security_rounded,
+                  text: 'Secure',
+                  color: step.accent,
+                ),
+                const SizedBox(width: 10),
+                _buildMiniPoint(
+                  icon: Icons.sync_rounded,
+                  text: 'Synced',
+                  color: step.accent,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniPoint({
     required IconData icon,
+    required String text,
     required Color color,
   }) {
-    return PageViewModel(
-      titleWidget: Padding(
-        padding: const EdgeInsets.only(top: 40),
-        child: Text(
-          title,
-          style: GoogleFonts.inter(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-          textAlign: TextAlign.center,
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
         ),
-      ),
-      bodyWidget: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Text(
-          body,
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            color: Colors.grey[400],
-            height: 1.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
-      image: Center(
-        child: Container(
-          width: 200,
-          height: 200,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                color.withAlpha(40),
-                color.withAlpha(20),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 6),
+            Text(
+              text,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
             ),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: color.withAlpha(50),
-              width: 2,
-            ),
-          ),
-          child: Icon(
-            icon,
-            size: 80,
-            color: color,
-          ),
+          ],
         ),
       ),
-      decoration: PageDecoration(
-        pageColor: AppTheme.darkBg,
-        imagePadding: const EdgeInsets.only(top: 80),
+    );
+  }
+
+  Widget _buildBottomActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _currentIndex == 0 ? null : _previousPage,
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFFC9D4EE)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+            child: Text(
+              'Back',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF475569),
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          flex: 2,
+          child: ElevatedButton(
+            onPressed: _nextPage,
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: _isLastPage ? _primaryDark : _primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+            child: Text(
+              _isLastPage ? 'Get Started' : 'Continue',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _bg,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+          child: Column(
+            children: [
+              _buildTopBar(),
+              const SizedBox(height: 8),
+              _buildProgressBar(),
+              const SizedBox(height: 12),
+              _buildHero(),
+              const SizedBox(height: 12),
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: _steps.length,
+                  onPageChanged: (index) {
+                    setState(() => _currentIndex = index);
+                  },
+                  itemBuilder: (context, index) {
+                    return _buildStepCard(_steps[index]);
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildBottomActions(),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   void _completeOnboarding(BuildContext context) {
-    // Save that onboarding is complete
     DatabaseService().setFirstLaunchComplete();
-    
-    // Navigate to home screen
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
   }
+}
+
+class _OnboardingStep {
+  final String title;
+  final String description;
+  final IconData icon;
+  final Color accent;
+  final String label;
+  final List<String> points;
+
+  const _OnboardingStep({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.accent,
+    required this.label,
+    required this.points,
+  });
 }

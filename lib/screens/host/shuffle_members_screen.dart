@@ -7,7 +7,6 @@ import '../../services/auto_sync_service.dart';
 import '../../services/toast_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
-import '../../utils/app_theme.dart';
 
 class ShuffleMembersScreen extends StatefulWidget {
   final Committee committee;
@@ -20,6 +19,14 @@ class ShuffleMembersScreen extends StatefulWidget {
 
 class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
     with SingleTickerProviderStateMixin {
+  static const Color _bg = Color(0xFFF7F8FC);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _success = Color(0xFF059669);
+  static const Color _warning = Color(0xFFD97706);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+
   final _dbService = DatabaseService();
   final _syncService = SyncService();
   final _autoSyncService = AutoSyncService();
@@ -49,13 +56,13 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
   Future<void> _syncAndLoad() async {
     if (_isSyncing) return;
     setState(() => _isSyncing = true);
-    
+
     try {
       await _syncService.syncMembers(widget.committee.id);
     } catch (e) {
       debugPrint('Sync error: $e');
     }
-    
+
     _loadMembers();
     if (mounted) {
       setState(() => _isSyncing = false);
@@ -134,39 +141,63 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
 
     final result = await showDialog<int>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Set Order for ${member.name}',
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          decoration: InputDecoration(
-            labelText: 'Payout Order',
-            hintText: 'e.g., 1',
-            helperText: 'Enter 1 to ${_members.length}',
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: _surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              'Set Order for ${member.name}',
+              style: GoogleFonts.inter(
+                color: _textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            content: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Payout Order',
+                hintText: 'e.g., 1',
+                helperText: 'Enter 1 to ${_members.length}',
+                filled: true,
+                fillColor: const Color(0xFFF8FAFF),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFD0D9EE)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: _primary, width: 1.6),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: _textSecondary),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final value = int.tryParse(controller.text);
+                  if (value != null && value >= 1 && value <= _members.length) {
+                    Navigator.pop(context, value);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                ),
+                child: const Text('Save'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final value = int.tryParse(controller.text);
-              if (value != null && value >= 1 && value <= _members.length) {
-                Navigator.pop(context, value);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
     );
 
     if (result != null) {
@@ -206,30 +237,45 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
     final receivedCount = _members.where((m) => m.hasReceivedPayout).length;
 
     return Scaffold(
+      backgroundColor: _bg,
       appBar: AppBar(
-        title: const Text('Payout Order'),
+        backgroundColor: _bg,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        foregroundColor: _textPrimary,
+        iconTheme: const IconThemeData(color: _textPrimary),
+        elevation: 0,
+        title: Text(
+          'Payout Order',
+          style: GoogleFonts.inter(
+            color: _textPrimary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         centerTitle: true,
         leadingWidth: _isReordering ? 80 : null,
-        leading: _isReordering
-            ? GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isReordering = false;
-                    _loadMembers();
-                  });
-                },
-                child: Container(
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 14,
+        leading:
+            _isReordering
+                ? GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isReordering = false;
+                      _loadMembers();
+                    });
+                  },
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: _textSecondary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-              )
-            : null,
+                )
+                : null,
         actions: [
           if (hasShuffle)
             Container(
@@ -243,201 +289,219 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                 icon: Icon(
                   _isReordering ? Icons.check : Icons.edit,
                   size: 18,
-                  color: _isReordering ? AppTheme.secondaryColor : Colors.grey[400],
+                  color: _isReordering ? _success : _textSecondary,
                 ),
                 label: Text(
                   _isReordering ? 'Done' : 'Edit',
                   style: TextStyle(
-                    color: _isReordering ? AppTheme.secondaryColor : Colors.grey[400],
+                    color: _isReordering ? _success : _textSecondary,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ),
         ],
       ),
-      body: _members.isEmpty
-          ? _buildEmptyState()
-          : CustomScrollView(
-              slivers: [
-                // Header Section
-                SliverToBoxAdapter(
-                  child: Container(
-                    margin: const EdgeInsets.all(16),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppTheme.primaryColor.withAlpha(40),
-                          AppTheme.secondaryColor.withAlpha(20),
-                        ],
+      body:
+          _members.isEmpty
+              ? _buildEmptyState()
+              : CustomScrollView(
+                slivers: [
+                  // Header Section
+                  SliverToBoxAdapter(
+                    child: Container(
+                      margin: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: _surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFFDCE4F7),
+                          width: 1,
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppTheme.primaryColor.withAlpha(50),
-                        width: 1,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        // Stats Row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildStatColumn(
-                              '${_members.length}',
-                              'Members',
-                              Icons.people_outline,
+                      child: Column(
+                        children: [
+                          // Stats Row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildStatColumn(
+                                '${_members.length}',
+                                'Members',
+                                Icons.people_outline,
+                                _primary,
+                              ),
+                              Container(
+                                height: 40,
+                                width: 1,
+                                color: const Color(0xFFE2E8F0),
+                              ),
+                              _buildStatColumn(
+                                '$receivedCount',
+                                'Received',
+                                Icons.check_circle_outline,
+                                _success,
+                              ),
+                              Container(
+                                height: 40,
+                                width: 1,
+                                color: const Color(0xFFE2E8F0),
+                              ),
+                              _buildStatColumn(
+                                '${_members.length - receivedCount}',
+                                'Pending',
+                                Icons.pending_outlined,
+                                _warning,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          // Shuffle Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _isShuffling ? null : _shuffleMembers,
+                              icon:
+                                  _isShuffling
+                                      ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                      : const Icon(
+                                        Icons.shuffle_rounded,
+                                        size: 20,
+                                      ),
+                              label: Text(
+                                _isShuffling
+                                    ? 'Shuffling...'
+                                    : hasShuffle
+                                    ? 'Reshuffle Order'
+                                    : 'Shuffle Members',
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
                             ),
+                          ),
+                          if (_isReordering) ...[
+                            const SizedBox(height: 12),
                             Container(
-                              height: 40,
-                              width: 1,
-                              color: Colors.grey[700],
-                            ),
-                            _buildStatColumn(
-                              '$receivedCount',
-                              'Received',
-                              Icons.check_circle_outline,
-                            ),
-                            Container(
-                              height: 40,
-                              width: 1,
-                              color: Colors.grey[700],
-                            ),
-                            _buildStatColumn(
-                              '${_members.length - receivedCount}',
-                              'Pending',
-                              Icons.pending_outlined,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE9EEFC),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 16,
+                                    color: _primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Drag to reorder or tap # to edit',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      color: _primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 20),
-                        // Shuffle Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _isShuffling ? null : _shuffleMembers,
-                            icon: _isShuffling
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Icon(Icons.shuffle_rounded, size: 20),
-                            label: Text(
-                              _isShuffling
-                                  ? 'Shuffling...'
-                                  : hasShuffle
-                                      ? 'Reshuffle Order'
-                                      : 'Shuffle Members',
-                              style: GoogleFonts.inter(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 0,
-                            ),
-                          ),
-                        ),
-                        if (_isReordering) ...[
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withAlpha(30),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  size: 16,
-                                  color: Colors.blue[300],
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Drag to reorder or tap # to edit',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.blue[300],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
 
-                // Members List
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: _isReordering
-                      ? SliverReorderableList(
-                          itemCount: _members.length,
-                          onReorder: _onReorder,
-                          itemBuilder: (context, index) {
-                            final member = _members[index];
-                            return _buildMemberTile(
-                              member,
-                              index,
-                              key: ValueKey(member.id),
-                            );
-                          },
-                        )
-                      : SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final member = _members[index];
-                              return _buildMemberTile(member, index);
-                            },
-                            childCount: _members.length,
-                          ),
-                        ),
-                ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 20),
-                ),
-              ],
-            ),
+                  // Members List
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver:
+                        _isReordering
+                            ? SliverReorderableList(
+                              itemCount: _members.length,
+                              onReorder: _onReorder,
+                              itemBuilder: (context, index) {
+                                final member = _members[index];
+                                return _buildMemberTile(
+                                  member,
+                                  index,
+                                  key: ValueKey(member.id),
+                                );
+                              },
+                            )
+                            : SliverList(
+                              delegate: SliverChildBuilderDelegate((
+                                context,
+                                index,
+                              ) {
+                                final member = _members[index];
+                                return _buildMemberTile(member, index);
+                              }, childCount: _members.length),
+                            ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                ],
+              ),
     );
   }
 
-  Widget _buildStatColumn(String value, String label, IconData icon) {
+  Widget _buildStatColumn(
+    String value,
+    String label,
+    IconData icon,
+    Color tone,
+  ) {
     return Column(
       children: [
-        Icon(icon, color: AppTheme.primaryColor, size: 22),
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: tone.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: tone, size: 18),
+        ),
         const SizedBox(height: 6),
         Text(
           value,
           style: GoogleFonts.inter(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: _textPrimary,
           ),
         ),
         Text(
           label,
-          style: TextStyle(
+          style: GoogleFonts.inter(
             fontSize: 11,
-            color: Colors.grey[500],
+            color: _textSecondary,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -452,14 +516,10 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.grey[800]?.withAlpha(50),
+              color: const Color(0xFFE9EEFC),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.people_outline,
-              size: 60,
-              color: Colors.grey[600],
-            ),
+            child: const Icon(Icons.people_outline, size: 60, color: _primary),
           ),
           const SizedBox(height: 20),
           Text(
@@ -467,16 +527,13 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Colors.grey[400],
+              color: _textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Add members to assign payout order',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[600],
-            ),
+            style: GoogleFonts.inter(fontSize: 13, color: _textSecondary),
           ),
         ],
       ),
@@ -492,14 +549,11 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
       key: key,
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: hasReceived
-            ? AppTheme.secondaryColor.withAlpha(15)
-            : AppTheme.darkCard,
+        color: hasReceived ? _success.withOpacity(0.08) : _surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: hasReceived
-              ? AppTheme.secondaryColor.withAlpha(40)
-              : Colors.transparent,
+          color:
+              hasReceived ? _success.withOpacity(0.3) : const Color(0xFFDCE4F7),
           width: 1,
         ),
       ),
@@ -514,48 +568,47 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  gradient: hasOrder
-                      ? LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: hasReceived
-                              ? [
-                                  AppTheme.secondaryColor,
-                                  AppTheme.secondaryColor.withAlpha(200),
-                                ]
-                              : [
-                                  AppTheme.primaryColor,
-                                  AppTheme.primaryColor.withAlpha(200),
-                                ],
-                        )
-                      : null,
-                  color: hasOrder ? null : Colors.grey[700],
+                  gradient:
+                      hasOrder
+                          ? LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors:
+                                hasReceived
+                                    ? [_success, _success.withOpacity(0.8)]
+                                    : [_primary, _primary.withOpacity(0.8)],
+                          )
+                          : null,
+                  color: hasOrder ? null : const Color(0xFF94A3B8),
                   borderRadius: BorderRadius.circular(10),
-                  boxShadow: hasOrder
-                      ? [
-                          BoxShadow(
-                            color: (hasReceived
-                                    ? AppTheme.secondaryColor
-                                    : AppTheme.primaryColor)
-                                .withAlpha(60),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
+                  boxShadow:
+                      hasOrder
+                          ? [
+                            BoxShadow(
+                              color: (hasReceived ? _success : _primary)
+                                  .withOpacity(0.24),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                          : null,
                 ),
                 child: Center(
-                  child: hasOrder
-                      ? Text(
-                          '$order',
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                  child:
+                      hasOrder
+                          ? Text(
+                            '$order',
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          )
+                          : const Icon(
+                            Icons.help_outline,
+                            color: Colors.white54,
+                            size: 20,
                           ),
-                        )
-                      : const Icon(Icons.help_outline,
-                          color: Colors.white54, size: 20),
                 ),
               ),
             ),
@@ -570,8 +623,9 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: hasReceived ? Colors.grey[400] : Colors.white,
-                      decoration: hasReceived ? TextDecoration.lineThrough : null,
+                      color: hasReceived ? _textSecondary : _textPrimary,
+                      decoration:
+                          hasReceived ? TextDecoration.lineThrough : null,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -581,17 +635,14 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                       if (hasReceived)
                         Row(
                           children: [
-                            Icon(
-                              Icons.check_circle,
-                              size: 12,
-                              color: AppTheme.secondaryColor,
-                            ),
+                            Icon(Icons.check_circle, size: 12, color: _success),
                             const SizedBox(width: 4),
                             Text(
                               'Received',
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 fontSize: 11,
-                                color: AppTheme.secondaryColor,
+                                color: _success,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -599,9 +650,10 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                       else if (hasOrder)
                         Text(
                           'Queue #$order',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontSize: 11,
-                            color: Colors.grey[600],
+                            color: _textSecondary,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                     ],
@@ -613,35 +665,35 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
             if (hasOrder)
               hasReceived
                   ? IconButton(
-                      icon: Icon(
-                        Icons.undo_rounded,
-                        color: Colors.grey[500],
-                        size: 20,
-                      ),
-                      tooltip: 'Revert Payout',
-                      onPressed: () => _revertPayout(member),
-                    )
+                    icon: Icon(
+                      Icons.undo_rounded,
+                      color: _textSecondary,
+                      size: 20,
+                    ),
+                    tooltip: 'Revert Payout',
+                    onPressed: () => _revertPayout(member),
+                  )
                   : TextButton(
-                      onPressed: () => _markPayout(member),
-                      style: TextButton.styleFrom(
-                        backgroundColor: AppTheme.secondaryColor.withAlpha(30),
-                        foregroundColor: AppTheme.secondaryColor,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                    onPressed: () => _markPayout(member),
+                    style: TextButton.styleFrom(
+                      backgroundColor: _success.withOpacity(0.12),
+                      foregroundColor: _success,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
                       ),
-                      child: const Text(
-                        'Mark Paid',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
+                    child: const Text(
+                      'Mark Paid',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
             // Drag Handle
             if (_isReordering) ...[
               const SizedBox(width: 4),
@@ -651,7 +703,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                   padding: const EdgeInsets.all(4),
                   child: Icon(
                     Icons.drag_indicator,
-                    color: Colors.grey[600],
+                    color: _textSecondary,
                     size: 20,
                   ),
                 ),

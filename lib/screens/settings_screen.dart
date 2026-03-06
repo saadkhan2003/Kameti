@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../services/biometric_service.dart';
-import '../../services/localization_service.dart';
-import '../../services/toast_service.dart';
-import '../../services/currency_service.dart';
-import '../../services/haptic_service.dart';
-import '../../utils/app_theme.dart';
+
+import '../services/biometric_service.dart';
+import '../services/localization_service.dart';
+import '../services/toast_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,23 +13,30 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  static const Color _bg = Color(0xFFF4F7FF);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _primaryDark = Color(0xFF25348A);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _success = Color(0xFF059669);
+  static const Color _muted = Color(0xFFF1F5F9);
+
   bool _biometricEnabled = false;
   bool _biometricAvailable = false;
   String _biometricType = 'Biometric';
-  String _defaultCurrency = CurrencyService.defaultCurrency;
 
   @override
   void initState() {
     super.initState();
     _loadBiometricSettings();
-    _loadCurrencySettings();
   }
 
   Future<void> _loadBiometricSettings() async {
     final isAvailable = await BiometricService.canCheckBiometrics();
     final isEnabled = await BiometricService.isBiometricLockEnabled();
     final types = await BiometricService.getAvailableBiometrics();
-    
+
     if (mounted) {
       setState(() {
         _biometricAvailable = isAvailable;
@@ -41,267 +46,304 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _loadCurrencySettings() async {
-    await CurrencyService().initialize();
-    if (mounted) {
-      setState(() {
-        _defaultCurrency = CurrencyService().appDefaultCurrency;
-      });
+  Future<void> _onBiometricToggle(bool value) async {
+    if (!_biometricAvailable) return;
+
+    if (value) {
+      final success = await BiometricService.authenticate(
+        reason: 'Confirm $_biometricType to enable lock',
+      );
+      if (!success) {
+        if (mounted) {
+          ToastService.warning(context, 'Authentication failed');
+        }
+        return;
+      }
     }
+
+    await BiometricService.setBiometricLockEnabled(value);
+    if (!mounted) return;
+
+    setState(() => _biometricEnabled = value);
+    ToastService.success(
+      context,
+      value ? '$_biometricType lock enabled' : '$_biometricType lock disabled',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final currencyInfo = CurrencyService.getCurrencyInfo(_defaultCurrency);
-    
+    final bool faceMode = _biometricType == 'Face ID';
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('app_settings'.tr),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Security Section
-            Text(
-              'security_settings'.tr,
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Biometric Lock Toggle
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.darkCard,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      _biometricType == 'Face ID' 
-                          ? Icons.face_rounded 
-                          : Icons.fingerprint_rounded,
-                      color: AppTheme.primaryColor,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'biometric_lock'.tr,
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _biometricAvailable 
-                              ? 'Require $_biometricType to unlock app'
-                              : 'Not available on this device',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Switch(
-                    value: _biometricEnabled,
-                    onChanged: _biometricAvailable 
-                        ? (value) async {
-                            if (value) {
-                              final success = await BiometricService.authenticate(
-                                reason: 'Confirm $_biometricType to enable lock',
-                              );
-                              if (!success) {
-                                if (mounted) {
-                                  ToastService.warning(context, 'Authentication failed');
-                                }
-                                return;
-                              }
-                            }
-                            await BiometricService.setBiometricLockEnabled(value);
-                            setState(() => _biometricEnabled = value);
-                            HapticService.selectionTick();
-                            if (mounted) {
-                              ToastService.success(
-                                context, 
-                                value ? '$_biometricType lock enabled' : '$_biometricType lock disabled',
-                              );
-                            }
-                          }
-                        : null,
-                    activeThumbColor: AppTheme.primaryColor,
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Currency Section
-            Text(
-              'Default Currency',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Set the default currency for new committees',
-              style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-            ),
-            const SizedBox(height: 16),
-
-            InkWell(
-              onTap: () => _showCurrencyPicker(),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.darkCard,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        currencyInfo.flag,
-                        style: const TextStyle(fontSize: 22),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${currencyInfo.code} — ${currencyInfo.name}',
-                            style: GoogleFonts.inter(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Symbol: ${currencyInfo.symbol}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-                  ],
-                ),
-              ),
-            ),
-          ],
+      backgroundColor: _bg,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTopBar(context),
+              const SizedBox(height: 14),
+              _buildHero(faceMode),
+              const SizedBox(height: 14),
+              _buildSectionLabel('security_settings'.tr),
+              const SizedBox(height: 10),
+              _buildBiometricCard(faceMode),
+              const SizedBox(height: 12),
+              _buildInfoCard(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  void _showCurrencyPicker() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.darkCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  Widget _buildTopBar(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: _surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFDDE5F6)),
+          ),
+          child: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 18,
+              color: _textPrimary,
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            'app_settings'.tr,
+            style: GoogleFonts.inter(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: _textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHero(bool faceMode) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF3347A8), Color(0xFF4F46E5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withOpacity(0.24),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.85,
-        minChildSize: 0.4,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Row(
-                children: [
-                  const Icon(Icons.currency_exchange, color: AppTheme.primaryColor),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Select Default Currency',
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+      child: Row(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.16),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              faceMode
+                  ? Icons.face_retouching_natural_rounded
+                  : Icons.fingerprint_rounded,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _biometricAvailable
+                      ? '$_biometricType protection available'
+                      : 'Biometric lock unavailable',
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  _biometricAvailable
+                      ? 'Use your $_biometricType to protect app access and secure sensitive actions.'
+                      : 'Your device currently does not support biometric authentication.',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    height: 1.45,
+                    color: Colors.white.withOpacity(0.92),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String text) {
+    return Text(
+      text,
+      style: GoogleFonts.inter(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: _textSecondary,
+        letterSpacing: 0.3,
+      ),
+    );
+  }
+
+  Widget _buildBiometricCard(bool faceMode) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFD9E3F6)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 2),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE9EEFC),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              faceMode ? Icons.face_rounded : Icons.fingerprint_rounded,
+              size: 20,
+              color: _primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'biometric_lock'.tr,
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: _textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _biometricAvailable
+                      ? 'Require $_biometricType to unlock app'
+                      : 'Not available on this device',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: _textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _biometricEnabled ? const Color(0xFFECFDF3) : _muted,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color:
+                          _biometricEnabled
+                              ? _success.withOpacity(0.25)
+                              : const Color(0xFFD7DFEE),
                     ),
                   ),
-                ],
+                  child: Text(
+                    _biometricEnabled ? 'Enabled' : 'Disabled',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: _biometricEnabled ? _success : _textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: _biometricEnabled,
+            onChanged: _biometricAvailable ? _onBiometricToggle : null,
+            activeColor: _primaryDark,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFF),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDCE4F7)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(
+              Icons.info_outline_rounded,
+              size: 16,
+              color: _textSecondary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Biometric settings are applied immediately on app lock and resume.',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: _textSecondary,
+                fontWeight: FontWeight.w500,
+                height: 1.4,
               ),
             ),
-            const Divider(color: Colors.white10, height: 1),
-            Expanded(
-              child: ListView.builder(
-                controller: scrollController,
-                itemCount: CurrencyService.supportedCurrencies.length,
-                itemBuilder: (context, index) {
-                  final currency = CurrencyService.supportedCurrencies[index];
-                  final isSelected = currency.code == _defaultCurrency;
-                  return ListTile(
-                    leading: Text(currency.flag, style: const TextStyle(fontSize: 24)),
-                    title: Text(
-                      '${currency.code} — ${currency.name}',
-                      style: TextStyle(
-                        color: isSelected ? AppTheme.primaryColor : Colors.white,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Symbol: ${currency.symbol}',
-                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                    ),
-                    trailing: isSelected
-                        ? const Icon(Icons.check_circle, color: AppTheme.primaryColor)
-                        : null,
-                    onTap: () async {
-                      HapticService.selectionTick();
-                      await CurrencyService().setAppDefaultCurrency(currency.code);
-                      setState(() => _defaultCurrency = currency.code);
-                      Navigator.pop(context);
-                      if (mounted) {
-                        ToastService.success(context, 'Default currency set to ${currency.code}');
-                      }
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

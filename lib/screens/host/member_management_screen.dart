@@ -8,7 +8,6 @@ import '../../services/auto_sync_service.dart';
 import '../../services/toast_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
-import '../../utils/app_theme.dart';
 import '../../utils/code_generator.dart';
 import '../../ui/widgets/ads/banner_ad_widget.dart';
 
@@ -22,6 +21,15 @@ class MemberManagementScreen extends StatefulWidget {
 }
 
 class _MemberManagementScreenState extends State<MemberManagementScreen> {
+  static const Color _bg = Color(0xFFF7F8FC);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _success = Color(0xFF059669);
+  static const Color _warning = Color(0xFFD97706);
+  static const Color _danger = Color(0xFFDC2626);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+
   final _dbService = DatabaseService();
   final _autoSyncService = AutoSyncService();
   final _searchController = TextEditingController();
@@ -94,7 +102,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.darkCard,
+      backgroundColor: _surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -115,24 +123,44 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: _textPrimary,
                 ),
               ),
               const SizedBox(height: 20),
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Member Name',
-                  prefixIcon: Icon(Icons.person_outline),
+                  prefixIcon: const Icon(Icons.person_outline),
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFF),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFD0D9EE)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _primary, width: 1.6),
+                  ),
                 ),
                 textCapitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: phoneController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Phone Number',
-                  prefixIcon: Icon(Icons.phone_outlined),
+                  prefixIcon: const Icon(Icons.phone_outlined),
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFF),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFD0D9EE)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: _primary, width: 1.6),
+                  ),
                 ),
                 keyboardType: TextInputType.phone,
               ),
@@ -181,6 +209,12 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                   _loadMembers();
                 },
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: _primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: Text(isEditing ? 'Save Changes' : 'Add Member'),
@@ -197,22 +231,28 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: AppTheme.darkCard,
+            backgroundColor: _surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: const Text(
+            title: Text(
               'Delete Member?',
-              style: TextStyle(color: Colors.white),
+              style: GoogleFonts.inter(
+                color: _textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             content: Text(
               'Are you sure you want to delete ${member.name}? This will also delete all their payment records.',
-              style: TextStyle(color: Colors.grey[400]),
+              style: const TextStyle(color: _textSecondary),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: _textSecondary),
+                ),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -224,7 +264,8 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                   _loadMembers();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.errorColor,
+                  backgroundColor: _danger,
+                  foregroundColor: Colors.white,
                 ),
                 child: const Text('Delete'),
               ),
@@ -240,9 +281,24 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final paidCount = _allMembers.where((m) => m.hasReceivedPayout).length;
+
     return Scaffold(
+      backgroundColor: _bg,
       appBar: AppBar(
-        title: const Text('Members'),
+        backgroundColor: _bg,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        foregroundColor: _textPrimary,
+        iconTheme: const IconThemeData(color: _textPrimary),
+        elevation: 0,
+        title: Text(
+          'Members',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w800,
+            color: _textPrimary,
+          ),
+        ),
         actions: [
           Center(
             child: Padding(
@@ -252,93 +308,175 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor,
+                  color: _primary,
                 ),
               ),
             ),
           ),
         ],
       ),
-      body:
-          _allMembers.isEmpty
-              ? _buildEmptyState()
-              : Column(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFDCE4F7)),
+              ),
+              child: Row(
                 children: [
-                  // Search Bar
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: _onSearchChanged,
-                      decoration: InputDecoration(
-                        hintText: 'Search by name, code, or phone...',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon:
-                            _searchQuery.isNotEmpty
-                                ? IconButton(
-                                  icon: const Icon(Icons.clear),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    _onSearchChanged('');
-                                  },
-                                )
-                                : null,
-                        filled: true,
-                        fillColor: AppTheme.darkCard,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                      ),
-                    ),
+                  _buildSummaryStat(
+                    icon: Icons.people_rounded,
+                    label: 'Total',
+                    value: '${_allMembers.length}',
+                    tone: _primary,
                   ),
-                  // Members List
-                  Expanded(
-                    child:
-                        _filteredMembers.isEmpty
-                            ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.search_off,
-                                    size: 60,
-                                    color: Colors.grey[700],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No members found',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 16,
-                                      color: Colors.grey[500],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                            : ListView.builder(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              itemCount: _filteredMembers.length,
-                              itemBuilder: (context, index) {
-                                final member = _filteredMembers[index];
-                                return _buildMemberCard(member, index);
-                              },
-                            ),
+                  const SizedBox(width: 10),
+                  _buildSummaryStat(
+                    icon: Icons.verified_rounded,
+                    label: 'Paid Out',
+                    value: '$paidCount',
+                    tone: _success,
+                  ),
+                  const SizedBox(width: 10),
+                  _buildSummaryStat(
+                    icon: Icons.schedule_rounded,
+                    label: 'Pending',
+                    value: '${(_allMembers.length - paidCount).clamp(0, 999)}',
+                    tone: _warning,
                   ),
                 ],
               ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              style: GoogleFonts.inter(color: _textPrimary),
+              decoration: InputDecoration(
+                hintText: 'Search by name, code, or phone...',
+                hintStyle: GoogleFonts.inter(color: _textSecondary),
+                prefixIcon: const Icon(Icons.search, color: _textSecondary),
+                suffixIcon:
+                    _searchQuery.isNotEmpty
+                        ? IconButton(
+                          icon: const Icon(Icons.clear, color: _textSecondary),
+                          onPressed: () {
+                            _searchController.clear();
+                            _onSearchChanged('');
+                          },
+                        )
+                        : null,
+                filled: true,
+                fillColor: _surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFDCE4F7)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFDCE4F7)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: _primary, width: 1.6),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child:
+                _allMembers.isEmpty
+                    ? _buildEmptyState()
+                    : _filteredMembers.isEmpty
+                    ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.search_off_rounded,
+                            size: 56,
+                            color: _textSecondary,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No members found',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              color: _textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _filteredMembers.length,
+                      itemBuilder: (context, index) {
+                        final member = _filteredMembers[index];
+                        return _buildMemberCard(member, index);
+                      },
+                    ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddMemberDialog(),
-        icon: const Icon(Icons.person_add),
+        backgroundColor: _primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.person_add_alt_1_rounded),
         label: const Text('Add Member'),
       ),
       bottomNavigationBar: const BannerAdWidget(),
+    );
+  }
+
+  Widget _buildSummaryStat({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color tone,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: tone.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 18, color: tone),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: _textPrimary,
+              ),
+            ),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                color: _textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -347,26 +485,47 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.people_outline, size: 80, color: Colors.grey[700]),
+          Container(
+            width: 86,
+            height: 86,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE9EEFC),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: const Icon(
+              Icons.people_outline_rounded,
+              size: 42,
+              color: _primary,
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
             'No Members Yet',
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: Colors.grey[400],
+              color: _textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Add members to your committee',
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
+            style: GoogleFonts.inter(fontSize: 14, color: _textSecondary),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () => _showAddMemberDialog(),
             icon: const Icon(Icons.person_add),
             label: const Text('Add First Member'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            ),
           ),
         ],
       ),
@@ -375,7 +534,13 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
 
   Widget _buildMemberCard(Member member, int index) {
     return Card(
+      elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
+      color: _surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFDCE4F7)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -384,7 +549,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
+                color: _primary.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -393,7 +558,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
+                    color: _primary,
                   ),
                 ),
               ),
@@ -408,7 +573,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: _textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -417,7 +582,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                       member.phone,
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        color: Colors.grey[500],
+                        color: _textSecondary,
                       ),
                     ),
                   const SizedBox(height: 6),
@@ -429,7 +594,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.secondaryColor.withOpacity(0.1),
+                        color: _success.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
@@ -440,14 +605,14 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.secondaryColor,
+                              color: _success,
                             ),
                           ),
                           const SizedBox(width: 4),
                           Icon(
                             Icons.copy,
                             size: 12,
-                            color: AppTheme.secondaryColor.withOpacity(0.7),
+                            color: _success.withOpacity(0.7),
                           ),
                         ],
                       ),
@@ -465,8 +630,8 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                 decoration: BoxDecoration(
                   color:
                       member.hasReceivedPayout
-                          ? AppTheme.secondaryColor.withOpacity(0.1)
-                          : AppTheme.warningColor.withOpacity(0.1),
+                          ? _success.withOpacity(0.12)
+                          : _warning.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -474,15 +639,12 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color:
-                        member.hasReceivedPayout
-                            ? AppTheme.secondaryColor
-                            : AppTheme.warningColor,
+                    color: member.hasReceivedPayout ? _success : _warning,
                   ),
                 ),
               ),
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: Colors.grey),
+              icon: const Icon(Icons.more_vert, color: _textSecondary),
               onSelected: (value) {
                 if (value == 'edit') {
                   _showAddMemberDialog(existingMember: member);
@@ -498,11 +660,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                       value: 'share',
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.share,
-                            size: 18,
-                            color: AppTheme.primaryColor,
-                          ),
+                          Icon(Icons.share, size: 18, color: _primary),
                           SizedBox(width: 8),
                           Text('Share Code'),
                         ],
@@ -522,16 +680,9 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                       value: 'delete',
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.delete,
-                            size: 18,
-                            color: AppTheme.errorColor,
-                          ),
+                          Icon(Icons.delete, size: 18, color: _danger),
                           SizedBox(width: 8),
-                          Text(
-                            'Delete',
-                            style: TextStyle(color: AppTheme.errorColor),
-                          ),
+                          Text('Delete', style: TextStyle(color: _danger)),
                         ],
                       ),
                     ),

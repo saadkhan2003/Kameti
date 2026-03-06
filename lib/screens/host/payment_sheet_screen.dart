@@ -12,7 +12,6 @@ import '../../services/analytics_service.dart';
 import '../../services/toast_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
-import '../../models/payment.dart';
 import '../../utils/app_theme.dart';
 import 'member_management_screen.dart';
 import '../viewer/member_calendar_view.dart';
@@ -32,6 +31,14 @@ class PaymentSheetScreen extends StatefulWidget {
 }
 
 class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
+  static const Color _bg = Color(0xFFF7F8FC);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _success = Color(0xFF059669);
+  static const Color _warning = Color(0xFFD97706);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+
   final _dbService = DatabaseService();
   final _authService = AuthService();
   final _exportService = ExportService();
@@ -41,7 +48,6 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   List<Member> _members = [];
   List<DateTime> _dates = [];
   Map<String, Map<String, bool>> _paymentGrid = {};
-  final List<Payment> _cloudPayments = []; // Payments fetched from cloud
   bool _isLoading = true;
   int _selectedCycle = 1;
   int _maxCycles = 1;
@@ -62,7 +68,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   Future<void> _syncAndLoad() async {
     // Load from local FIRST (fast, non-blocking)
     await _loadDataFromLocal();
-    
+
     // Then sync in background (don't await - may hang on web)
     _syncInBackground();
   }
@@ -119,16 +125,16 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     final today = DateTime.now();
     final committeeStartDate = widget.committee.startDate;
     final payoutIntervalDays = widget.committee.paymentIntervalDays;
-    
+
     // If today is before the committee start date, return cycle 1
     if (today.isBefore(committeeStartDate)) {
       return 1;
     }
-    
+
     // Calculate which cycle today falls into
     final daysSinceStart = today.difference(committeeStartDate).inDays;
     final cycleNumber = (daysSinceStart ~/ payoutIntervalDays) + 1;
-    
+
     return cycleNumber;
   }
 
@@ -195,10 +201,13 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     if (numMembers > 0) {
       // Generate dates for the SELECTED payout cycle only
       final cycleIndex = _selectedCycle - 1; // _selectedCycle is 1-based
-      
+
       DateTime cycleStartDate;
       if (widget.committee.frequency == 'monthly') {
-        cycleStartDate = _addMonths(committeeStartDate, cycleIndex * periodsPerPayout);
+        cycleStartDate = _addMonths(
+          committeeStartDate,
+          cycleIndex * periodsPerPayout,
+        );
       } else {
         final daysOffset = cycleIndex * payoutIntervalDays;
         cycleStartDate = committeeStartDate.add(Duration(days: daysOffset));
@@ -223,7 +232,9 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       if (widget.committee.frequency == 'monthly') {
         endDate = _addMonths(baseEndDate, _extraPeriods);
       } else {
-        endDate = baseEndDate.add(Duration(days: collectionInterval * _extraPeriods));
+        endDate = baseEndDate.add(
+          Duration(days: collectionInterval * _extraPeriods),
+        );
       }
 
       DateTime current = DateTime(
@@ -248,15 +259,6 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       if (_dates.isEmpty) {
         _dates.add(current);
       }
-    }
-  }
-
-  void _loadPaymentsFromCloudData() {
-    _paymentGrid = {};
-    for (final payment in _cloudPayments) {
-      final dateKey = _getDateKey(payment.date);
-      _paymentGrid[payment.memberId] ??= {};
-      _paymentGrid[payment.memberId]![dateKey] = payment.isPaid;
     }
   }
 
@@ -398,15 +400,16 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     }
 
     // Calculate total payout amount (members × contribution × collections per payout)
-    final collectionInterval = widget.committee.frequency == 'daily'
-        ? 1
-        : widget.committee.frequency == 'weekly'
+    final collectionInterval =
+        widget.committee.frequency == 'daily'
+            ? 1
+            : widget.committee.frequency == 'weekly'
             ? 7
             : 30;
-    final collectionsPerPayout = payoutInterval > 0
-        ? payoutInterval ~/ collectionInterval
-        : 1;
-    final totalPayoutAmount = _members.length * amountPerCell * collectionsPerPayout;
+    final collectionsPerPayout =
+        payoutInterval > 0 ? payoutInterval ~/ collectionInterval : 1;
+    final totalPayoutAmount =
+        _members.length * amountPerCell * collectionsPerPayout;
 
     return {
       'totalPaid': totalPaid,
@@ -422,17 +425,6 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       'collectionsPerPayout': collectionsPerPayout,
       'daysElapsed': daysElapsed,
     };
-  }
-
-  int _getMinimumPeriods() {
-    final now = DateTime.now();
-    int count = 0;
-    for (var date in _dates) {
-      if (!date.isAfter(now)) {
-        count++;
-      }
-    }
-    return count > 0 ? count : 1;
   }
 
   Map<String, dynamic> _calculateMemberAdvance(String memberId) {
@@ -470,7 +462,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
 
     try {
       final hostId = currentUser?.id ?? '';
-      
+
       // Use local-first toggle (saves locally, syncs in background)
       await _autoSyncService.togglePayment(
         memberId,
@@ -478,7 +470,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         date,
         hostId,
       );
-      
+
       // Log analytics event
       final newStatus = !currentStatus;
       AnalyticsService.logPaymentMarked(
@@ -595,9 +587,9 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   void _showExportOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.darkCard,
+      backgroundColor: _surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder:
           (context) => Container(
@@ -606,57 +598,115 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Text(
                   'Export Payment Sheet',
                   style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: _textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Select a cycle to export',
-                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                  style: GoogleFonts.inter(
+                    color: _textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 // Cycle selection chips
                 SizedBox(
-                  height: 40,
+                  height: 44,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: _maxCycles + 1, // +1 for "All Cycles" option
                     itemBuilder: (context, index) {
                       final isAllCycles = index == 0;
                       final cycleNum = index;
-                      final isOngoing = !isAllCycles && _exportService.isCycleOngoing(widget.committee, cycleNum);
-                      final isCompleted = !isAllCycles && _exportService.isCycleCompleted(widget.committee, cycleNum);
-                      
+                      final isOngoing =
+                          !isAllCycles &&
+                          _exportService.isCycleOngoing(
+                            widget.committee,
+                            cycleNum,
+                          );
+                      final isCompleted =
+                          !isAllCycles &&
+                          _exportService.isCycleCompleted(
+                            widget.committee,
+                            cycleNum,
+                          );
+
                       String label;
                       Color bgColor;
+                      Color textColor;
+                      Color borderColor;
                       if (isAllCycles) {
                         label = 'All Cycles';
-                        bgColor = AppTheme.primaryColor.withOpacity(0.2);
+                        bgColor = _primary.withOpacity(0.12);
+                        textColor = _primary;
+                        borderColor = _primary.withOpacity(0.35);
                       } else if (isOngoing) {
                         label = 'Cycle $cycleNum (Ongoing)';
-                        bgColor = Colors.orange.withOpacity(0.2);
+                        bgColor = _warning.withOpacity(0.14);
+                        textColor = _warning;
+                        borderColor = _warning.withOpacity(0.35);
                       } else if (isCompleted) {
                         label = 'Cycle $cycleNum';
-                        bgColor = Colors.green.withOpacity(0.2);
+                        bgColor = _success.withOpacity(0.12);
+                        textColor = _success;
+                        borderColor = _success.withOpacity(0.35);
                       } else {
                         label = 'Cycle $cycleNum (Upcoming)';
-                        bgColor = Colors.grey.withOpacity(0.2);
+                        bgColor = const Color(0xFFF1F5F9);
+                        textColor = _textSecondary;
+                        borderColor = const Color(0xFFD7DFEE);
                       }
-                      
+
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: ActionChip(
-                          label: Text(label, style: const TextStyle(fontSize: 12)),
-                          backgroundColor: bgColor,
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _showExportFormatDialog(isAllCycles ? null : cycleNum);
-                          },
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _showExportFormatDialog(
+                                isAllCycles ? null : cycleNum,
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: bgColor,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: borderColor),
+                              ),
+                              child: Text(
+                                label,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: textColor,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       );
                     },
@@ -665,7 +715,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                 const SizedBox(height: 12),
                 Text(
                   'Tap a cycle above to export, or scroll for more cycles',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 11),
+                  style: GoogleFonts.inter(color: _textSecondary, fontSize: 11),
                 ),
               ],
             ),
@@ -682,90 +732,118 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       final end = range['end']!;
       dateRange = '${_formatDate(start)} - ${_formatDate(end)}';
     }
-    
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.darkCard,
+      backgroundColor: _surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Export $cycleLabel',
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            if (dateRange != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                dateRange,
-                style: TextStyle(color: Colors.grey[400], fontSize: 12),
-              ),
-            ],
-            const SizedBox(height: 20),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+      builder:
+          (context) => Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
                 ),
-                child: const Icon(Icons.picture_as_pdf, color: Colors.red),
-              ),
-              title: const Text(
-                'Export as PDF',
-                style: TextStyle(color: Colors.white),
-              ),
-              subtitle: Text(
-                'Print or share as document',
-                style: TextStyle(color: Colors.grey[500]),
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-                ToastService.info(context, 'Generating PDF...');
-                await _exportService.exportToPdf(
-                  widget.committee,
-                  cycle: cycle,
-                );
-              },
-            ),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+                const SizedBox(height: 16),
+                Text(
+                  'Export $cycleLabel',
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: _textPrimary,
+                  ),
                 ),
-                child: const Icon(Icons.table_chart, color: Colors.green),
-              ),
-              title: const Text(
-                'Export as CSV (Excel)',
-                style: TextStyle(color: Colors.white),
-              ),
-              subtitle: Text(
-                'Open in Excel or Google Sheets',
-                style: TextStyle(color: Colors.grey[500]),
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-                ToastService.info(context, 'Generating CSV...');
-                await _exportService.exportToCsv(
-                  widget.committee,
-                  cycle: cycle,
-                );
-              },
+                if (dateRange != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    dateRange,
+                    style: GoogleFonts.inter(
+                      color: _textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                  ),
+                  title: Text(
+                    'Export as PDF',
+                    style: GoogleFonts.inter(
+                      color: _textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Print or share as document',
+                    style: GoogleFonts.inter(
+                      color: _textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    ToastService.info(context, 'Generating PDF...');
+                    await _exportService.exportToPdf(
+                      widget.committee,
+                      cycle: cycle,
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.table_chart, color: Colors.green),
+                  ),
+                  title: Text(
+                    'Export as CSV (Excel)',
+                    style: GoogleFonts.inter(
+                      color: _textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Open in Excel or Google Sheets',
+                    style: GoogleFonts.inter(
+                      color: _textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    ToastService.info(context, 'Generating CSV...');
+                    await _exportService.exportToCsv(
+                      widget.committee,
+                      cycle: cycle,
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -782,26 +860,46 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     final amountPerCell = widget.committee.contributionAmount;
 
     return Scaffold(
+      backgroundColor: _bg,
       appBar: AppBar(
-        title: const Text('Payment Sheet'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: _textPrimary),
+          onPressed: () => Navigator.pop(context),
+          tooltip: 'Back',
+        ),
+        title: Text(
+          'Payment Sheet',
+          style: GoogleFonts.inter(
+            color: _textPrimary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(
               Icons.date_range,
               color:
                   (_filterStartDate != null || _filterEndDate != null)
-                      ? AppTheme.primaryColor
-                      : null,
+                      ? _primary
+                      : _textSecondary,
             ),
             tooltip: 'Filter by Date',
             onPressed: _showDateFilterDialog,
           ),
           IconButton(
-            icon: const Icon(Icons.file_download_outlined),
+            icon: const Icon(
+              Icons.file_download_outlined,
+              color: _textSecondary,
+            ),
             tooltip: 'Export',
             onPressed: _showExportOptions,
           ),
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: _textSecondary),
+            onPressed: _loadData,
+          ),
         ],
       ),
       body:
@@ -815,30 +913,34 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                   Builder(
                     builder: (context) {
                       final stats = _calculateCurrentStats();
+                      final totalPending = stats['totalPending'] as double;
                       return Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppTheme.primaryColor.withAlpha(40),
-                              AppTheme.secondaryColor.withAlpha(20),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppTheme.primaryColor.withAlpha(50),
-                          ),
+                          color: _surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFDCE4F7)),
                         ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Text(
+                              'Cycle Overview',
+                              style: GoogleFonts.inter(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: _textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
                             Row(
                               children: [
                                 Expanded(
                                   child: _buildStatItem(
                                     icon: Icons.check_circle,
-                                    color: AppTheme.secondaryColor,
+                                    color: _success,
                                     value: '${stats['totalPaid']}',
                                     label: 'Paid',
                                   ),
@@ -847,7 +949,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                 Expanded(
                                   child: _buildStatItem(
                                     icon: Icons.cancel,
-                                    color: Colors.grey[500]!,
+                                    color: _warning,
                                     value: '${stats['totalUnpaid']}',
                                     label: 'Unpaid',
                                   ),
@@ -855,11 +957,11 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: _buildStatItem(
-                                    icon: Icons.today,
-                                    color: Colors.blue[400]!,
+                                    icon: Icons.payments_outlined,
+                                    color: _primary,
                                     value:
                                         '${widget.committee.currency} ${(stats['currentCycleCollected'] as double).toInt()}',
-                                    label: 'Amount of\n(${stats['daysElapsed']} days)',
+                                    label: 'Cycle Amt',
                                   ),
                                 ),
                               ],
@@ -872,9 +974,9 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                               ),
                               decoration: BoxDecoration(
                                 color:
-                                    (stats['totalPending'] as double) == 0
-                                        ? Colors.green.withOpacity(0.1)
-                                        : Colors.red.withOpacity(0.1),
+                                    totalPending == 0
+                                        ? _success.withOpacity(0.1)
+                                        : _warning.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -882,23 +984,24 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    (stats['totalPending'] as double) == 0
+                                    totalPending == 0
                                         ? 'All Paid:'
                                         : 'Pending Dues:',
-                                    style: TextStyle(
-                                      color: Colors.grey[400],
+                                    style: GoogleFonts.inter(
+                                      color: _textSecondary,
                                       fontSize: 12,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
-                                    (stats['totalPending'] as double) == 0
+                                    totalPending == 0
                                         ? 'No Pending ✓'
-                                        : '${widget.committee.currency} ${(stats['totalPending'] as double).toInt()}',
-                                    style: TextStyle(
+                                        : '${widget.committee.currency} ${totalPending.toInt()}',
+                                    style: GoogleFonts.inter(
                                       color:
-                                          (stats['totalPending'] as double) == 0
-                                              ? Colors.green[300]
-                                              : Colors.red[300],
+                                          totalPending == 0
+                                              ? _success
+                                              : _warning,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
                                     ),
@@ -907,17 +1010,13 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Collection: ${widget.committee.frequency.toUpperCase()} • Payout: Every ${widget.committee.paymentIntervalDays} Days',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 10,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              'Collection: ${widget.committee.frequency.toUpperCase()} • Payout: Every ${widget.committee.paymentIntervalDays} Days',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                color: _textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
@@ -925,23 +1024,20 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                     },
                   ),
 
-
                   // Payout Selector - styled with radius
                   if (_members.isNotEmpty)
                     Center(
                       child: Container(
                         margin: const EdgeInsets.symmetric(vertical: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppTheme.primaryColor.withAlpha(30),
-                              AppTheme.secondaryColor.withAlpha(20),
-                            ],
-                          ),
+                          color: _surface,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: AppTheme.primaryColor.withAlpha(60),
+                            color: const Color(0xFFDCE4F7),
                             width: 1,
                           ),
                         ),
@@ -949,17 +1045,17 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                           child: DropdownButton<int>(
                             value: _selectedCycle,
                             isDense: true,
-                            icon: Icon(
+                            icon: const Icon(
                               Icons.keyboard_arrow_down_rounded,
-                              color: AppTheme.primaryColor,
+                              color: _primary,
                               size: 20,
                             ),
-                            style: TextStyle(
-                              color: Colors.white,
+                            style: GoogleFonts.inter(
+                              color: _textPrimary,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
-                            dropdownColor: AppTheme.darkCard,
+                            dropdownColor: _surface,
                             borderRadius: BorderRadius.circular(16),
                             elevation: 8,
                             menuMaxHeight: 300,
@@ -968,16 +1064,21 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                               (i) => DropdownMenuItem<int>(
                                 value: i + 1,
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   child: Text(
                                     'Cycle ${i + 1}',
-                                    style: TextStyle(
-                                      color: (i + 1) == _selectedCycle
-                                          ? AppTheme.primaryColor
-                                          : Colors.white,
-                                      fontWeight: (i + 1) == _selectedCycle
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
+                                    style: GoogleFonts.inter(
+                                      color:
+                                          (i + 1) == _selectedCycle
+                                              ? _primary
+                                              : _textPrimary,
+                                      fontWeight:
+                                          (i + 1) == _selectedCycle
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
                                     ),
                                   ),
                                 ),
@@ -1000,18 +1101,66 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                       ),
                     ),
 
-
-
-
-
-
-                  // Grid with Proper Scrolling
+                  // Custom Payment Matrix
                   Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: _buildGrid(amountPerCell),
+                    child: Container(
+                      margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                      decoration: BoxDecoration(
+                        color: _surface,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFDCE4F7)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF0F172A).withOpacity(0.04),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Payment Matrix',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: _textPrimary,
+                                  ),
+                                ),
+                                const Spacer(),
+                                _buildLegendChip(
+                                  icon: Icons.check_rounded,
+                                  label: 'Paid',
+                                  color: _success,
+                                ),
+                                const SizedBox(width: 6),
+                                _buildLegendChip(
+                                  icon: Icons.star_rounded,
+                                  label: 'Payout',
+                                  color: _warning,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: _buildGrid(amountPerCell),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -1035,84 +1184,51 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     final targetAmount = amountPerCell * _members.length;
     final payoutInterval = widget.committee.paymentIntervalDays;
     final startDate = widget.committee.startDate;
+    const double memberColWidth = 190;
+    const double dateColWidth = 56;
+    const double duesColWidth = 120;
 
-    return DataTable(
-      columnSpacing: 8,
-      horizontalMargin: 16,
-      headingRowColor: WidgetStateProperty.all(AppTheme.darkCard),
-      columns: [
-        const DataColumn(
-          label: Text('Member', style: TextStyle(fontWeight: FontWeight.bold)),
-        ),
-        ..._dates.asMap().entries.map((entry) {
-          final index = entry.key;
-          final date = entry.value;
-          final now = DateTime.now();
-          final isFutureDate = date.isAfter(now);
-          final format =
-              widget.committee.frequency == 'monthly'
-                  ? DateFormat('MMM')
-                  : DateFormat('dd/MM');
-          final isTargetMet = totals[index] >= targetAmount;
+    final now = DateTime.now();
 
-          final daysElapsed = date.difference(startDate).inDays + 1;
-          final isPayoutDay =
-              payoutInterval > 0 &&
-              daysElapsed > 0 &&
-              (daysElapsed % payoutInterval == 0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFF),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFDCE4F7)),
+          ),
+          child: Row(
+            children: [
+              _buildMatrixHeaderCell('Member', memberColWidth, isStart: true),
+              ..._dates.asMap().entries.map((entry) {
+                final index = entry.key;
+                final date = entry.value;
+                final isFutureDate = date.isAfter(now);
+                final format =
+                    widget.committee.frequency == 'monthly'
+                        ? DateFormat('MMM')
+                        : DateFormat('dd/MM');
+                final daysElapsed = date.difference(startDate).inDays + 1;
+                final isPayoutDay =
+                    payoutInterval > 0 &&
+                    daysElapsed > 0 &&
+                    (daysElapsed % payoutInterval == 0);
 
-          return DataColumn(
-            label: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                RotatedBox(
-                  quarterTurns: -1,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (isFutureDate)
-                        Icon(Icons.schedule, size: 10, color: Colors.blue[300]),
-                      if (isFutureDate) const SizedBox(width: 2),
-                      Text(
-                        format.format(date),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color:
-                              isFutureDate
-                                  ? Colors.blue[300]
-                                  : isPayoutDay
-                                  ? Colors.amber
-                                  : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (totals[index] > 0) ...[
-                  const SizedBox(height: 4),
-                  Container(
-                    width: 4,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color:
-                          isTargetMet ? AppTheme.secondaryColor : Colors.orange,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          );
-        }),
-        const DataColumn(
-          label: Text(
-            'Dues',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                return _buildDateHeaderCell(
+                  width: dateColWidth,
+                  label: format.format(date),
+                  isFutureDate: isFutureDate,
+                  isPayoutDay: isPayoutDay,
+                  progress: totals[index] / targetAmount,
+                );
+              }),
+              _buildMatrixHeaderCell('Dues', duesColWidth, isEnd: true),
+            ],
           ),
         ),
-      ],
-      rows: [
+        const SizedBox(height: 10),
         ..._members.asMap().entries.map((entry) {
           final memberIndex = entry.key;
           final member = entry.value;
@@ -1123,271 +1239,438 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
           final hasAdvance = memberAdvance['hasAdvance'] as bool;
           final advanceCount = memberAdvance['advanceCount'] as int;
 
-          return DataRow(
-            cells: [
-              DataCell(
-                Row(
-                  children: [
-                    // Payout order number on LEFT
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '#${member.payoutOrder}',
-                        style: TextStyle(fontSize: 9, color: Colors.grey[400]),
-                      ),
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: _surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color:
+                    isDefaulter
+                        ? _warning.withOpacity(0.35)
+                        : const Color(0xFFE5ECF9),
+              ),
+            ),
+            child: Row(
+              children: [
+                _buildMemberInfoCell(
+                  member: member,
+                  width: memberColWidth,
+                  isDefaulter: isDefaulter,
+                  hasAdvance: hasAdvance,
+                  advanceCount: advanceCount,
+                ),
+                ..._dates.map((date) {
+                  final isPaid = _isPaymentMarked(member.id, date);
+
+                  final daysElapsed = date.difference(startDate).inDays;
+                  final currentRound =
+                      payoutInterval > 0 ? (daysElapsed ~/ payoutInterval) : 0;
+                  final receiverIndex = currentRound % _members.length;
+                  final isPayoutReceiver = receiverIndex == memberIndex;
+
+                  final isPayoutDay =
+                      payoutInterval > 0 &&
+                      ((daysElapsed + 1) % payoutInterval == 0);
+                  final isPayoutCell = isPayoutReceiver && isPayoutDay;
+
+                  return _buildPaymentCell(
+                    width: dateColWidth,
+                    isPaid: isPaid,
+                    isPayoutCell: isPayoutCell,
+                    onTap: () => _togglePayment(member.id, date),
+                  );
+                }),
+                _buildDuesCell(
+                  width: duesColWidth,
+                  isDefaulter: isDefaulter,
+                  unpaidCount: unpaidCount,
+                  hasAdvance: hasAdvance,
+                  advanceCount: advanceCount,
+                ),
+              ],
+            ),
+          );
+        }),
+        Container(
+          margin: const EdgeInsets.only(top: 2),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFF),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFDCE4F7)),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: memberColWidth,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'Collected',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      color: _textSecondary,
                     ),
-                    const SizedBox(width: 4),
-                    // Warning icon if defaulter
-                    if (isDefaulter) ...[
-                      const Icon(
-                        Icons.warning_amber_rounded,
-                        size: 16,
-                        color: Colors.amber,
-                      ),
-                      const SizedBox(width: 4),
-                    ],
-                    // Member name in MIDDLE
-                    SizedBox(
-                      width: (isDefaulter || hasAdvance) ? 60 : 70,
-                      child: Text(
-                        member.name,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color:
-                              isDefaulter
-                                  ? Colors.amber[300]
-                                  : hasAdvance
-                                  ? Colors.blue[300]
-                                  : null,
-                        ),
-                      ),
-                    ),
-                    // Advance count on RIGHT
-                    if (hasAdvance) ...[
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '+$advanceCount',
-                          style: TextStyle(
-                            fontSize: 8,
-                            color: Colors.blue[300],
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
               ),
-              ..._dates.asMap().entries.map((dateEntry) {
-                final date = dateEntry.value;
-                final isPaid = _isPaymentMarked(member.id, date);
-
-                final daysElapsed = date.difference(startDate).inDays;
-                final currentRound =
-                    payoutInterval > 0 ? (daysElapsed ~/ payoutInterval) : 0;
-                final receiverIndex = currentRound % _members.length;
-                final isPayoutReceiver = (receiverIndex == memberIndex);
-
-                // Highlight Payout Day
-                final isPayoutDay =
-                    payoutInterval > 0 &&
-                    ((daysElapsed + 1) % payoutInterval == 0);
-                final isPayoutCell = isPayoutReceiver && isPayoutDay;
-
-                return DataCell(
-                  GestureDetector(
-                    onTap: () => _togglePayment(member.id, date),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color:
-                            isPaid ? AppTheme.secondaryColor : Colors.grey[800],
-                        borderRadius: BorderRadius.circular(6),
-                        border:
-                            isPayoutCell
-                                ? Border.all(color: Colors.amber, width: 2)
-                                : Border.all(
-                                  color:
-                                      isPaid
-                                          ? AppTheme.secondaryColor
-                                          : Colors.grey[700]!,
-                                  width: 1,
-                                ),
-                        boxShadow:
-                            isPayoutCell
-                                ? [
-                                  BoxShadow(
-                                    color: Colors.amber.withOpacity(0.3),
-                                    blurRadius: 4,
-                                  ),
-                                ]
-                                : null,
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          if (isPaid)
-                            const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                          if (isPayoutCell && !isPaid)
-                            const Icon(
-                              Icons.star_outline,
-                              color: Colors.amber,
-                              size: 18,
-                            ),
-                          if (isPayoutCell && isPaid)
-                            const Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Icon(
-                                Icons.star,
-                                color: Colors.amber,
-                                size: 8,
-                              ),
-                            ),
-                        ],
-                      ),
+              ...totals.map((total) {
+                final isMet = total >= targetAmount;
+                return SizedBox(
+                  width: dateColWidth,
+                  child: Text(
+                    '${total.toInt()}',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: isMet ? _success : _textSecondary,
                     ),
                   ),
                 );
               }),
-              DataCell(
-                Container(
+              SizedBox(
+                width: duesColWidth,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
+                    horizontal: 8,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color:
-                        isDefaulter
-                            ? Colors.amber.withOpacity(0.2)
-                            : hasAdvance
-                            ? Colors.blue.withOpacity(0.2)
-                            : Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
+                        _calculateTotalDebt() > 0
+                            ? _warning.withOpacity(0.14)
+                            : _success.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      if (isDefaulter) ...[
-                        Text(
-                          '${widget.committee.currency} ${(unpaidCount * widget.committee.contributionAmount).toInt()}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.amber[300],
-                          ),
-                        ),
-                        Text(
-                          '$unpaidCount unpaid',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey[400],
-                          ),
-                        ),
-                      ] else if (hasAdvance) ...[
-                        Text(
-                          '+$advanceCount',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue[300],
-                          ),
-                        ),
-                      ] else ...[
-                        Text(
-                          '✓',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.secondaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ],
+                  child: Text(
+                    _calculateTotalDebt() > 0
+                        ? '${widget.committee.currency} ${_calculateTotalDebt().toInt()}'
+                        : 'All Paid ✓',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: _calculateTotalDebt() > 0 ? _warning : _success,
+                    ),
                   ),
                 ),
               ),
             ],
-          );
-        }),
-        DataRow(
-          cells: [
-            const DataCell(
-              Text(
-                'Collected',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-            ..._dates.asMap().entries.map((entry) {
-              final index = entry.key;
-              final total = totals[index];
-              final isMet = total >= targetAmount;
-              return DataCell(
-                Text(
-                  '${(total).toInt()}/${(targetAmount).toInt()}',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: isMet ? AppTheme.secondaryColor : Colors.grey[400],
-                  ),
-                ),
-              );
-            }),
-            DataCell(
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color:
-                      _calculateTotalDebt() > 0
-                          ? Colors.red.withOpacity(0.2)
-                          : Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  _calculateTotalDebt() > 0
-                      ? '${widget.committee.currency} ${_calculateTotalDebt().toInt()}'
-                      : 'All Paid ✓',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color:
-                        _calculateTotalDebt() > 0
-                            ? Colors.red[300]
-                            : AppTheme.secondaryColor,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildLegendChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMatrixHeaderCell(
+    String title,
+    double width, {
+    bool isStart = false,
+    bool isEnd = false,
+  }) {
+    return Container(
+      width: width,
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      alignment: Alignment.centerLeft,
+      decoration: BoxDecoration(
+        border: Border(
+          right: BorderSide(
+            color: const Color(0xFFE5ECF9),
+            width: isEnd ? 0 : 1,
+          ),
+        ),
+      ),
+      child: Text(
+        title,
+        style: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: _textPrimary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateHeaderCell({
+    required double width,
+    required String label,
+    required bool isFutureDate,
+    required bool isPayoutDay,
+    required double progress,
+  }) {
+    return Container(
+      width: width,
+      height: 56,
+      decoration: const BoxDecoration(
+        border: Border(right: BorderSide(color: Color(0xFFE5ECF9), width: 1)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color:
+                  isFutureDate
+                      ? _primary
+                      : (isPayoutDay ? _warning : _textSecondary),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            width: 20,
+            height: 3,
+            decoration: BoxDecoration(
+              color: progress >= 1 ? _success : const Color(0xFFD7E0F2),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMemberInfoCell({
+    required Member member,
+    required double width,
+    required bool isDefaulter,
+    required bool hasAdvance,
+    required int advanceCount,
+  }) {
+    return SizedBox(
+      width: width,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8EEFA),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                '#${member.payoutOrder}',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  color: _primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                member.name,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color:
+                      isDefaulter
+                          ? _warning
+                          : hasAdvance
+                          ? _primary
+                          : _textPrimary,
+                ),
+              ),
+            ),
+            if (isDefaulter)
+              const Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  size: 14,
+                  color: _warning,
+                ),
+              ),
+            if (hasAdvance)
+              Container(
+                margin: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '+$advanceCount',
+                  style: GoogleFonts.inter(
+                    fontSize: 9,
+                    color: _primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentCell({
+    required double width,
+    required bool isPaid,
+    required bool isPayoutCell,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: width,
+      child: Center(
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: isPaid ? _success : const Color(0xFFEEF2FA),
+              borderRadius: BorderRadius.circular(8),
+              border:
+                  isPayoutCell
+                      ? Border.all(color: _warning, width: 2)
+                      : Border.all(
+                        color: isPaid ? _success : const Color(0xFFD3DDEF),
+                        width: 1,
+                      ),
+              boxShadow:
+                  isPayoutCell
+                      ? [
+                        BoxShadow(
+                          color: _warning.withOpacity(0.2),
+                          blurRadius: 5,
+                        ),
+                      ]
+                      : null,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (isPaid)
+                  const Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 17,
+                  ),
+                if (isPayoutCell && !isPaid)
+                  const Icon(
+                    Icons.star_outline_rounded,
+                    color: _warning,
+                    size: 16,
+                  ),
+                if (isPayoutCell && isPaid)
+                  const Positioned(
+                    right: 1,
+                    top: 1,
+                    child: Icon(Icons.star_rounded, color: _warning, size: 8),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDuesCell({
+    required double width,
+    required bool isDefaulter,
+    required int unpaidCount,
+    required bool hasAdvance,
+    required int advanceCount,
+  }) {
+    return SizedBox(
+      width: width,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color:
+                isDefaulter
+                    ? _warning.withOpacity(0.14)
+                    : hasAdvance
+                    ? _primary.withOpacity(0.12)
+                    : _success.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (isDefaulter) ...[
+                Text(
+                  '${widget.committee.currency} ${(unpaidCount * widget.committee.contributionAmount).toInt()}',
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: _warning,
+                  ),
+                ),
+                Text(
+                  '$unpaidCount unpaid',
+                  style: GoogleFonts.inter(fontSize: 9, color: _textSecondary),
+                ),
+              ] else if (hasAdvance) ...[
+                Text(
+                  '+$advanceCount',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: _primary,
+                  ),
+                ),
+                Text(
+                  'advance',
+                  style: GoogleFonts.inter(fontSize: 9, color: _textSecondary),
+                ),
+              ] else ...[
+                const Icon(Icons.verified_rounded, color: _success, size: 14),
+                Text(
+                  'clear',
+                  style: GoogleFonts.inter(
+                    fontSize: 9,
+                    color: _success,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1401,26 +1684,30 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 24),
+          Icon(icon, color: color, size: 20),
           const SizedBox(height: 4),
           Text(
             value,
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
               color: color,
             ),
           ),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[400]),
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: _textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -1432,14 +1719,26 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.grid_off_rounded, size: 80, color: Colors.grey[700]),
+          Container(
+            width: 92,
+            height: 92,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE9EEFC),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: const Icon(
+              Icons.grid_off_rounded,
+              size: 44,
+              color: _primary,
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
             'No Members Yet',
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: Colors.grey[400],
+              color: _textPrimary,
             ),
           ),
           const SizedBox(height: 12),
@@ -1448,7 +1747,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
             child: Text(
               'Add members to start collecting payments. The Period and Cycle options will appear once members are added.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[500]),
+              style: GoogleFonts.inter(color: _textSecondary),
             ),
           ),
           const SizedBox(height: 20),
@@ -1467,26 +1766,18 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
             },
             icon: const Icon(Icons.person_add_alt_1),
             label: const Text('Add Members'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildLegendItem({required Color color, required String label}) {
-    return Row(
-      children: [
-        Container(
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(label, style: TextStyle(color: Colors.grey[400])),
-      ],
     );
   }
 

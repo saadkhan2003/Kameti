@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../services/database_service.dart';
-import '../../services/sync_service.dart';
+
 import '../../models/committee.dart';
 import '../../models/member.dart';
-import '../../utils/app_theme.dart';
+import '../../services/database_service.dart';
+import '../../services/sync_service.dart';
 import '../../ui/widgets/ads/banner_ad_widget.dart';
 
 class MemberViewScreen extends StatefulWidget {
@@ -23,15 +23,24 @@ class MemberViewScreen extends StatefulWidget {
 }
 
 class _MemberViewScreenState extends State<MemberViewScreen> {
+  static const Color _bg = Color(0xFFF6F8FC);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _primarySoft = Color(0xFFEAF0FF);
+  static const Color _success = Color(0xFF059669);
+  static const Color _warning = Color(0xFFD97706);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+
   final _dbService = DatabaseService();
   final _syncService = SyncService();
+
   List<DateTime> _dates = [];
   int _paidCount = 0;
   int _totalDays = 0;
   bool _isRefreshing = false;
-  bool _isFirstLoad = true; // Track if this is initial load
+  bool _isFirstLoad = true;
 
-  // Cycle support
   int _selectedCycle = 1;
   int _maxCycles = 1;
   List<Member> _members = [];
@@ -40,68 +49,30 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
   void initState() {
     super.initState();
     _loadData();
-    // Auto-sync on first load
     _refreshFromCloud();
   }
 
   void _loadData() {
-    // Load members to calculate max cycles
     _members = _dbService.getMembersByCommittee(widget.committee.id);
     _maxCycles = _members.isNotEmpty ? _members.length : 1;
 
-    debugPrint('');
-    debugPrint(
-      '╔════════════════════════════════════════════════════════════╗',
-    );
-    debugPrint(
-      '║             MEMBER VIEW DATA LOAD                          ║',
-    );
-    debugPrint(
-      '╠════════════════════════════════════════════════════════════╣',
-    );
-    debugPrint('║ Committee: ${widget.committee.name}');
-    debugPrint('║ Committee ID: ${widget.committee.id}');
-    debugPrint('║ START DATE: ${widget.committee.startDate}');
-    debugPrint('║ Frequency: ${widget.committee.frequency}');
-    debugPrint(
-      '║ Payout Interval: ${widget.committee.paymentIntervalDays} days',
-    );
-    debugPrint('║ Members: ${_members.length} → MaxCycles: $_maxCycles');
-    debugPrint(
-      '╚════════════════════════════════════════════════════════════╝',
-    );
-
-    // Default to ongoing cycle on first load only
     if (_isFirstLoad) {
-      final ongoingCycle = _findOngoingCycle();
-      debugPrint('🎯 First load - Setting to ongoing cycle: $ongoingCycle');
-      _selectedCycle = ongoingCycle;
+      _selectedCycle = _findOngoingCycle();
       _isFirstLoad = false;
     }
 
-    // Keep selected cycle in valid range
     if (_selectedCycle > _maxCycles) _selectedCycle = _maxCycles;
     if (_selectedCycle < 1) _selectedCycle = 1;
 
-    debugPrint('🎯 Current selected cycle: $_selectedCycle / $_maxCycles');
-
     _generateDates();
     _calculateStats();
-    debugPrint('');
   }
 
-  /// Find which cycle is currently ongoing based on today's date
   int _findOngoingCycle() {
     final now = DateTime.now();
     final committeeStartDate = widget.committee.startDate;
     final payoutIntervalDays = widget.committee.paymentIntervalDays;
 
-    debugPrint('🔍 Finding ongoing cycle...');
-    debugPrint('🔍 Now: $now');
-    debugPrint('🔍 Committee Start: $committeeStartDate');
-    debugPrint('🔍 Payout Interval: $payoutIntervalDays days');
-
-    // Calculate periods per payout based on frequency
     int periodsPerPayout;
     if (widget.committee.frequency == 'monthly') {
       periodsPerPayout = (payoutIntervalDays / 30).ceil();
@@ -110,14 +81,10 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
       periodsPerPayout = (payoutIntervalDays / 7).ceil();
       if (periodsPerPayout < 1) periodsPerPayout = 1;
     } else {
-      // Daily frequency
       periodsPerPayout = payoutIntervalDays;
       if (periodsPerPayout < 1) periodsPerPayout = 1;
     }
 
-    debugPrint('🔍 Periods per payout: $periodsPerPayout');
-
-    // Check each cycle to find the one that contains today
     for (int cycle = 1; cycle <= _maxCycles; cycle++) {
       DateTime cycleStartDate;
       DateTime cycleEndDate;
@@ -127,8 +94,10 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
           committeeStartDate,
           (cycle - 1) * periodsPerPayout,
         );
-        cycleEndDate = _addMonths(cycleStartDate, periodsPerPayout);
-        cycleEndDate = cycleEndDate.subtract(const Duration(days: 1));
+        cycleEndDate = _addMonths(
+          cycleStartDate,
+          periodsPerPayout,
+        ).subtract(const Duration(days: 1));
       } else {
         final daysOffset = (cycle - 1) * payoutIntervalDays;
         cycleStartDate = committeeStartDate.add(Duration(days: daysOffset));
@@ -137,30 +106,18 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
         );
       }
 
-      debugPrint(
-        '🔍 Cycle $cycle: ${DateFormat('yyyy-MM-dd').format(cycleStartDate)} to ${DateFormat('yyyy-MM-dd').format(cycleEndDate)}',
-      );
-
-      // Check if today is within this cycle
       if (!now.isBefore(cycleStartDate) && !now.isAfter(cycleEndDate)) {
-        debugPrint('🔍 ✅ Cycle $cycle is ONGOING');
         return cycle;
       }
 
-      // If today is before this cycle starts, return the previous cycle (or 1)
       if (now.isBefore(cycleStartDate)) {
-        final result = cycle > 1 ? cycle - 1 : 1;
-        debugPrint('🔍 Today is before cycle $cycle, returning cycle $result');
-        return result;
+        return cycle > 1 ? cycle - 1 : 1;
       }
     }
 
-    // If we've passed all cycles, return the last one
-    debugPrint('🔍 Passed all cycles, returning $_maxCycles');
     return _maxCycles;
   }
 
-  // Helper to safely add months without skipping (e.g., Jan 31 -> Feb 28)
   DateTime _addMonths(DateTime date, int monthsToAdd) {
     var newYear = date.year;
     var newMonth = date.month + monthsToAdd;
@@ -185,17 +142,11 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
     final committeeStartDate = widget.committee.startDate;
     final payoutIntervalDays = widget.committee.paymentIntervalDays;
 
-    debugPrint(
-      '📅 Generating dates - Start: $committeeStartDate, Interval: $payoutIntervalDays, Frequency: ${widget.committee.frequency}',
-    );
-
-    // Use collection frequency to determine interval between collection dates
     int collectionInterval = 30;
     if (widget.committee.frequency == 'daily') collectionInterval = 1;
     if (widget.committee.frequency == 'weekly') collectionInterval = 7;
     if (widget.committee.frequency == 'monthly') collectionInterval = 30;
 
-    // Calculate how many collection periods fit in one payout cycle
     int periodsPerPayout;
     if (widget.committee.frequency == 'monthly') {
       periodsPerPayout = (payoutIntervalDays / 30).ceil();
@@ -205,11 +156,6 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
       if (periodsPerPayout < 1) periodsPerPayout = 1;
     }
 
-    debugPrint(
-      '📅 Collection interval: $collectionInterval, Periods per payout: $periodsPerPayout',
-    );
-
-    // Calculate start date for the selected payout cycle
     DateTime cycleStartDate;
     if (widget.committee.frequency == 'monthly') {
       cycleStartDate = _addMonths(
@@ -221,17 +167,13 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
       cycleStartDate = committeeStartDate.add(Duration(days: daysOffset));
     }
 
-    debugPrint('📅 Cycle $_selectedCycle start date: $cycleStartDate');
-
-    // Generate exactly periodsPerPayout dates for this payout cycle
-    // LIMIT to 35 days (5 weeks) for daily committees to avoid calendar overflow
     final maxDatesToShow =
         widget.committee.frequency == 'daily' ? 35 : periodsPerPayout;
     final datesToGenerate =
         periodsPerPayout < maxDatesToShow ? periodsPerPayout : maxDatesToShow;
 
     DateTime current = cycleStartDate;
-    for (int i = 0; i < datesToGenerate; i++) {
+    for (int index = 0; index < datesToGenerate; index++) {
       _dates.add(current);
       if (widget.committee.frequency == 'monthly') {
         current = _addMonths(current, 1);
@@ -239,19 +181,11 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
         current = current.add(Duration(days: collectionInterval));
       }
     }
-
-    debugPrint(
-      '📅 Generated ${_dates.length} dates (limit: $maxDatesToShow) for cycle $_selectedCycle',
-    );
   }
 
   void _calculateStats() {
     _totalDays = _dates.length;
     _paidCount = 0;
-
-    debugPrint(
-      '💰 Calculating stats for CYCLE $_selectedCycle (${_dates.length} dates)',
-    );
 
     for (final date in _dates) {
       final payment = _dbService.getPayment(widget.member.id, date);
@@ -261,55 +195,16 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
       }
     }
 
-    debugPrint(
-      '💰 Cycle $_selectedCycle stats: $_paidCount / $_totalDays paid',
-    );
     setState(() {});
   }
 
-  /// Sync fresh data from Supabase cloud (READ-ONLY for viewers)
   Future<void> _refreshFromCloud() async {
     if (_isRefreshing) return;
-
     setState(() => _isRefreshing = true);
 
     try {
-      debugPrint(
-        '🔄 Starting viewer refresh for committee: ${widget.committee.id}',
-      );
-
-      // Use the new read-only refresh method
       await _syncService.refreshViewerData(widget.committee.id);
-
-      // Reload local data
       _loadData();
-
-      // Debug: print payment counts and dates
-      final allPayments = _dbService.getPaymentsByCommittee(
-        widget.committee.id,
-      );
-      final memberPayments =
-          allPayments.where((p) => p.memberId == widget.member.id).toList();
-      debugPrint('✅ Total payments for committee: ${allPayments.length}');
-      debugPrint(
-        '✅ Payments for member ${widget.member.name}: ${memberPayments.length}',
-      );
-
-      // Show sample of payment dates for this member
-      if (memberPayments.isNotEmpty) {
-        final sortedPayments =
-            memberPayments..sort((a, b) => a.date.compareTo(b.date));
-        debugPrint(
-          '✅ First 5 payment dates: ${sortedPayments.take(5).map((p) => "${DateFormat('yyyy-MM-dd').format(p.date)} (paid: ${p.isPaid})").toList()}',
-        );
-        debugPrint(
-          '✅ Last 5 payment dates: ${sortedPayments.reversed.take(5).map((p) => "${DateFormat('yyyy-MM-dd').format(p.date)} (paid: ${p.isPaid})").toList()}',
-        );
-      }
-
-      debugPrint('✅ Paid count for current cycle: $_paidCount / $_totalDays');
-    } catch (e) {
-      debugPrint('❌ Viewer sync error: $e');
     } finally {
       if (mounted) {
         setState(() => _isRefreshing = false);
@@ -317,7 +212,6 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
     }
   }
 
-  /// Check if the currently selected cycle is ongoing
   bool _isCurrentCycleOngoing() {
     if (_dates.isEmpty) return false;
     final now = DateTime.now();
@@ -344,21 +238,30 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final contribution = _paidCount * widget.committee.contributionAmount;
+    final pendingCount = (_totalDays - _paidCount).clamp(0, _totalDays);
+    final progress = _totalDays > 0 ? (_paidCount / _totalDays) : 0.0;
+
     return Scaffold(
-      // Anchored adaptive banner — Google's recommended placement.
-      // Scaffold automatically reserves space so body content is never hidden.
+      backgroundColor: _bg,
       bottomNavigationBar: const BannerAdWidget(),
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.committee.name),
+            Text(
+              widget.committee.name,
+              style: GoogleFonts.inter(
+                color: _textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             Text(
               'Welcome, ${widget.member.name}',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.normal,
-              ),
+              style: GoogleFonts.inter(fontSize: 12, color: _textSecondary),
             ),
           ],
         ),
@@ -367,366 +270,478 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
               ? const Padding(
                 padding: EdgeInsets.all(12),
                 child: SizedBox(
-                  width: 24,
-                  height: 24,
+                  width: 22,
+                  height: 22,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               )
               : IconButton(
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh_rounded, color: _textSecondary),
                 tooltip: 'Refresh from cloud',
                 onPressed: _refreshFromCloud,
               ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Member Info Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppTheme.secondaryColor, Color(0xFF059669)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        widget.committee.name,
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.refresh,
-                          color: Colors.white70,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          _selectedCycle = 1;
-                          _loadData();
-                        },
-                        tooltip: 'Refresh',
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    'Welcome, ${widget.member.name}',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Stats Row - These update with cycle
-                  Row(
-                    children: [
-                      // Paid count
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.check_circle,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '$_paidCount / $_totalDays',
-                                style: GoogleFonts.inter(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                'Paid',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Amount Contributed
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.payments,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${widget.committee.currency} ${(_paidCount * widget.committee.contributionAmount).toInt()}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                'Contributed',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Per Day/Period
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.calendar_today,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${widget.committee.currency} ${widget.committee.contributionAmount.toInt()}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                'Per ${widget.committee.frequency == 'daily'
-                                    ? 'Day'
-                                    : widget.committee.frequency == 'weekly'
-                                    ? 'Week'
-                                    : 'Month'}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Payment History
-            Text(
-              'Payment History',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[400],
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Payment Grid
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-              ),
-              itemCount: _dates.length,
-              itemBuilder: (context, index) {
-                final date = _dates[index];
-                final isPaid = _isPaymentMarked(date);
-                final format =
-                    widget.committee.frequency == 'monthly'
-                        ? DateFormat('MMM')
-                        : DateFormat('d');
-
-                return Container(
-                  decoration: BoxDecoration(
-                    color: isPaid ? AppTheme.secondaryColor : Colors.grey[800],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (isPaid)
-                        const Icon(Icons.check, color: Colors.white, size: 14)
-                      else
-                        const Icon(Icons.close, color: Colors.grey, size: 14),
-                      const SizedBox(height: 2),
-                      Text(
-                        format.format(date),
-                        style: GoogleFonts.inter(
-                          fontSize: 9,
-                          color: isPaid ? Colors.white : Colors.grey[500],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 20),
-
-            // Cycle Selector
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppTheme.darkCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppTheme.primaryColor.withOpacity(0.3),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    onPressed:
-                        _selectedCycle > 1 ? () => _changeCycle(-1) : null,
-                    icon: Icon(
-                      Icons.chevron_left,
-                      color:
-                          _selectedCycle > 1 ? Colors.white : Colors.grey[600],
-                    ),
-                  ),
-                  Column(
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Cycle $_selectedCycle of $_maxCycles',
-                            style: GoogleFonts.inter(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          if (_isCurrentCycleOngoing()) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: Colors.orange.withOpacity(0.5),
-                                ),
-                              ),
-                              child: Text(
-                                'ONGOING',
-                                style: GoogleFonts.inter(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.orange,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      if (_dates.isNotEmpty)
-                        Text(
-                          '${DateFormat('MMM d').format(_dates.first)} - ${DateFormat('MMM d, yyyy').format(_dates.last)}',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            color: Colors.grey[400],
-                          ),
-                        ),
-                    ],
-                  ),
-                  IconButton(
-                    onPressed:
-                        _selectedCycle < _maxCycles
-                            ? () => _changeCycle(1)
-                            : null,
-                    icon: Icon(
-                      Icons.chevron_right,
-                      color:
-                          _selectedCycle < _maxCycles
-                              ? Colors.white
-                              : Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Legend
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildLegend(AppTheme.secondaryColor, 'Paid'),
-                const SizedBox(width: 24),
-                _buildLegend(Colors.grey[800]!, 'Not Paid'),
-              ],
-            ),
+            _buildHero(contribution),
+            const SizedBox(height: 14),
+            _buildCycleSelector(),
+            const SizedBox(height: 14),
+            _buildProgressCard(_paidCount, pendingCount, progress),
+            const SizedBox(height: 14),
+            _buildPaymentHistoryGrid(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLegend(Color color, String label) {
+  Widget _buildHero(double contribution) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF3347A8), Color(0xFF4F46E5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withOpacity(0.24),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  'Member Overview',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  _selectedCycle = 1;
+                  _loadData();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Colors.white.withOpacity(0.25)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.restart_alt_rounded,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Reset',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildHeroStat(
+                  Icons.check_circle_rounded,
+                  'Paid',
+                  '$_paidCount / $_totalDays',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildHeroStat(
+                  Icons.payments_rounded,
+                  'Contributed',
+                  '${widget.committee.currency} ${contribution.toStringAsFixed(0)}',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildHeroStat(
+                  Icons.calendar_today_rounded,
+                  'Per ${_periodLabel()}',
+                  '${widget.committee.currency} ${widget.committee.contributionAmount.toStringAsFixed(0)}',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroStat(IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white, size: 18),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCycleSelector() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: _cardDecoration(),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: _selectedCycle > 1 ? () => _changeCycle(-1) : null,
+            icon: Icon(
+              Icons.chevron_left_rounded,
+              color:
+                  _selectedCycle > 1 ? _textPrimary : const Color(0xFFB8C3D8),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                Wrap(
+                  spacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    Text(
+                      'Cycle $_selectedCycle of $_maxCycles',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: _textPrimary,
+                      ),
+                    ),
+                    if (_isCurrentCycleOngoing())
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _warning.withOpacity(0.16),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: _warning.withOpacity(0.32)),
+                        ),
+                        child: Text(
+                          'ONGOING',
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: _warning,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                if (_dates.isNotEmpty)
+                  Text(
+                    '${DateFormat('MMM d').format(_dates.first)} - ${DateFormat('MMM d, yyyy').format(_dates.last)}',
+                    style: GoogleFonts.inter(
+                      color: _textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed:
+                _selectedCycle < _maxCycles ? () => _changeCycle(1) : null,
+            icon: Icon(
+              Icons.chevron_right_rounded,
+              color:
+                  _selectedCycle < _maxCycles
+                      ? _textPrimary
+                      : const Color(0xFFB8C3D8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressCard(int paid, int pending, double progress) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Payment Performance',
+            style: GoogleFonts.inter(
+              color: _textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _buildPillStat('Paid', '$paid', _success)),
+              const SizedBox(width: 10),
+              Expanded(child: _buildPillStat('Pending', '$pending', _warning)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Completion',
+                style: GoogleFonts.inter(color: _textSecondary, fontSize: 12),
+              ),
+              Text(
+                '${(progress * 100).toStringAsFixed(0)}%',
+                style: GoogleFonts.inter(
+                  color: _primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 10,
+              backgroundColor: const Color(0xFFE4EAF7),
+              valueColor: const AlwaysStoppedAnimation<Color>(_primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPillStat(String label, String value, Color tone) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: tone.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: tone.withOpacity(0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              color: tone,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(
+            label,
+            style: GoogleFonts.inter(color: _textSecondary, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentHistoryGrid() {
+    final dateFormat =
+        widget.committee.frequency == 'monthly'
+            ? DateFormat('MMM')
+            : DateFormat('d');
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Payment History',
+            style: GoogleFonts.inter(
+              color: _textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 1,
+            ),
+            itemCount: _dates.length,
+            itemBuilder: (context, index) {
+              final date = _dates[index];
+              final isPaid = _isPaymentMarked(date);
+
+              return Container(
+                decoration: BoxDecoration(
+                  color: isPaid ? _success.withOpacity(0.14) : _primarySoft,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color:
+                        isPaid
+                            ? _success.withOpacity(0.35)
+                            : const Color(0xFFD7E3FF),
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isPaid
+                          ? Icons.check_circle_rounded
+                          : Icons.schedule_rounded,
+                      size: 14,
+                      color: isPaid ? _success : _warning,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      dateFormat.format(date),
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        color: _textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildLegend(_success.withOpacity(0.15), _success, 'Paid'),
+              const SizedBox(width: 16),
+              _buildLegend(_primarySoft, _warning, 'Not Paid'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegend(Color bg, Color tone, String label) {
     return Row(
       children: [
         Container(
           width: 16,
           height: 16,
           decoration: BoxDecoration(
-            color: color,
+            color: bg,
             borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: tone.withOpacity(0.45)),
           ),
         ),
         const SizedBox(width: 6),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: _textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
+  }
+
+  BoxDecoration _cardDecoration() {
+    return BoxDecoration(
+      color: _surface,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFFDCE5F6)),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF0F172A).withOpacity(0.05),
+          blurRadius: 12,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    );
+  }
+
+  String _periodLabel() {
+    switch (widget.committee.frequency) {
+      case 'daily':
+        return 'Day';
+      case 'weekly':
+        return 'Week';
+      case 'monthly':
+        return 'Month';
+      default:
+        return 'Period';
+    }
   }
 }

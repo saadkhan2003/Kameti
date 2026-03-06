@@ -1,57 +1,136 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../utils/app_theme.dart';
 
 class ContactScreen extends StatelessWidget {
   const ContactScreen({super.key});
 
+  static const Color _bg = Color(0xFFF7F8FC);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _success = Color(0xFF059669);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBg,
+      backgroundColor: _bg,
       appBar: AppBar(
-        title: const Text('Contact Us'),
-        backgroundColor: AppTheme.darkCard,
+        backgroundColor: _bg,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        foregroundColor: _textPrimary,
+        iconTheme: const IconThemeData(color: _textPrimary),
+        elevation: 0,
+        title: Text(
+          'Contact Us',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w800,
+            color: _textPrimary,
+          ),
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         children: [
-          // Header
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_primary, Color(0xFF5B6FD6)],
               ),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: _primary.withOpacity(0.25),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            child: const Column(
+            child: Column(
               children: [
-                Icon(Icons.support_agent, size: 48, color: Colors.white),
-                SizedBox(height: 12),
+                const Icon(
+                  Icons.support_agent_rounded,
+                  size: 46,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 10),
                 Text(
                   'We\'re here to help!',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Reach out to us anytime',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  'Reach out anytime — we usually reply within 24 hours',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Colors.white.withOpacity(0.28)),
+                  ),
+                  child: Text(
+                    'Support window: Mon - Sat',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
-          // Contact Options
+          Row(
+            children: [
+              Expanded(
+                child: _buildTopStat(
+                  icon: Icons.bolt_rounded,
+                  label: 'Fast Reply',
+                  value: '< 24h',
+                  tone: _success,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildTopStat(
+                  icon: Icons.language_rounded,
+                  label: 'Languages',
+                  value: 'EN / UR',
+                  tone: _primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
           _buildContactCard(
             icon: Icons.email_outlined,
             title: 'Email',
             subtitle: 'msaad.official6@gmail.com',
+            badge: 'Preferred',
+            badgeColor: _success,
             onTap: () => _launchEmail(),
           ),
           const SizedBox(height: 12),
@@ -60,6 +139,8 @@ class ContactScreen extends StatelessWidget {
             icon: Icons.phone_outlined,
             title: 'Phone',
             subtitle: '+92 321 8685488',
+            badge: 'Direct',
+            badgeColor: _primary,
             onTap: () => _launchPhone(),
           ),
           const SizedBox(height: 12),
@@ -68,54 +149,115 @@ class ContactScreen extends StatelessWidget {
             icon: Icons.chat_outlined,
             title: 'WhatsApp',
             subtitle: 'Chat with us',
+            badge: 'Quick Chat',
+            badgeColor: _success,
             onTap: () => _launchWhatsApp(),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
 
-          // FAQ Section
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.darkCard,
+              color: _surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withAlpha(13)),
+              border: Border.all(color: const Color(0xFFDCE4F7)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.help_outline, color: AppTheme.primaryColor),
-                    SizedBox(width: 8),
+                    const Icon(Icons.help_outline_rounded, color: _primary),
+                    const SizedBox(width: 8),
                     Text(
                       'Quick Help',
-                      style: TextStyle(
-                        color: Colors.white,
+                      style: GoogleFonts.inter(
+                        color: _textPrimary,
                         fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                _buildFaqItem('How to create a committee?', 
-                    'Tap the + button on the dashboard and fill in the details.'),
-                _buildFaqItem('How to add members?', 
-                    'Open a committee and tap "Add Member" button.'),
-                _buildFaqItem('How to record payments?', 
-                    'Open payment sheet, tap a cell and select payment status.'),
-                _buildFaqItem('How to share with members?', 
-                    'Use the "Share Code" button in committee details.'),
+                _buildFaqItem(
+                  'How to create a committee?',
+                  'Tap the + button on the dashboard and fill in the details.',
+                ),
+                _buildFaqItem(
+                  'How to add members?',
+                  'Open a committee and tap "Add Member" button.',
+                ),
+                _buildFaqItem(
+                  'How to record payments?',
+                  'Open payment sheet, tap a cell and select payment status.',
+                ),
+                _buildFaqItem(
+                  'How to share with members?',
+                  'Use the "Share Code" button in committee details.',
+                ),
               ],
             ),
           ),
           const SizedBox(height: 24),
 
-          // App Info
           Center(
             child: Text(
               'Made with ❤️ in Pakistan',
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              style: GoogleFonts.inter(color: _textSecondary, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopStat({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color tone,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDCE4F7)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: tone.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(icon, size: 16, color: tone),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: _textPrimary,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: _textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -127,6 +269,8 @@ class ContactScreen extends StatelessWidget {
     required IconData icon,
     required String title,
     required String subtitle,
+    required String badge,
+    required Color badgeColor,
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -135,19 +279,19 @@ class ContactScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.darkCard,
+          color: _surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withAlpha(13)),
+          border: Border.all(color: const Color(0xFFDCE4F7)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withAlpha(26),
+                color: _primary.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppTheme.primaryColor, size: 24),
+              child: Icon(icon, color: _primary, size: 24),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -156,21 +300,43 @@ class ContactScreen extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: GoogleFonts.inter(
+                      color: _textPrimary,
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                    style: GoogleFonts.inter(
+                      color: _textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: badgeColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      badge,
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: badgeColor,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey[600]),
+            const Icon(Icons.chevron_right_rounded, color: _textSecondary),
           ],
         ),
       ),
@@ -185,16 +351,16 @@ class ContactScreen extends StatelessWidget {
         children: [
           Text(
             question,
-            style: const TextStyle(
-              color: Colors.white,
+            style: GoogleFonts.inter(
+              color: _textPrimary,
               fontSize: 14,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             answer,
-            style: TextStyle(color: Colors.grey[400], fontSize: 13),
+            style: GoogleFonts.inter(color: _textSecondary, fontSize: 13),
           ),
         ],
       ),

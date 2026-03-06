@@ -35,6 +35,11 @@
 </head>
 
 <body>
+  <script>
+    // Prefer HTML renderer to avoid CanvasKit context-loss crash on some GPUs/browsers.
+    window.flutterWebRenderer = "html";
+  </script>
+
   <!-- Firebase SDK configuration for long polling (fixes WebSocket issues) -->
   <script>
     // Configure Firebase to use long polling instead of WebSockets

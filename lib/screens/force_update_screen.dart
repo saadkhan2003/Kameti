@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../utils/app_theme.dart';
 import '../services/remote_config_service.dart';
 
 /// Force Update Screen - Blocks app usage until user updates
 class ForceUpdateScreen extends StatelessWidget {
   final UpdateStatus updateStatus;
 
-  const ForceUpdateScreen({
-    super.key,
-    required this.updateStatus,
-  });
+  static const Color _bgTop = Color(0xFFF7F8FC);
+  static const Color _bgBottom = Color(0xFFEEF1F8);
+  static const Color _surface = Colors.white;
+  static const Color _primary = Color(0xFF3347A8);
+  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _textSecondary = Color(0xFF64748B);
+
+  const ForceUpdateScreen({super.key, required this.updateStatus});
 
   Future<void> _openStore() async {
     final url = updateStatus.storeUrl ?? '';
@@ -33,145 +36,217 @@ class ForceUpdateScreen extends StatelessWidget {
       // Prevent back button (force user to update)
       onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: AppTheme.darkBg,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [_bgTop, _bgBottom],
+            ),
+          ),
+          child: SafeArea(
+            child: Stack(
               children: [
-                // Icon
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.system_update_alt,
-                    size: 60,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Title
-                Text(
-                  updateStatus.updateTitle ?? 'Update Required',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Message
-                Text(
-                  updateStatus.updateMessage ?? 
-                      'Please update to the latest version to continue using the app.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[400],
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                
-                const SizedBox(height: 12),
-                
-                // Version info
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.darkCard,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[800]!),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Current Version:',
-                            style: TextStyle(color: Colors.grey[500]),
-                          ),
-                          Text(
-                            updateStatus.currentVersion,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Required Version:',
-                            style: TextStyle(color: Colors.grey[500]),
-                          ),
-                          Text(
-                            updateStatus.minimumVersion ?? 'N/A',
-                            style: const TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Update Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                Positioned(
+                  top: -90,
+                  right: -40,
+                  child: Container(
+                    width: 230,
+                    height: 230,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _primary.withValues(alpha: 0.08),
                     ),
-                    onPressed: _openStore,
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.download, size: 24),
-                        SizedBox(width: 12),
-                        Text(
-                          'Update Now',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 420),
+                        padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+                        decoration: BoxDecoration(
+                          color: _surface,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFF0F172A,
+                              ).withValues(alpha: 0.08),
+                              blurRadius: 24,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
-                      ],
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 64,
+                              height: 30,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE9EEFC),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text(
+                                'UPDATE',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: _primary,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Container(
+                              width: 92,
+                              height: 92,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE9EEFC),
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: const Icon(
+                                Icons.system_update_alt_rounded,
+                                size: 46,
+                                color: _primary,
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            Text(
+                              updateStatus.updateTitle ?? 'Update Required',
+                              style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w800,
+                                color: _textPrimary,
+                                height: 1.1,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              updateStatus.updateMessage ??
+                                  'Please update to the latest version to continue using the app.',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: _textSecondary,
+                                height: 1.45,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 18),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFF),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: const Color(0xFFD0D9EE),
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.phone_android_rounded,
+                                        size: 16,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Expanded(
+                                        child: Text(
+                                          'Current Version',
+                                          style: TextStyle(
+                                            color: _textSecondary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        updateStatus.currentVersion,
+                                        style: const TextStyle(
+                                          color: _textPrimary,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.new_releases_rounded,
+                                        size: 16,
+                                        color: _primary,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Expanded(
+                                        child: Text(
+                                          'Required Version',
+                                          style: TextStyle(
+                                            color: _textSecondary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        updateStatus.minimumVersion ?? 'N/A',
+                                        style: const TextStyle(
+                                          color: _primary,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 54,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _primary,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                onPressed: _openStore,
+                                icon: const Icon(
+                                  Icons.download_rounded,
+                                  size: 20,
+                                ),
+                                label: const Text(
+                                  'Update Now',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'A critical update is required before continuing.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: _textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Info text
-                Text(
-                  'This update includes critical improvements and bug fixes.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
                 ),
               ],
             ),

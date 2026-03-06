@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'database_service.dart';
 
 /// Represents a supported currency with display info
