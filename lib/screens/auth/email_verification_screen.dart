@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/toast_service.dart';
-import '../host/host_dashboard_screen.dart';
+import '../splash_screen.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   final String email;
@@ -20,6 +20,20 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   static const Color _primary = Color(0xFF3347A8);
   static const Color _textPrimary = Color(0xFF0F172A);
   static const Color _textSecondary = Color(0xFF64748B);
+
+  String _maskedEmail() {
+    final email = widget.email.trim();
+    final parts = email.split('@');
+    if (parts.length != 2) return email;
+
+    final local = parts[0];
+    final domain = parts[1];
+    if (local.length <= 2) return '$local@$domain';
+
+    final head = local.substring(0, 2);
+    final masked = '*' * (local.length - 2);
+    return '$head$masked@$domain';
+  }
 
   final List<TextEditingController> _digitControllers = List.generate(
     6,
@@ -84,9 +98,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       if (mounted) {
         ToastService.success(context, 'Email verified! Logging in...');
 
-        // Navigate to Dashboard
+        // Navigate through Splash so post-auth sync always runs
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HostDashboardScreen()),
+          MaterialPageRoute(builder: (_) => const SplashScreen()),
           (route) => false,
         );
       }
@@ -184,7 +198,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _bgBottom,
       body: Container(
+        constraints: const BoxConstraints.expand(),
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -193,149 +209,183 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight - 34,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFDCE5F6),
+                                  ),
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.arrow_back_ios_new_rounded,
+                                    size: 18,
+                                    color: _textPrimary,
+                                  ),
+                                  onPressed: () => Navigator.of(context).pop(),
+                                ),
+                              ),
+                            ],
                           ),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.arrow_back_ios_new_rounded,
-                              size: 18,
+                          const SizedBox(height: 16),
+                          Text(
+                            'Verify your email',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w800,
                               color: _textPrimary,
                             ),
-                            onPressed: () => Navigator.of(context).pop(),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Verify your email',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
-                        color: _textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Enter the 6-digit code sent to ${widget.email}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: _textSecondary,
-                        height: 1.45,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-                      decoration: BoxDecoration(
-                        color: _surface,
-                        borderRadius: BorderRadius.circular(22),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xFF0F172A,
-                            ).withValues(alpha: 0.08),
-                            blurRadius: 24,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Center(
-                            child: Container(
-                              width: 76,
-                              height: 76,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE9EEFC),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Icon(
-                                Icons.mark_email_read_rounded,
-                                size: 38,
-                                color: _primary,
-                              ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Enter the 6-digit code sent to ${_maskedEmail()}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: _textSecondary,
+                              height: 1.45,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                           const SizedBox(height: 18),
-                          _buildOtpInputRow(),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            height: 52,
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _verify,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _primary,
-                                disabledBackgroundColor: _primary.withValues(
-                                  alpha: 0.5,
-                                ),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+                            decoration: BoxDecoration(
+                              color: _surface,
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(
+                                color: const Color(0xFFDCE5F6),
                               ),
-                              child:
-                                  _isLoading
-                                      ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                      : const Text(
-                                        'Verify Code',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF0F172A,
+                                  ).withValues(alpha: 0.08),
+                                  blurRadius: 24,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextButton(
-                            onPressed: _canResend ? _resendCode : null,
-                            child: Text(
-                              _canResend
-                                  ? 'Resend Code'
-                                  : 'Resend in ${_resendTimer}s',
-                              style: TextStyle(
-                                color:
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Center(
+                                  child: Container(
+                                    width: 76,
+                                    height: 76,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE9EEFC),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Icon(
+                                      Icons.mark_email_read_rounded,
+                                      size: 38,
+                                      color: _primary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF7F9FF),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Text(
+                                    'Check spam/junk if you do not see the code.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: _textSecondary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                _buildOtpInputRow(),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  height: 52,
+                                  child: ElevatedButton(
+                                    onPressed: _isLoading ? null : _verify,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _primary,
+                                      disabledBackgroundColor: _primary
+                                          .withValues(alpha: 0.5),
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                    ),
+                                    child:
+                                        _isLoading
+                                            ? const SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                            : const Text(
+                                              'Verify Code',
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                TextButton(
+                                  onPressed: _canResend ? _resendCode : null,
+                                  child: Text(
                                     _canResend
-                                        ? _primary
-                                        : const Color(0xFF94A3B8),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
+                                        ? 'Resend Code'
+                                        : 'Resend in ${_resendTimer}s',
+                                    style: TextStyle(
+                                      color:
+                                          _canResend
+                                              ? _primary
+                                              : const Color(0xFF94A3B8),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
       ),

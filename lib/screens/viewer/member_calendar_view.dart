@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../models/committee.dart';
 import '../../models/member.dart';
+import '../../services/database_service.dart';
 import 'member_dashboard_screen.dart';
 
 class MemberCalendarView extends StatefulWidget {
@@ -47,6 +48,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
   static const Color _info = Color(0xFF2563EB);
   static const Color _textPrimary = Color(0xFF0F172A);
   static const Color _textSecondary = Color(0xFF64748B);
+  final _dbService = DatabaseService();
 
   late DateTime _selectedMonth;
   DateTime? _selectedDate;
@@ -71,7 +73,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
   }
 
   void _initializeCycleData() {
-    _maxCycles = widget.members.isNotEmpty ? widget.members.length : 1;
+    _maxCycles = _resolveTotalCycles();
     _selectedCycle = _findOngoingCycle();
     _calculateCycleDates();
 
@@ -86,6 +88,38 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
         _selectedMonth = DateTime(cycleStart.year, cycleStart.month);
       }
     }
+  }
+
+  int _resolveTotalCycles() {
+    final memberPayments = _dbService.getPaymentsByMember(widget.member.id);
+
+    int periodsPerPayout;
+    if (widget.committee.frequency == 'monthly') {
+      periodsPerPayout = (widget.committee.paymentIntervalDays / 30).ceil();
+    } else if (widget.committee.frequency == 'weekly') {
+      periodsPerPayout = (widget.committee.paymentIntervalDays / 7).ceil();
+    } else {
+      periodsPerPayout = widget.committee.paymentIntervalDays;
+    }
+    if (periodsPerPayout < 1) periodsPerPayout = 1;
+
+    final cyclesFromPayments =
+        memberPayments.isEmpty
+            ? 0
+            : (memberPayments.length / periodsPerPayout).ceil();
+
+    final candidates =
+        <int>[
+          widget.members.length,
+          widget.committee.totalMembers,
+          widget.committee.totalCycles,
+          cyclesFromPayments,
+          widget.member.payoutOrder,
+        ].where((value) => value > 0).toList();
+
+    if (candidates.isEmpty) return 1;
+    candidates.sort();
+    return candidates.last;
   }
 
   int _findOngoingCycle() {

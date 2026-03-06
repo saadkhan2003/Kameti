@@ -47,10 +47,42 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    final members = _dbService.getMembersByCommittee(widget.committee.id);
-    _maxCycles = members.isNotEmpty ? members.length : 1;
+    _maxCycles = _resolveTotalCycles();
     _selectedCycle = _findOngoingCycle();
     _calculateStats();
+  }
+
+  int _resolveTotalCycles() {
+    final members = _dbService.getMembersByCommittee(widget.committee.id);
+    final memberPayments = _dbService.getPaymentsByMember(widget.member.id);
+
+    int periodsPerPayout;
+    if (widget.committee.frequency == 'monthly') {
+      periodsPerPayout = (widget.committee.paymentIntervalDays / 30).ceil();
+    } else if (widget.committee.frequency == 'weekly') {
+      periodsPerPayout = (widget.committee.paymentIntervalDays / 7).ceil();
+    } else {
+      periodsPerPayout = widget.committee.paymentIntervalDays;
+    }
+    if (periodsPerPayout < 1) periodsPerPayout = 1;
+
+    final cyclesFromPayments =
+        memberPayments.isEmpty
+            ? 0
+            : (memberPayments.length / periodsPerPayout).ceil();
+
+    final candidates =
+        <int>[
+          members.length,
+          widget.committee.totalMembers,
+          widget.committee.totalCycles,
+          cyclesFromPayments,
+          widget.member.payoutOrder,
+        ].where((value) => value > 0).toList();
+
+    if (candidates.isEmpty) return 1;
+    candidates.sort();
+    return candidates.last;
   }
 
   int _findOngoingCycle() {

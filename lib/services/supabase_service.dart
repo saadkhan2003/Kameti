@@ -176,6 +176,21 @@ class SupabaseService {
     }
   }
 
+  /// Get member count for a committee (lightweight helper)
+  Future<int> getMemberCount(String committeeId) async {
+    try {
+      final response = await client
+          .from(membersTable)
+          .select('id')
+          .eq('committee_id', committeeId);
+
+      return _toRows(response).length;
+    } catch (e) {
+      _log('❌ Error getting member count: $e');
+      return 0;
+    }
+  }
+
   /// Create or update a member
   Future<void> upsertMember(Member member) async {
     await client.from(membersTable).upsert(member.toJson());

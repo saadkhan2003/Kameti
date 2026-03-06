@@ -683,6 +683,12 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
               ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: _textSecondary),
+              color: _surface,
+              elevation: 8,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: Color(0xFFDCE5F6)),
+              ),
               onSelected: (value) {
                 if (value == 'edit') {
                   _showAddMemberDialog(existingMember: member);
@@ -700,7 +706,10 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                         children: [
                           Icon(Icons.share, size: 18, color: _primary),
                           SizedBox(width: 8),
-                          Text('Share Code'),
+                          Text(
+                            'Share Code',
+                            style: TextStyle(color: _textPrimary),
+                          ),
                         ],
                       ),
                     ),
@@ -708,9 +717,9 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                       value: 'edit',
                       child: Row(
                         children: [
-                          Icon(Icons.edit, size: 18),
+                          Icon(Icons.edit, size: 18, color: _textSecondary),
                           SizedBox(width: 8),
-                          Text('Edit'),
+                          Text('Edit', style: TextStyle(color: _textPrimary)),
                         ],
                       ),
                     ),

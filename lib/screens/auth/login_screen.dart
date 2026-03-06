@@ -7,7 +7,7 @@ import '../../services/auth_service.dart';
 import '../../services/analytics_service.dart';
 import '../../services/toast_service.dart';
 import '../../utils/app_theme.dart';
-import '../host/host_dashboard_screen.dart';
+import '../splash_screen.dart';
 import 'email_verification_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
             AnalyticsService.logLogin();
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const HostDashboardScreen()),
+              MaterialPageRoute(builder: (_) => const SplashScreen()),
             );
           }
         }
@@ -84,14 +84,13 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+
         AnalyticsService.logLogin();
 
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-              builder: (context) => const HostDashboardScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const SplashScreen()),
           );
         }
       } else {
@@ -120,6 +119,34 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } catch (e) {
+      final rawError = e.toString();
+
+      if (!_isLogin && rawError.toLowerCase().contains('already registered')) {
+        final email = _emailController.text.trim();
+
+        try {
+          await _authService.resendVerificationCode(email);
+          if (mounted) {
+            ToastService.info(
+              context,
+              'Email already exists. Verification code sent again.',
+            );
+          }
+        } catch (_) {
+          // Ignore resend failure here; user can still proceed to OTP screen.
+        }
+
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EmailVerificationScreen(email: email),
+            ),
+          );
+        }
+        return;
+      }
+
       String userFriendlyMessage = _getUserFriendlyErrorMessage(e.toString());
 
       setState(() {
@@ -160,7 +187,13 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (error.contains('already registered')) {
-      return 'This email is already registered. Please log in instead.';
+      return 'This email is already registered. Please verify your email or sign in if already verified.';
+    }
+
+    if (error.contains('Database error saving new user') ||
+        error.contains('AuthRetryableFetchException') ||
+        error.contains('statusCode: 500')) {
+      return 'Account creation is temporarily unavailable due to a server setup issue. Please try Google Sign-In or contact support.';
     }
 
     // Default: clean up the error message
@@ -312,9 +345,7 @@ class _LoginScreenState extends State<LoginScreen> {
           AnalyticsService.logLogin();
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-              builder: (context) => const HostDashboardScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const SplashScreen()),
           );
         }
       }

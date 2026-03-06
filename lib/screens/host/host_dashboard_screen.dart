@@ -63,6 +63,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
   @override
   void initState() {
     super.initState();
+
     _tabController = TabController(length: 2, vsync: this);
     _loadCommittees();
 
@@ -73,7 +74,9 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
       _realtimeSyncService.startListening(userId);
     }
 
-    // Initial sync is already performed in SplashScreen; avoid duplicate full sync here.
+    // Ensure data appears even if splash sync timed out or was delayed.
+    // Uses silent sync (no toasts) and respects in-flight/cooldown logic in SyncService.
+    Future.microtask(_syncDataSilentOnStart);
 
     // Schedule in-app review prompt after dashboard renders.
     // ReviewService internally checks whether all conditions are met.
@@ -85,6 +88,36 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
     // Start email verification check timer
     _startEmailVerificationCheck();
+  }
+
+  Future<void> _syncDataSilentOnStart() async {
+    if (_isSyncing) return;
+
+    final hostId = _authService.currentUser?.id ?? '';
+    if (hostId.isEmpty) return;
+
+    setState(() => _isSyncing = true);
+    _syncStatusService.setSyncing();
+
+    try {
+      final result = await _syncService.syncAll(hostId);
+      if (!mounted) return;
+
+      if (result.success) {
+        _syncStatusService.setSynced();
+        _loadCommittees();
+      } else {
+        _syncStatusService.setError(result.message);
+      }
+    } catch (_) {
+      if (mounted) {
+        _syncStatusService.setError('Startup sync failed');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSyncing = false);
+      }
+    }
   }
 
   void _startEmailVerificationCheck() {
@@ -329,7 +362,13 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
               borderRadius: BorderRadius.circular(18),
             ),
             backgroundColor: _surface,
-            title: const Text('Delete Kameti?'),
+            title: const Text(
+              'Delete Kameti?',
+              style: TextStyle(
+                color: _textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             content: Text(
               'This will permanently delete "${committee.name}" and all its data. This cannot be undone.',
               style: const TextStyle(color: _textSecondary),

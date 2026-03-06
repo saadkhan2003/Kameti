@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:package_info_plus/package_info_plus.dart';
@@ -24,6 +25,8 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
+  StreamSubscription<dynamic>? _authStateSub;
+
   late AnimationController _controller;
   late AnimationController _pulseController;
   late Animation<double> _fadeAnimation;
@@ -100,8 +103,7 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _loadAppVersion() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
-      if (!mounted) return;
-      setState(() {
+      _safeSetState(() {
         _appVersion = 'v${packageInfo.version}';
       });
     } catch (_) {
@@ -109,8 +111,15 @@ class _SplashScreenState extends State<SplashScreen>
     }
   }
 
+  void _safeSetState(VoidCallback fn) {
+    if (!mounted) return;
+    setState(fn);
+  }
+
   void _setupAuthListener() {
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    _authStateSub = Supabase.instance.client.auth.onAuthStateChange.listen((
+      data,
+    ) {
       final event = data.event;
       final session = data.session;
 
@@ -126,24 +135,15 @@ class _SplashScreenState extends State<SplashScreen>
         }
       }
 
-      // Handle OAuth sign-in completion on Web
-      if (event == AuthChangeEvent.signedIn && session != null && kIsWeb) {
-        debugPrint('OAuth sign-in completed on web');
-        if (mounted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const HostDashboardScreen()),
-            );
-          });
-        }
-      }
+      // Keep signed-in handling centralized in _initializeApp to avoid
+      // duplicate navigation/sync paths on web OAuth callback.
     });
   }
 
   Future<void> _initializeApp() async {
     try {
       // Step 0: Check for updates
-      setState(() => _status = 'Checking for updates...');
+      _safeSetState(() => _status = 'Checking for updates...');
       final remoteConfig = RemoteConfigService();
       await remoteConfig.initialize();
       final updateStatus = await remoteConfig.checkForUpdate();
@@ -154,7 +154,7 @@ class _SplashScreenState extends State<SplashScreen>
       }
 
       // Step 1: Database
-      setState(() => _status = 'Loading database...');
+      _safeSetState(() => _status = 'Loading database...');
       await Future.delayed(const Duration(milliseconds: 300));
 
       // Step 1.5: Check if first launch (show onboarding)
@@ -162,7 +162,7 @@ class _SplashScreenState extends State<SplashScreen>
       final isFirstLaunch = await dbService.isFirstLaunch();
 
       if (isFirstLaunch) {
-        setState(() => _status = 'Welcome!');
+        _safeSetState(() => _status = 'Welcome!');
         await Future.delayed(const Duration(milliseconds: 500));
 
         if (mounted) {
@@ -187,7 +187,7 @@ class _SplashScreenState extends State<SplashScreen>
       }
 
       // Step 2: Check auth
-      setState(() => _status = 'Checking authentication...');
+      _safeSetState(() => _status = 'Checking authentication...');
       await Future.delayed(const Duration(milliseconds: 300));
 
       final authService = AuthService();
@@ -215,11 +215,11 @@ class _SplashScreenState extends State<SplashScreen>
       // Step 3.5: Sync if logged in AND is a real host (and verified)
 
       if (isRealHost) {
-        setState(() => _status = 'Syncing data...');
+        _safeSetState(() => _status = 'Syncing data...');
         try {
           final syncService = SyncService();
           await syncService
-              .syncAll(user!.id)
+              .syncAll(user!.id, force: true)
               .timeout(
                 const Duration(seconds: 5),
                 onTimeout: () => SyncResult(success: true, message: 'Timeout'),
@@ -230,7 +230,7 @@ class _SplashScreenState extends State<SplashScreen>
       }
 
       // Step 4: Ready
-      setState(() {
+      _safeSetState(() {
         _status = 'Ready!';
         _isComplete = true;
       });
@@ -294,12 +294,13 @@ class _SplashScreenState extends State<SplashScreen>
       }
     } catch (e) {
       debugPrint('Splash init error: $e');
-      setState(() => _status = 'Error: $e');
+      _safeSetState(() => _status = 'Error: $e');
     }
   }
 
   @override
   void dispose() {
+    _authStateSub?.cancel();
     _controller.dispose();
     _pulseController.dispose();
     super.dispose();
@@ -640,6 +641,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _showForceUpdateDialog(UpdateStatus updateStatus) {
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => ForceUpdateScreen(updateStatus: updateStatus),

@@ -395,7 +395,26 @@ class SyncService {
 
       if (response == null) return null;
 
-      final committee = Committee.fromJson(response);
+      var committee = Committee.fromJson(response);
+
+      final memberCount = await _supabase.getMemberCount(committee.id);
+      if (memberCount > 0) {
+        committee = committee.copyWith(
+          totalMembers:
+              committee.totalMembers > 0
+                  ? (committee.totalMembers >= memberCount
+                      ? committee.totalMembers
+                      : memberCount)
+                  : memberCount,
+          totalCycles:
+              committee.totalCycles > 0
+                  ? (committee.totalCycles >= memberCount
+                      ? committee.totalCycles
+                      : memberCount)
+                  : memberCount,
+        );
+      }
+
       await _dbService.saveCommittee(committee);
 
       return committee;
@@ -488,6 +507,30 @@ class SyncService {
     }
 
     _log('🔄 Refreshing viewer data for committee: $committeeId');
+
+    final cloudCommittee = await _supabase.getCommittee(committeeId);
+    if (cloudCommittee != null) {
+      final memberCount = await _supabase.getMemberCount(committeeId);
+      final hydratedCommittee =
+          memberCount > 0
+              ? cloudCommittee.copyWith(
+                totalMembers:
+                    cloudCommittee.totalMembers > 0
+                        ? (cloudCommittee.totalMembers >= memberCount
+                            ? cloudCommittee.totalMembers
+                            : memberCount)
+                        : memberCount,
+                totalCycles:
+                    cloudCommittee.totalCycles > 0
+                        ? (cloudCommittee.totalCycles >= memberCount
+                            ? cloudCommittee.totalCycles
+                            : memberCount)
+                        : memberCount,
+              )
+              : cloudCommittee;
+      await _dbService.saveCommittee(hydratedCommittee);
+    }
+
     if (memberId != null) {
       await _downloadSingleMemberOnly(memberId);
     } else {

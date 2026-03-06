@@ -21,10 +21,24 @@ class AuthService {
     String? displayName,
   }) async {
     try {
+      final normalizedName = displayName?.trim();
+      final metadata =
+          (normalizedName != null && normalizedName.isNotEmpty)
+              ? {
+                // Keep multiple common keys for compatibility with
+                // existing Supabase SQL triggers/functions.
+                'full_name': normalizedName,
+                'name': normalizedName,
+                'display_name': normalizedName,
+                // App-level guard: do not allow login bypass until OTP verify path sets true.
+                'app_email_verified': false,
+              }
+              : {'app_email_verified': false};
+
       final response = await _auth.signUp(
         email: email,
         password: password,
-        data: displayName != null ? {'full_name': displayName} : null,
+        data: metadata,
       );
       return response;
     } catch (e) {
@@ -38,7 +52,31 @@ class AuthService {
     required String password,
   }) async {
     try {
-      return await _auth.signInWithPassword(email: email, password: password);
+      final response = await _auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      final user = response.user ?? _auth.currentUser;
+      final userMetadata = user?.userMetadata;
+      final hasAppVerificationFlag =
+          userMetadata != null &&
+          userMetadata.containsKey('app_email_verified');
+      final appEmailVerified = userMetadata?['app_email_verified'] == true;
+      final isUnverifiedEmailUser =
+          user != null &&
+          !user.isAnonymous &&
+          user.email != null &&
+          (hasAppVerificationFlag
+              ? !appEmailVerified
+              : user.emailConfirmedAt == null);
+
+      if (isUnverifiedEmailUser) {
+        await _auth.signOut(scope: SignOutScope.local);
+        throw 'Email not confirmed. Please verify your email before logging in.';
+      }
+
+      return response;
     } catch (e) {
       throw 'Sign in failed: ${e.toString()}';
     }
@@ -147,6 +185,15 @@ class AuthService {
       } catch (_) {
         // Fallback if not a new signup
         await _auth.verifyOTP(token: token, type: OtpType.email, email: email);
+      }
+
+      try {
+        await _auth.updateUser(
+          UserAttributes(data: {'app_email_verified': true}),
+        );
+      } catch (_) {
+        // Ignore metadata update failure here; server-side email confirmation
+        // may still be sufficient for older accounts.
       }
     } catch (e) {
       throw 'Invalid code. Please check and try again.';
