@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -29,12 +29,12 @@ void main() async {
     // Begin loading the first App Open Ad in the background immediately.
     // By the time the splash screen finishes, the ad will be ready.
     await AppOpenAdService.instance.initialize();
-    print('✅ Google Mobile Ads SDK initialized');
+    if (kDebugMode) debugPrint('✅ Google Mobile Ads SDK initialized');
   }
 
   // Load environment variables (renamed to avoid Netlify 404 on dotfiles)
   await dotenv.load(fileName: "assets/env");
-  print('📦 Environment variables loaded');
+  if (kDebugMode) debugPrint('📦 Environment variables loaded');
 
   // Initialize Supabase (new backend)
   if (SupabaseConfig.isConfigured) {
@@ -45,9 +45,11 @@ void main() async {
         authFlowType: kIsWeb ? AuthFlowType.pkce : AuthFlowType.pkce,
       ),
     );
-    print('✅ Supabase initialized');
+    if (kDebugMode) debugPrint('✅ Supabase initialized');
   } else {
-    print('⚠️  Supabase not configured - add credentials to .env');
+    if (kDebugMode) {
+      debugPrint('⚠️  Supabase not configured - add credentials to .env');
+    }
   }
 
   // Firebase has been fully replaced by Supabase.
@@ -138,9 +140,7 @@ class _CommitteeAppState extends State<CommitteeApp>
     if (kIsWeb) return app;
 
     return UpgradeAlert(
-      upgrader: Upgrader(
-        durationUntilAlertAgain: const Duration(days: 3),
-      ),
+      upgrader: Upgrader(durationUntilAlertAgain: const Duration(days: 3)),
       dialogStyle: UpgradeDialogStyle.material,
       child: app,
     );

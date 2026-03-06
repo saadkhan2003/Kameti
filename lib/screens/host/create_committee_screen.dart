@@ -171,7 +171,11 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
     return Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: _bg,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        foregroundColor: _textPrimary,
+        iconTheme: const IconThemeData(color: _textPrimary),
         elevation: 0,
         title: Text(
           'Create Committee',
@@ -241,6 +245,10 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                   children: [
                     TextFormField(
                       controller: _nameController,
+                      style: GoogleFonts.inter(
+                        color: _textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                       decoration: _inputDecoration(
                         label: 'Kameti Name',
                         hint: 'e.g., Family Committee',
@@ -257,6 +265,10 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                     TextFormField(
                       controller: _amountController,
                       keyboardType: TextInputType.number,
+                      style: GoogleFonts.inter(
+                        color: _textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                       decoration: _inputDecoration(
                         label: 'Amount Per Collection',
                         hint: 'e.g., 1000',
@@ -351,6 +363,10 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                       TextFormField(
                         controller: _intervalController,
                         keyboardType: TextInputType.number,
+                        style: GoogleFonts.inter(
+                          color: _textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
                         decoration: _inputDecoration(
                           label: 'Days per Cycle',
                           hint: 'e.g., 10, 45, 90',
@@ -514,6 +530,22 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
       labelText: label,
       hintText: hint,
       prefixText: prefixText,
+      labelStyle: GoogleFonts.inter(
+        color: _textSecondary,
+        fontWeight: FontWeight.w600,
+      ),
+      floatingLabelStyle: GoogleFonts.inter(
+        color: _primary,
+        fontWeight: FontWeight.w700,
+      ),
+      hintStyle: GoogleFonts.inter(
+        color: _textSecondary,
+        fontWeight: FontWeight.w500,
+      ),
+      prefixStyle: GoogleFonts.inter(
+        color: _textPrimary,
+        fontWeight: FontWeight.w700,
+      ),
       prefixIcon: Icon(icon, color: _textSecondary),
       filled: true,
       fillColor: const Color(0xFFF8FAFF),

@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import '../models/committee.dart';
 import '../models/member.dart';
 import '../models/payment.dart';
@@ -6,6 +7,10 @@ import '../models/payment.dart';
 /// Supabase service for database operations
 /// Replaces Firebase Firestore with Supabase PostgreSQL
 class SupabaseService {
+  void _log(String message) {
+    if (kDebugMode) debugPrint(message);
+  }
+
   static final SupabaseService _instance = SupabaseService._internal();
   factory SupabaseService() => _instance;
   SupabaseService._internal();
@@ -17,6 +22,42 @@ class SupabaseService {
   static const String membersTable = 'members';
   static const String paymentsTable = 'payments';
 
+  static const int _batchSize = 500;
+
+  static const String _committeeColumns =
+      'id,code,name,host_id,contribution_amount,frequency,start_date,total_members,created_at,'
+      'is_active,payment_interval_days,is_archived,archived_at,total_cycles,is_synced,currency';
+
+  static const String _memberColumns =
+      'id,committee_id,member_code,name,phone,payout_order,has_received_payout,payout_date,created_at';
+
+  static const String _paymentColumns =
+      'id,member_id,committee_id,date,is_paid,marked_by,marked_at';
+
+  List<Map<String, dynamic>> _toRows(dynamic response) {
+    return (response as List)
+        .map((row) => Map<String, dynamic>.from(row as Map))
+        .toList(growable: false);
+  }
+
+  Map<String, dynamic>? _toRow(dynamic response) {
+    if (response == null) return null;
+    return Map<String, dynamic>.from(response as Map);
+  }
+
+  Future<void> _upsertInBatches(
+    String table,
+    List<Map<String, dynamic>> rows,
+  ) async {
+    if (rows.isEmpty) return;
+
+    for (int i = 0; i < rows.length; i += _batchSize) {
+      final end = (i + _batchSize < rows.length) ? i + _batchSize : rows.length;
+      final batch = rows.sublist(i, end);
+      await client.from(table).upsert(batch);
+    }
+  }
+
   // ============================================
   // COMMITTEES
   // ============================================
@@ -24,31 +65,19 @@ class SupabaseService {
   /// Get all committees for a host
   Future<List<Committee>> getCommittees(String hostId) async {
     try {
-      print('🔍 Supabase: Fetching committees for host $hostId');
+      _log('🔍 Supabase: Fetching committees for host $hostId');
       final response = await client
           .from(committeesTable)
-          .select()
+          .select(_committeeColumns)
           .eq('host_id', hostId);
 
-      print('🔍 Supabase: Raw response length: ${(response as List).length}');
-      if ((response as List).isNotEmpty) {
-        print('🔍 Supabase: First item keys: ${(response as List).first.keys.toList()}');
-      }
+      final rows = _toRows(response);
+      final committees = rows.map(Committee.fromJson).toList(growable: false);
 
-      final committees = (response as List).map((json) {
-         try {
-           return Committee.fromJson(json);
-         } catch (e) {
-           print('❌ Error parsing committee JSON: $e');
-           print('   JSON: $json');
-           rethrow;
-         }
-      }).toList();
-      
-      print('✅ Supabase: Parsed ${committees.length} committees');
+      _log('✅ Supabase: Parsed ${committees.length} committees');
       return committees;
     } catch (e) {
-      print('❌ Error getting committees: $e');
+      _log('❌ Error getting committees: $e');
       return [];
     }
   }
@@ -56,15 +85,17 @@ class SupabaseService {
   /// Get a single committee by ID
   Future<Committee?> getCommittee(String committeeId) async {
     try {
-      final response = await client
-          .from(committeesTable)
-          .select()
-          .eq('id', committeeId)
-          .maybeSingle();
+      final response =
+          await client
+              .from(committeesTable)
+              .select(_committeeColumns)
+              .eq('id', committeeId)
+              .maybeSingle();
 
-      return response != null ? Committee.fromJson(response) : null;
+      final row = _toRow(response);
+      return row != null ? Committee.fromJson(row) : null;
     } catch (e) {
-      print('Error getting committee: $e');
+      _log('❌ Error getting committee: $e');
       return null;
     }
   }
@@ -79,7 +110,7 @@ class SupabaseService {
     await client.from(committeesTable).delete().eq('id', committeeId);
   }
 
- /// Subscribe to committee changes for a host
+  /// Subscribe to committee changes for a host
   Stream<List<Committee>> watchCommittees(String hostId) {
     return client
         .from(committeesTable)
@@ -97,13 +128,51 @@ class SupabaseService {
     try {
       final response = await client
           .from(membersTable)
-          .select()
+          .select(_memberColumns)
           .eq('committee_id', committeeId);
 
-      return (response as List).map((json) => Member.fromJson(json)).toList();
+      final rows = _toRows(response);
+      return rows.map(Member.fromJson).toList(growable: false);
     } catch (e) {
-      print('Error getting members: $e');
+      _log('❌ Error getting members: $e');
       return [];
+    }
+  }
+
+  /// Get a single member by ID
+  Future<Member?> getMemberById(String memberId) async {
+    try {
+      final response =
+          await client
+              .from(membersTable)
+              .select(_memberColumns)
+              .eq('id', memberId)
+              .maybeSingle();
+
+      final row = _toRow(response);
+      return row != null ? Member.fromJson(row) : null;
+    } catch (e) {
+      _log('❌ Error getting member by id: $e');
+      return null;
+    }
+  }
+
+  /// Get a single member by member code within a committee
+  Future<Member?> getMemberByCode(String committeeId, String memberCode) async {
+    try {
+      final response =
+          await client
+              .from(membersTable)
+              .select(_memberColumns)
+              .eq('committee_id', committeeId)
+              .eq('member_code', memberCode)
+              .maybeSingle();
+
+      final row = _toRow(response);
+      return row != null ? Member.fromJson(row) : null;
+    } catch (e) {
+      _log('❌ Error getting member by code: $e');
+      return null;
     }
   }
 
@@ -115,8 +184,9 @@ class SupabaseService {
   /// Batch upsert members
   Future<void> upsertMembers(List<Member> members) async {
     if (members.isEmpty) return;
-    await client.from(membersTable).upsert(
-      members.map((m) => m.toJson()).toList(),
+    await _upsertInBatches(
+      membersTable,
+      members.map((m) => m.toJson()).toList(growable: false),
     );
   }
 
@@ -143,12 +213,33 @@ class SupabaseService {
     try {
       final response = await client
           .from(paymentsTable)
-          .select()
+          .select(_paymentColumns)
           .eq('committee_id', committeeId);
 
-      return (response as List).map((json) => Payment.fromJson(json)).toList();
+      final rows = _toRows(response);
+      return rows.map(Payment.fromJson).toList(growable: false);
     } catch (e) {
-      print('Error getting payments: $e');
+      _log('❌ Error getting payments: $e');
+      return [];
+    }
+  }
+
+  /// Get payments for a specific member in a committee
+  Future<List<Payment>> getPaymentsForMember(
+    String committeeId,
+    String memberId,
+  ) async {
+    try {
+      final response = await client
+          .from(paymentsTable)
+          .select(_paymentColumns)
+          .eq('committee_id', committeeId)
+          .eq('member_id', memberId);
+
+      final rows = _toRows(response);
+      return rows.map(Payment.fromJson).toList(growable: false);
+    } catch (e) {
+      _log('❌ Error getting member payments: $e');
       return [];
     }
   }
@@ -156,15 +247,17 @@ class SupabaseService {
   /// Get a single payment
   Future<Payment?> getPayment(String paymentId) async {
     try {
-      final response = await client
-          .from(paymentsTable)
-          .select()
-          .eq('id', paymentId)
-          .maybeSingle();
+      final response =
+          await client
+              .from(paymentsTable)
+              .select(_paymentColumns)
+              .eq('id', paymentId)
+              .maybeSingle();
 
-      return response != null ? Payment.fromJson(response) : null;
+      final row = _toRow(response);
+      return row != null ? Payment.fromJson(row) : null;
     } catch (e) {
-      print('Error getting payment: $e');
+      _log('❌ Error getting payment: $e');
       return null;
     }
   }
@@ -177,15 +270,13 @@ class SupabaseService {
   /// Batch upsert payments
   Future<void> upsertPayments(List<Payment> payments) async {
     if (payments.isEmpty) return;
-    
-    // Supabase allows up to 1000 rows per batch
-    const batchSize = 500;
-    for (int i = 0; i < payments.length; i += batchSize) {
-      final batch = payments.skip(i).take(batchSize).toList();
-      await client.from(paymentsTable).upsert(
-        batch.map((p) => p.toJson()).toList(),
-      );
-      print('✅ Synced batch ${i ~/ batchSize + 1}: ${batch.length} payments');
+
+    final rows = payments.map((p) => p.toJson()).toList(growable: false);
+    for (int i = 0; i < rows.length; i += _batchSize) {
+      final end = (i + _batchSize < rows.length) ? i + _batchSize : rows.length;
+      final batch = rows.sublist(i, end);
+      await client.from(paymentsTable).upsert(batch);
+      _log('✅ Synced batch ${i ~/ _batchSize + 1}: ${batch.length} payments');
     }
   }
 

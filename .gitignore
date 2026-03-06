@@ -143,3 +143,10 @@ package-lock.json
 # Ignore all build artifacts in flutter_assets
 **/flutter_assets/.env
 **/flutter_assets/google-services.json
+
+# Local CI/build helper artifacts
+keystore.base64.txt
+build_log.txt
+
+# Local Flutter SDK clone (used by some CI/local scripts)
+/flutter/

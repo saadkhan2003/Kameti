@@ -203,7 +203,10 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
     setState(() => _isRefreshing = true);
 
     try {
-      await _syncService.refreshViewerData(widget.committee.id);
+      await _syncService.refreshViewerData(
+        widget.committee.id,
+        memberId: widget.member.id,
+      );
       _loadData();
     } finally {
       if (mounted) {
