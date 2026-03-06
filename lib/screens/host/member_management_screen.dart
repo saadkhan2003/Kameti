@@ -129,9 +129,28 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
               const SizedBox(height: 20),
               TextField(
                 controller: nameController,
+                style: GoogleFonts.inter(
+                  color: _textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Member Name',
-                  prefixIcon: const Icon(Icons.person_outline),
+                  labelStyle: GoogleFonts.inter(
+                    color: _textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  floatingLabelStyle: GoogleFonts.inter(
+                    color: _primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  hintStyle: GoogleFonts.inter(
+                    color: _textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.person_outline,
+                    color: _textSecondary,
+                  ),
                   filled: true,
                   fillColor: const Color(0xFFF8FAFF),
                   border: OutlineInputBorder(
@@ -148,9 +167,28 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: phoneController,
+                style: GoogleFonts.inter(
+                  color: _textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Phone Number',
-                  prefixIcon: const Icon(Icons.phone_outlined),
+                  labelStyle: GoogleFonts.inter(
+                    color: _textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  floatingLabelStyle: GoogleFonts.inter(
+                    color: _primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  hintStyle: GoogleFonts.inter(
+                    color: _textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.phone_outlined,
+                    color: _textSecondary,
+                  ),
                   filled: true,
                   fillColor: const Color(0xFFF8FAFF),
                   border: OutlineInputBorder(

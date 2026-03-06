@@ -73,8 +73,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
       _realtimeSyncService.startListening(userId);
     }
 
-    // Trigger silent sync on load to fetch fresh data
-    _syncDataSilent();
+    // Initial sync is already performed in SplashScreen; avoid duplicate full sync here.
 
     // Schedule in-app review prompt after dashboard renders.
     // ReviewService internally checks whether all conditions are met.
@@ -125,27 +124,6 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     });
   }
 
-  // Silent sync for initState (no toast)
-  Future<void> _syncDataSilent() async {
-    if (_isSyncing) return;
-
-    setState(() => _isSyncing = true);
-    _syncStatusService.setSyncing();
-
-    final hostId = _authService.currentUser?.id ?? '';
-    final result = await _syncService.syncAll(hostId);
-
-    if (mounted) {
-      setState(() => _isSyncing = false);
-      if (result.success) {
-        _syncStatusService.setSynced();
-        _loadCommittees();
-      } else {
-        _syncStatusService.setError(result.message);
-      }
-    }
-  }
-
   // Sync with feedback (for manual sync tap)
   Future<void> _syncData() async {
     if (_isSyncing) return;
@@ -154,7 +132,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     _syncStatusService.setSyncing();
 
     final hostId = _authService.currentUser?.id ?? '';
-    final result = await _syncService.syncAll(hostId);
+    final result = await _syncService.syncAll(hostId, force: true);
 
     if (mounted) {
       setState(() => _isSyncing = false);
@@ -1546,10 +1524,19 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                   obscureText: true,
                   maxLength: 4,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 24, letterSpacing: 16),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    letterSpacing: 16,
+                    color: _textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
                   decoration: InputDecoration(
                     counterText: '',
                     hintText: '••••',
+                    hintStyle: const TextStyle(
+                      color: _textSecondary,
+                      letterSpacing: 16,
+                    ),
                     filled: true,
                     fillColor: const Color(0xFFF8FAFF),
                     border: OutlineInputBorder(

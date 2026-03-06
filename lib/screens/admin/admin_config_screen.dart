@@ -137,7 +137,11 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
     return Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: _bg,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        foregroundColor: _textPrimary,
+        iconTheme: const IconThemeData(color: _textPrimary),
         elevation: 0,
         title: Text(
           'Remote Config Admin',

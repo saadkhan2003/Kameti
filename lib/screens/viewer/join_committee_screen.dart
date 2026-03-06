@@ -170,6 +170,10 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
         return;
       }
 
+      try {
+        await _syncService.syncMemberByCode(committee.id, memberCode);
+      } catch (_) {}
+
       final memberFound = _dbService.getMemberByCode(committee.id, memberCode);
       if (memberFound == null) {
         setState(() {

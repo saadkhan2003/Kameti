@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import '../models/committee.dart';
 import '../models/member.dart';
 import '../models/payment.dart';
@@ -6,6 +7,14 @@ import 'database_service.dart';
 import 'supabase_service.dart';
 
 class SyncService {
+  void _log(String message) {
+    if (kDebugMode) debugPrint(message);
+  }
+
+  static const Duration _fullSyncCooldown = Duration(seconds: 20);
+  static final Map<String, DateTime> _lastFullSyncByHost = {};
+  static final Map<String, Future<SyncResult>> _inFlightFullSyncByHost = {};
+
   final SupabaseService _supabase = SupabaseService();
   final DatabaseService _dbService = DatabaseService();
 
@@ -18,7 +27,37 @@ class SyncService {
 
   // ============ SYNC ALL DATA ============
 
-  Future<SyncResult> syncAll(String hostId) async {
+  Future<SyncResult> syncAll(String hostId, {bool force = false}) async {
+    final inFlight = _inFlightFullSyncByHost[hostId];
+    if (inFlight != null) {
+      _log(
+        '⏳ Full sync already running. Joining existing sync for host: $hostId',
+      );
+      return inFlight;
+    }
+
+    final syncFuture = _runSyncAll(hostId, force: force);
+    _inFlightFullSyncByHost[hostId] = syncFuture;
+
+    try {
+      return await syncFuture;
+    } finally {
+      if (identical(_inFlightFullSyncByHost[hostId], syncFuture)) {
+        _inFlightFullSyncByHost.remove(hostId);
+      }
+    }
+  }
+
+  Future<SyncResult> _runSyncAll(String hostId, {required bool force}) async {
+    final lastSyncAt = _lastFullSyncByHost[hostId];
+    if (!force && lastSyncAt != null) {
+      final elapsed = DateTime.now().difference(lastSyncAt);
+      if (elapsed < _fullSyncCooldown) {
+        _log('⏱️ Skipping full sync (cooldown active) for host: $hostId');
+        return SyncResult(success: true, message: 'Sync recently completed');
+      }
+    }
+
     if (!await isOnline()) {
       return SyncResult(success: false, message: 'No internet connection');
     }
@@ -44,14 +83,14 @@ class SyncService {
       for (final committee in committees) {
         futures.add(
           syncMembers(committee.id).catchError((e) {
-            print('⚠️ Sync members failed for ${committee.id}: $e');
+            _log('⚠️ Sync members failed for ${committee.id}: $e');
             return SyncCounts();
           }),
         );
 
         futures.add(
           syncPayments(committee.id).catchError((e) {
-            print('⚠️ Sync payments failed for ${committee.id}: $e');
+            _log('⚠️ Sync payments failed for ${committee.id}: $e');
             return SyncCounts();
           }),
         );
@@ -63,6 +102,8 @@ class SyncService {
         uploaded += result.uploaded;
         downloaded += result.downloaded;
       }
+
+      _lastFullSyncByHost[hostId] = DateTime.now();
 
       return SyncResult(
         success: true,
@@ -116,14 +157,14 @@ class SyncService {
         if (local.isSynced) {
           // Case A: Was synced before -> Remote Deletion detected!
           // Action: Delete local
-          print(
+          _log(
             '🗑️ Sync: Committee ${local.name} was deleted remotely. removing locally.',
           );
           await _dbService.deleteCommittee(local.id);
         } else {
           // Case B: Never synced -> New Local Committee
           // Action: Upload to cloud
-          print('kameti Sync: New local committee ${local.name} found. Uploading.');
+          _log('⬆️ Sync: New local committee ${local.name} found. Uploading.');
           await _supabase.upsertCommittee(local);
           await _dbService.saveCommittee(local.copyWith(isSynced: true));
           uploaded++;
@@ -219,24 +260,52 @@ class SyncService {
     int uploaded = 0;
     int downloaded = 0;
 
-    // Upload local payments to Supabase using batch (faster)
+    // Read local and cloud once, then diff to minimize uploads/downloads
     final localPayments = _dbService.getPaymentsByCommittee(committeeId);
-    print('📦 Local payments to upload: ${localPayments.length}');
-
-    if (localPayments.isNotEmpty) {
-      // Use Supabase Service's batch upsert
-      await _supabase.upsertPayments(localPayments);
-      uploaded += localPayments.length;
-    }
-
-    // Download payments from Supabase
     final cloudPayments = await _supabase.getPayments(committeeId);
 
+    final localById = {
+      for (final payment in localPayments) payment.id: payment,
+    };
+    final cloudById = {
+      for (final payment in cloudPayments) payment.id: payment,
+    };
+
+    final paymentsToUpload = <Payment>[];
+    for (final localPayment in localPayments) {
+      final cloudPayment = cloudById[localPayment.id];
+
+      if (cloudPayment == null) {
+        paymentsToUpload.add(localPayment);
+        continue;
+      }
+
+      bool localIsNewer = false;
+
+      if (localPayment.isPaid != cloudPayment.isPaid) {
+        if (localPayment.markedAt != null && cloudPayment.markedAt != null) {
+          localIsNewer = localPayment.markedAt!.isAfter(cloudPayment.markedAt!);
+        } else if (localPayment.markedAt != null &&
+            cloudPayment.markedAt == null) {
+          localIsNewer = true;
+        }
+      } else if (localPayment.markedAt != null &&
+          cloudPayment.markedAt != null) {
+        localIsNewer = localPayment.markedAt!.isAfter(cloudPayment.markedAt!);
+      }
+
+      if (localIsNewer) {
+        paymentsToUpload.add(localPayment);
+      }
+    }
+
+    if (paymentsToUpload.isNotEmpty) {
+      await _supabase.upsertPayments(paymentsToUpload);
+      uploaded += paymentsToUpload.length;
+    }
+
     for (final cloudPayment in cloudPayments) {
-      final existingPayment = _dbService.getPayment(
-        cloudPayment.memberId,
-        cloudPayment.date,
-      );
+      final existingPayment = localById[cloudPayment.id];
 
       bool shouldDownload = false;
 
@@ -265,6 +334,14 @@ class SyncService {
       }
     }
 
+    if (paymentsToUpload.isNotEmpty || downloaded > 0) {
+      _log(
+        '💳 Payments sync [$committeeId] '
+        'local:${localPayments.length} cloud:${cloudPayments.length} '
+        'uploaded:$uploaded downloaded:$downloaded',
+      );
+    }
+
     return SyncCounts(uploaded: uploaded, downloaded: downloaded);
   }
 
@@ -278,10 +355,10 @@ class SyncService {
       // Supabase CASCADE delete handles members and paying
       // But let's verify if manual deletion is safer if CASCADE not set
       // (The setup guide SQL had ON DELETE CASCADE, so we trust that)
-      print('Successfully deleted committee $committeeId from cloud');
+      _log('✅ Deleted committee from cloud: $committeeId');
       return true;
     } catch (e) {
-      print('Error deleting committee from cloud: $e');
+      _log('❌ Error deleting committee from cloud: $e');
       return false;
     }
   }
@@ -293,10 +370,10 @@ class SyncService {
     try {
       await _supabase.deleteMember(memberId);
       // Payments should cascade delete
-      print('Successfully deleted member $memberId from cloud');
+      _log('✅ Deleted member from cloud: $memberId');
       return true;
     } catch (e) {
-      print('Error deleting member from cloud: $e');
+      _log('❌ Error deleting member from cloud: $e');
       return false;
     }
   }
@@ -321,15 +398,28 @@ class SyncService {
       final committee = Committee.fromJson(response);
       await _dbService.saveCommittee(committee);
 
-      // 2. Download Members (READ-ONLY - no upload)
-      await _downloadMembersOnly(committee.id);
-
-      // 3. Download Payments (READ-ONLY - no upload)
-      await _downloadPaymentsOnly(committee.id);
-
       return committee;
     } catch (e) {
-      print('Viewer sync error: $e');
+      _log('❌ Viewer sync error: $e');
+      return null;
+    }
+  }
+
+  /// Sync a single member by member code for viewer flow (read-only)
+  Future<Member?> syncMemberByCode(
+    String committeeId,
+    String memberCode,
+  ) async {
+    if (!await isOnline()) return null;
+
+    try {
+      final member = await _supabase.getMemberByCode(committeeId, memberCode);
+      if (member != null) {
+        await _dbService.saveMember(member);
+      }
+      return member;
+    } catch (e) {
+      _log('❌ Viewer member sync error: $e');
       return null;
     }
   }
@@ -339,45 +429,72 @@ class SyncService {
     int downloaded = 0;
     try {
       final cloudMembers = await _supabase.getMembers(committeeId);
-      print('📥 Downloaded ${cloudMembers.length} members from cloud');
+      _log('📥 Downloaded ${cloudMembers.length} members from cloud');
 
       for (final cloudMember in cloudMembers) {
         await _dbService.saveMember(cloudMember);
         downloaded++;
       }
     } catch (e) {
-      print('Error downloading members: $e');
+      _log('❌ Error downloading members: $e');
     }
     return downloaded;
   }
 
+  /// Download only one member from cloud (for viewer-specific refresh)
+  Future<int> _downloadSingleMemberOnly(String memberId) async {
+    try {
+      final member = await _supabase.getMemberById(memberId);
+      if (member == null) return 0;
+      await _dbService.saveMember(member);
+      _log('📥 Downloaded 1 member from cloud (member scoped)');
+      return 1;
+    } catch (e) {
+      _log('❌ Error downloading single member: $e');
+      return 0;
+    }
+  }
+
   /// Download payments from cloud only - no upload (for viewers)
-  Future<int> _downloadPaymentsOnly(String committeeId) async {
+  Future<int> _downloadPaymentsOnly(
+    String committeeId, {
+    String? memberId,
+  }) async {
     int downloaded = 0;
     try {
-      final cloudPayments = await _supabase.getPayments(committeeId);
-      print('📥 Downloaded ${cloudPayments.length} payments from cloud');
+      final cloudPayments =
+          memberId == null
+              ? await _supabase.getPayments(committeeId)
+              : await _supabase.getPaymentsForMember(committeeId, memberId);
+      _log(
+        '📥 Downloaded ${cloudPayments.length} payments from cloud'
+        '${memberId != null ? ' (member scoped)' : ''}',
+      );
 
       for (final payment in cloudPayments) {
         await _dbService.savePayment(payment);
         downloaded++;
       }
     } catch (e) {
-      print('Error downloading payments: $e');
+      _log('❌ Error downloading payments: $e');
     }
     return downloaded;
   }
 
   /// Refresh viewer data from cloud (read-only)
-  Future<void> refreshViewerData(String committeeId) async {
+  Future<void> refreshViewerData(String committeeId, {String? memberId}) async {
     if (!await isOnline()) {
       throw Exception('No internet connection');
     }
 
-    print('🔄 Refreshing viewer data for committee: $committeeId');
-    await _downloadMembersOnly(committeeId);
-    await _downloadPaymentsOnly(committeeId);
-    print('✅ Viewer data refreshed');
+    _log('🔄 Refreshing viewer data for committee: $committeeId');
+    if (memberId != null) {
+      await _downloadSingleMemberOnly(memberId);
+    } else {
+      await _downloadMembersOnly(committeeId);
+    }
+    await _downloadPaymentsOnly(committeeId, memberId: memberId);
+    _log('✅ Viewer data refreshed');
   }
 
   // ============ CLOUD-ONLY OPERATIONS (NO LOCAL CACHE) ============
@@ -406,14 +523,14 @@ class SyncService {
 
   /// Push a single payment to Supabase immediately
   Future<void> pushPaymentToCloud(Payment payment) async {
-    print('🔥 pushPaymentToCloud: ${payment.id}');
+    _log('🔥 pushPaymentToCloud: ${payment.id}');
 
     if (!await isOnline()) {
       throw Exception('No internet connection');
     }
 
     await _supabase.upsertPayment(payment);
-    print('✅ Payment pushed: ${payment.id}');
+    _log('✅ Payment pushed: ${payment.id}');
   }
 
   // ============ MIGRATION HELPER ============
@@ -434,7 +551,7 @@ class SyncService {
         bool isNewHost = currentHostId.length == 36;
 
         if (committee.hostId != currentHostId && isLegacyHost && isNewHost) {
-          print(
+          _log(
             '🔄 Migrating committee ${committee.name} from ${committee.hostId} to $currentHostId',
           );
 
@@ -445,10 +562,10 @@ class SyncService {
       }
 
       if (migrationOccurred) {
-        print('✅ Migration of local data ownership complete.');
+        _log('✅ Migration of local data ownership complete.');
       }
     } catch (e) {
-      print('⚠️ Migration error: $e');
+      _log('⚠️ Migration error: $e');
     }
   }
 }

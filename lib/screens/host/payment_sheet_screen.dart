@@ -12,7 +12,6 @@ import '../../services/analytics_service.dart';
 import '../../services/toast_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
-import '../../utils/app_theme.dart';
 import 'member_management_screen.dart';
 import '../viewer/member_calendar_view.dart';
 
@@ -52,10 +51,6 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   int _selectedCycle = 1;
   int _maxCycles = 1;
 
-  // Date filter
-  DateTime? _filterStartDate;
-  DateTime? _filterEndDate;
-
   // Number of extra future periods to show (for advance payments)
   final int _extraPeriods = 1;
 
@@ -65,30 +60,43 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     _syncAndLoad();
   }
 
-  Future<void> _syncAndLoad() async {
+  Future<void> _syncAndLoad({bool waitForSync = false}) async {
     // Load from local FIRST (fast, non-blocking)
     await _loadDataFromLocal();
 
+    if (waitForSync) {
+      await _syncCommitteeData();
+      await _loadDataFromLocal();
+      return;
+    }
+
     // Then sync in background (don't await - may hang on web)
     _syncInBackground();
+  }
+
+  Future<void> _syncCommitteeData() async {
+    // If viewing as member (viewer mode), use read-only sync
+    if (widget.viewAsMember != null) {
+      await _syncService.refreshViewerData(
+        widget.committee.id,
+        memberId: widget.viewAsMember!.id,
+      );
+      return;
+    }
+
+    // Host mode - can write
+    await _syncService.syncMembers(widget.committee.id);
+    await _syncService.syncPayments(widget.committee.id);
   }
 
   void _syncInBackground() {
     // Fire and forget - don't block UI
     Future(() async {
       try {
-        // If viewing as member (viewer mode), use read-only sync
-        if (widget.viewAsMember != null) {
-          await _syncService.refreshViewerData(widget.committee.id);
-        } else {
-          // Host mode - can write
-          await _syncService.syncMembers(widget.committee.id);
-          await _syncService.syncPayments(widget.committee.id);
-        }
+        await _syncCommitteeData();
         // Reload after sync completes
         if (mounted) {
-          _loadPaymentsFromLocal();
-          setState(() {});
+          await _loadDataFromLocal();
         }
       } catch (e) {
         debugPrint('Background sync error: $e');
@@ -225,8 +233,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       }
     } else {
       // Fallback: no members, use extraPeriods logic
-      final startDate = _filterStartDate ?? committeeStartDate;
-      DateTime baseEndDate = _filterEndDate ?? DateTime.now();
+      final startDate = committeeStartDate;
+      DateTime baseEndDate = DateTime.now();
 
       DateTime endDate;
       if (widget.committee.frequency == 'monthly') {
@@ -491,97 +499,6 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         ToastService.error(context, 'Update failed: $e');
       }
     }
-  }
-
-  void _showDateFilterDialog() {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: AppTheme.darkCard,
-            title: const Text('Filter by Date Range'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  title: Text(
-                    'Start Date',
-                    style: TextStyle(color: Colors.grey[400]),
-                  ),
-                  subtitle: Text(
-                    _filterStartDate != null
-                        ? DateFormat('dd/MM/yyyy').format(_filterStartDate!)
-                        : 'Kameti Start',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  trailing: const Icon(Icons.calendar_today),
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate:
-                          _filterStartDate ?? widget.committee.startDate,
-                      firstDate: widget.committee.startDate,
-                      lastDate: DateTime.now(),
-                    );
-                    if (date != null && mounted) {
-                      setState(() => _filterStartDate = date);
-                      _generateDates();
-                      _loadPayments();
-                      Navigator.pop(context);
-                      _showDateFilterDialog();
-                    }
-                  },
-                ),
-                ListTile(
-                  title: Text(
-                    'End Date',
-                    style: TextStyle(color: Colors.grey[400]),
-                  ),
-                  subtitle: Text(
-                    _filterEndDate != null
-                        ? DateFormat('dd/MM/yyyy').format(_filterEndDate!)
-                        : 'Today',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  trailing: const Icon(Icons.calendar_today),
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _filterEndDate ?? DateTime.now(),
-                      firstDate: widget.committee.startDate,
-                      lastDate: DateTime.now(),
-                    );
-                    if (date != null && mounted) {
-                      setState(() => _filterEndDate = date);
-                      _generateDates();
-                      _loadPayments();
-                      Navigator.pop(context);
-                      _showDateFilterDialog();
-                    }
-                  },
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _filterStartDate = null;
-                    _filterEndDate = null;
-                  });
-                  _generateDates();
-                  _loadPayments();
-                  Navigator.pop(context);
-                },
-                child: const Text('Clear Filter'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Done'),
-              ),
-            ],
-          ),
-    );
   }
 
   void _showExportOptions() {
@@ -878,17 +795,6 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.date_range,
-              color:
-                  (_filterStartDate != null || _filterEndDate != null)
-                      ? _primary
-                      : _textSecondary,
-            ),
-            tooltip: 'Filter by Date',
-            onPressed: _showDateFilterDialog,
-          ),
-          IconButton(
             icon: const Icon(
               Icons.file_download_outlined,
               color: _textSecondary,
@@ -898,7 +804,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.refresh, color: _textSecondary),
-            onPressed: _loadData,
+            onPressed: () => _syncAndLoad(waitForSync: true),
           ),
         ],
       ),
@@ -1810,7 +1716,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       advanceCount: advanceCount,
       advanceAmount: advanceAmount,
       isPaymentMarked: _isPaymentMarked,
-      onRefresh: _loadData,
+      onRefresh: () => _syncAndLoad(waitForSync: true),
     );
   }
 }

@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../utils/app_theme.dart';
 
 enum ToastType { success, error, warning, info }
 
-/// Premium overlay-based toast notification system.
-/// Slides in from the top with glassmorphism, animated progress bar,
-/// and smooth entrance/exit animations.
+/// Overlay-based toast notification system.
+/// Clean, minimal, and consistent across the app.
 class ToastService {
   static final List<_ToastEntry> _activeToasts = [];
 
@@ -19,9 +18,10 @@ class ToastService {
     Duration duration = const Duration(seconds: 3),
   }) {
     // Hide any existing SnackBars (legacy cleanup)
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
 
-    final overlay = Overlay.of(context);
+    final overlay = Overlay.maybeOf(context);
+    if (overlay == null) return;
     final config = _getConfig(type);
 
     // Auto-set title based on type if not provided
@@ -31,26 +31,27 @@ class ToastService {
     final animController = _ToastAnimController();
 
     entry = OverlayEntry(
-      builder: (context) => _AnimatedToast(
-        message: message,
-        title: effectiveTitle,
-        config: config,
-        duration: duration,
-        animController: animController,
-        onDismiss: () {
-          entry.remove();
-          _activeToasts.removeWhere((e) => e.entry == entry);
-          _repositionToasts();
-        },
-        index: _activeToasts.length,
-      ),
+      builder:
+          (context) => _AnimatedToast(
+            message: message,
+            title: effectiveTitle,
+            config: config,
+            duration: duration,
+            animController: animController,
+            onDismiss: () {
+              entry.remove();
+              _activeToasts.removeWhere((e) => e.entry == entry);
+              _repositionToasts();
+            },
+            index: _activeToasts.length,
+          ),
     );
 
     _activeToasts.add(_ToastEntry(entry: entry, controller: animController));
     overlay.insert(entry);
 
-    // Limit to 3 toasts at a time
-    if (_activeToasts.length > 3) {
+    // Keep one toast visible at a time for a cleaner UX
+    if (_activeToasts.length > 1) {
       final oldest = _activeToasts.removeAt(0);
       oldest.controller.dismiss();
     }
@@ -65,8 +66,13 @@ class ToastService {
   }
 
   static void error(BuildContext context, String message, {String? title}) {
-    show(context, message, type: ToastType.error, title: title,
-        duration: const Duration(seconds: 4));
+    show(
+      context,
+      message,
+      type: ToastType.error,
+      title: title,
+      duration: const Duration(seconds: 4),
+    );
   }
 
   static void warning(BuildContext context, String message, {String? title}) {
@@ -82,33 +88,33 @@ class ToastService {
       case ToastType.success:
         return _ToastConfig(
           icon: Icons.check_circle_rounded,
-          accentColor: const Color(0xFF00C853),
-          bgGradient: const [Color(0xDD0D1F17), Color(0xDD122A1C)],
-          borderColor: const Color(0xFF00C853),
+          accentColor: const Color(0xFF059669),
+          bgGradient: const [Color(0xFFF3FBF7), Color(0xFFEAF8F0)],
+          borderColor: const Color(0xFFBEE9D0),
           defaultTitle: 'Success',
         );
       case ToastType.error:
         return _ToastConfig(
           icon: Icons.error_rounded,
-          accentColor: const Color(0xFFFF5252),
-          bgGradient: const [Color(0xDD2A0F0F), Color(0xDD331414)],
-          borderColor: const Color(0xFFFF5252),
+          accentColor: const Color(0xFFDC2626),
+          bgGradient: const [Color(0xFFFEF4F4), Color(0xFFFDEAEA)],
+          borderColor: const Color(0xFFF6C8C8),
           defaultTitle: 'Error',
         );
       case ToastType.warning:
         return _ToastConfig(
           icon: Icons.warning_amber_rounded,
-          accentColor: const Color(0xFFFFB74D),
-          bgGradient: const [Color(0xDD2A2210), Color(0xDD332B14)],
-          borderColor: const Color(0xFFFFB74D),
+          accentColor: const Color(0xFFD97706),
+          bgGradient: const [Color(0xFFFFF8F0), Color(0xFFFFF2E4)],
+          borderColor: const Color(0xFFF5D7AE),
           defaultTitle: 'Warning',
         );
       case ToastType.info:
         return _ToastConfig(
           icon: Icons.info_rounded,
           accentColor: AppTheme.primaryColor,
-          bgGradient: const [Color(0xDD0F1629), Color(0xDD141D33)],
-          borderColor: AppTheme.primaryColor,
+          bgGradient: const [Color(0xFFF3F6FF), Color(0xFFEAF0FF)],
+          borderColor: const Color(0xFFCCDAFF),
           defaultTitle: 'Info',
         );
     }
@@ -188,19 +194,18 @@ class _AnimatedToastState extends State<_AnimatedToast>
   void initState() {
     super.initState();
 
-    // Slide + fade + scale animation
+    // Slide + fade + subtle scale animation
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 260),
       vsync: this,
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1.5),
+      begin: const Offset(0, 0.25),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+    );
 
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
@@ -209,11 +214,8 @@ class _AnimatedToastState extends State<_AnimatedToast>
       ),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1).animate(
-      CurvedAnimation(
-        parent: _slideController,
-        curve: Curves.easeOutBack,
-      ),
+    _scaleAnimation = Tween<double>(begin: 0.98, end: 1).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOut),
     );
 
     // Progress bar animation (countdown)
@@ -268,10 +270,7 @@ class _AnimatedToastState extends State<_AnimatedToast>
             position: _slideAnimation,
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: ScaleTransition(
-                scale: _scaleAnimation,
-                child: child!,
-              ),
+              child: ScaleTransition(scale: _scaleAnimation, child: child!),
             ),
           ),
         );
@@ -283,7 +282,7 @@ class _AnimatedToastState extends State<_AnimatedToast>
           }
         },
         onVerticalDragEnd: (details) {
-          if (_dragOffset > 30) {
+          if (_dragOffset > 24) {
             _dismiss();
           } else {
             setState(() => _dragOffset = 0);
@@ -292,143 +291,104 @@ class _AnimatedToastState extends State<_AnimatedToast>
         onTap: _dismiss,
         child: Material(
           color: Colors.transparent,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: widget.config.bgGradient,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: widget.config.borderColor.withAlpha(80),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.config.accentColor.withAlpha(40),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withAlpha(100),
-                      blurRadius: 40,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-                      child: Row(
-                        children: [
-                          // Animated icon with glow
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: widget.config.accentColor.withAlpha(30),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: widget.config.accentColor.withAlpha(60),
-                                width: 1,
-                              ),
-                            ),
-                            child: Icon(
-                              widget.config.icon,
-                              color: widget.config.accentColor,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // Title + Message
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.title,
-                                  style: TextStyle(
-                                    color: widget.config.accentColor,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  widget.message,
-                                  style: TextStyle(
-                                    color: Colors.white.withAlpha(220),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w400,
-                                    height: 1.3,
-                                  ),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          // Close button
-                          GestureDetector(
-                            onTap: _dismiss,
-                            child: Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withAlpha(15),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.close_rounded,
-                                color: Colors.white.withAlpha(120),
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Animated progress bar
-                    AnimatedBuilder(
-                      animation: _progressController,
-                      builder: (context, _) {
-                        return Container(
-                          height: 3,
-                          decoration: BoxDecoration(
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(16),
-                              bottomRight: Radius.circular(16),
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(16),
-                              bottomRight: Radius.circular(16),
-                            ),
-                            child: LinearProgressIndicator(
-                              value: 1 - _progressController.value,
-                              backgroundColor: Colors.white.withAlpha(10),
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                widget.config.accentColor.withAlpha(180),
-                              ),
-                              minHeight: 3,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: widget.config.bgGradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: widget.config.borderColor, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withOpacity(0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: widget.config.accentColor.withOpacity(0.14),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          widget.config.icon,
+                          color: widget.config.accentColor,
+                          size: 19,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.title,
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF0F172A),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.message,
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF475569),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                height: 1.3,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _dismiss,
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Color(0xFF64748B),
+                          size: 18,
+                        ),
+                        splashRadius: 18,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ),
+                ),
+                AnimatedBuilder(
+                  animation: _progressController,
+                  builder: (context, _) {
+                    return ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(14),
+                        bottomRight: Radius.circular(14),
+                      ),
+                      child: LinearProgressIndicator(
+                        value: 1 - _progressController.value,
+                        backgroundColor: const Color(0xFFE2E8F0),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          widget.config.accentColor,
+                        ),
+                        minHeight: 2,
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         ),

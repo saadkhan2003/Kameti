@@ -8,9 +8,9 @@ import '../../services/realtime_sync_service.dart';
 import '../../models/committee.dart';
 
 /// Controller for dashboard business logic
-/// 
+///
 /// Separates sync, load, and committee management logic from UI.
-/// 
+///
 /// Usage:
 /// ```dart
 /// final controller = DashboardController();
@@ -36,25 +36,28 @@ class DashboardController extends ChangeNotifier {
   bool get isSyncing => _isSyncing;
   bool get isEmailVerified => _isEmailVerified;
   String get userId => _authService.currentUser?.id ?? '';
-  String get displayName => _authService.currentUser?.userMetadata?['full_name'] ?? 
-                            _authService.currentUser?.email?.split('@')[0] ?? 'Host';
+  String get displayName =>
+      _authService.currentUser?.userMetadata?['full_name'] ??
+      _authService.currentUser?.email?.split('@')[0] ??
+      'Host';
   String get email => _authService.currentUser?.email ?? 'Anonymous User';
-  bool get needsEmailVerification => _authService.currentUser != null && 
-                                      _authService.currentUser!.emailConfirmedAt == null;
+  bool get needsEmailVerification =>
+      _authService.currentUser != null &&
+      _authService.currentUser!.emailConfirmedAt == null;
 
   /// Initialize controller - call in initState
   Future<void> initialize() async {
     loadCommittees();
-    
+
     // Start real-time sync listener
     if (userId.isNotEmpty) {
       _realtimeSyncService.onDataChanged = loadCommittees;
       _realtimeSyncService.startListening(userId);
     }
-    
+
     // Trigger silent sync
     await syncDataSilent();
-    
+
     // Start email verification check
     _startEmailVerificationCheck();
   }
@@ -67,7 +70,9 @@ class DashboardController extends ChangeNotifier {
 
   void _startEmailVerificationCheck() {
     if (needsEmailVerification) {
-      _emailVerificationTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
+      _emailVerificationTimer = Timer.periodic(const Duration(seconds: 3), (
+        timer,
+      ) async {
         await _authService.reloadUser();
         if (_authService.isEmailVerified) {
           timer.cancel();
@@ -104,12 +109,13 @@ class DashboardController extends ChangeNotifier {
 
   /// Sync with result for UI feedback
   Future<SyncResult> syncData() async {
-    if (_isSyncing) return SyncResult(success: false, message: 'Already syncing');
+    if (_isSyncing)
+      return SyncResult(success: false, message: 'Already syncing');
 
     _isSyncing = true;
     notifyListeners();
 
-    final result = await _syncService.syncAll(userId);
+    final result = await _syncService.syncAll(userId, force: true);
 
     _isSyncing = false;
     if (result.success) {
@@ -159,14 +165,19 @@ class DashboardController extends ChangeNotifier {
 
   /// Get member names for a specific committee
   List<String> getMemberNames(String committeeId) {
-    return _dbService.getMembersByCommittee(committeeId).map((m) => m.name).toList();
+    return _dbService
+        .getMembersByCommittee(committeeId)
+        .map((m) => m.name)
+        .toList();
   }
 
   /// Get this month's potential collection
   double getThisMonthCollection() {
     double total = 0;
     for (var committee in _activeCommittees) {
-      total += committee.contributionAmount * _dbService.getMembersByCommittee(committee.id).length;
+      total +=
+          committee.contributionAmount *
+          _dbService.getMembersByCommittee(committee.id).length;
     }
     return total;
   }
