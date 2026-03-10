@@ -397,21 +397,22 @@ class SyncService {
 
       var committee = Committee.fromJson(response);
 
-      final memberCount = await _supabase.getMemberCount(committee.id);
-      if (memberCount > 0) {
+      final localMemberCount =
+          _dbService.getMembersByCommittee(committee.id).length;
+      if (localMemberCount > 0) {
         committee = committee.copyWith(
           totalMembers:
               committee.totalMembers > 0
-                  ? (committee.totalMembers >= memberCount
+                  ? (committee.totalMembers >= localMemberCount
                       ? committee.totalMembers
-                      : memberCount)
-                  : memberCount,
+                      : localMemberCount)
+                  : localMemberCount,
           totalCycles:
               committee.totalCycles > 0
-                  ? (committee.totalCycles >= memberCount
+                  ? (committee.totalCycles >= localMemberCount
                       ? committee.totalCycles
-                      : memberCount)
-                  : memberCount,
+                      : localMemberCount)
+                  : localMemberCount,
         );
       }
 
@@ -510,25 +511,7 @@ class SyncService {
 
     final cloudCommittee = await _supabase.getCommittee(committeeId);
     if (cloudCommittee != null) {
-      final memberCount = await _supabase.getMemberCount(committeeId);
-      final hydratedCommittee =
-          memberCount > 0
-              ? cloudCommittee.copyWith(
-                totalMembers:
-                    cloudCommittee.totalMembers > 0
-                        ? (cloudCommittee.totalMembers >= memberCount
-                            ? cloudCommittee.totalMembers
-                            : memberCount)
-                        : memberCount,
-                totalCycles:
-                    cloudCommittee.totalCycles > 0
-                        ? (cloudCommittee.totalCycles >= memberCount
-                            ? cloudCommittee.totalCycles
-                            : memberCount)
-                        : memberCount,
-              )
-              : cloudCommittee;
-      await _dbService.saveCommittee(hydratedCommittee);
+      await _dbService.saveCommittee(cloudCommittee);
     }
 
     if (memberId != null) {
@@ -537,6 +520,29 @@ class SyncService {
       await _downloadMembersOnly(committeeId);
     }
     await _downloadPaymentsOnly(committeeId, memberId: memberId);
+
+    if (cloudCommittee != null) {
+      final localMemberCount =
+          _dbService.getMembersByCommittee(committeeId).length;
+      if (localMemberCount > 0) {
+        final hydratedCommittee = cloudCommittee.copyWith(
+          totalMembers:
+              cloudCommittee.totalMembers > 0
+                  ? (cloudCommittee.totalMembers >= localMemberCount
+                      ? cloudCommittee.totalMembers
+                      : localMemberCount)
+                  : localMemberCount,
+          totalCycles:
+              cloudCommittee.totalCycles > 0
+                  ? (cloudCommittee.totalCycles >= localMemberCount
+                      ? cloudCommittee.totalCycles
+                      : localMemberCount)
+                  : localMemberCount,
+        );
+        await _dbService.saveCommittee(hydratedCommittee);
+      }
+    }
+
     _log('✅ Viewer data refreshed');
   }
 

@@ -672,22 +672,32 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                               ],
                             ),
                             AnimatedSize(
-                              duration: const Duration(milliseconds: 220),
+                              duration: const Duration(milliseconds: 400),
                               curve: Curves.easeInOut,
                               child: AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 220),
+                                duration: const Duration(milliseconds: 300),
                                 switchInCurve: Curves.easeOutCubic,
                                 switchOutCurve: Curves.easeInCubic,
+                                layoutBuilder:
+                                    (currentChild, previousChildren) => Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        ...previousChildren,
+                                        if (currentChild != null) currentChild,
+                                      ],
+                                    ),
                                 transitionBuilder: (child, animation) {
-                                  final slide = Tween<Offset>(
-                                    begin: const Offset(0, -0.08),
-                                    end: Offset.zero,
-                                  ).animate(animation);
                                   return FadeTransition(
                                     opacity: animation,
-                                    child: SlideTransition(
-                                      position: slide,
-                                      child: child,
+                                    child: ClipRect(
+                                      child: SizeTransition(
+                                        sizeFactor: animation,
+                                        axis: Axis.vertical,
+                                        axisAlignment: -1.0,
+                                        child: child,
+                                      ),
                                     ),
                                   );
                                 },

@@ -93,15 +93,11 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
       });
     }
 
-    // Assign final order
-    for (int i = 0; i < _members.length; i++) {
-      final member = _members[i];
-      await _autoSyncService.updateMemberPayoutOrder(
-        member.id,
-        i + 1,
-        widget.committee.id,
-      );
-    }
+    // Assign final order with a single debounced sync
+    await _autoSyncService.updateMemberPayoutOrdersBatch(
+      _members,
+      widget.committee.id,
+    );
 
     _loadMembers();
     setState(() {
@@ -221,14 +217,11 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
       _members.insert(newIndex, item);
     });
 
-    // Update all payout orders
-    for (int i = 0; i < _members.length; i++) {
-      await _autoSyncService.updateMemberPayoutOrder(
-        _members[i].id,
-        i + 1,
-        widget.committee.id,
-      );
-    }
+    // Update all payout orders with one debounced sync
+    await _autoSyncService.updateMemberPayoutOrdersBatch(
+      _members,
+      widget.committee.id,
+    );
     _loadMembers();
   }
 
@@ -557,7 +550,8 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
         color: hasReceived ? _success.withOpacity(0.08) : _surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: hasReceived ? _success.withOpacity(0.3) : AppColors.lightBorder,
+          color:
+              hasReceived ? _success.withOpacity(0.3) : AppColors.lightBorder,
           width: 1,
         ),
       ),

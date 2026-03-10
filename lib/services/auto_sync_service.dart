@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'sync_service.dart';
 import 'sync_status_service.dart';
@@ -10,10 +11,28 @@ import '../models/payment.dart';
 /// A wrapper service that automatically syncs data to Firebase
 /// whenever changes are made locally.
 class AutoSyncService {
+  static const Duration _syncDebounce = Duration(milliseconds: 1200);
+  static final Map<String, Timer> _syncDebounceTimers = {};
+  static final Map<String, Future<void> Function()> _pendingSyncJobs = {};
+
   final SyncService _syncService = SyncService();
   final DatabaseService _dbService = DatabaseService();
   final RealtimeSyncService _realtimeSyncService = RealtimeSyncService();
   final SyncStatusService _syncStatusService = SyncStatusService();
+
+  void _scheduleDebouncedSync(String key, Future<void> Function() syncFn) {
+    _pendingSyncJobs[key] = syncFn;
+
+    final existingTimer = _syncDebounceTimers[key];
+    existingTimer?.cancel();
+
+    _syncDebounceTimers[key] = Timer(_syncDebounce, () async {
+      _syncDebounceTimers.remove(key);
+      final pendingJob = _pendingSyncJobs.remove(key);
+      if (pendingJob == null) return;
+      await _syncInBackground(pendingJob);
+    });
+  }
 
   // ============ COMMITTEE OPERATIONS WITH AUTO-SYNC ============
 
@@ -21,8 +40,8 @@ class AutoSyncService {
     // Save locally first
     await _dbService.saveCommittee(committee);
 
-    // Sync to cloud in background
-    _syncInBackground(() async {
+    // Sync to cloud in background (debounced)
+    _scheduleDebouncedSync('committee:${committee.hostId}', () async {
       await _syncService.syncCommittees(committee.hostId);
     });
   }
@@ -30,14 +49,16 @@ class AutoSyncService {
   Future<bool> deleteCommittee(String committeeId, String hostId) async {
     // Mark as pending delete to prevent real-time sync from re-adding
     _realtimeSyncService.markCommitteeForDelete(committeeId);
-    
+
     // Delete locally FIRST for instant UI feedback
     await _dbService.deleteCommittee(committeeId);
 
     // Delete from cloud in background (non-blocking)
     _syncInBackground(() async {
       try {
-        final success = await _syncService.deleteCommitteeFromCloud(committeeId);
+        final success = await _syncService.deleteCommitteeFromCloud(
+          committeeId,
+        );
         if (success) {
           print('Cloud delete succeeded for committee $committeeId');
         } else {
@@ -78,7 +99,7 @@ class AutoSyncService {
     );
     await _dbService.saveCommittee(unarchived);
 
-    _syncInBackground(() async {
+    _scheduleDebouncedSync('committee:${committee.hostId}', () async {
       await _syncService.syncCommittees(committee.hostId);
     });
   }
@@ -88,10 +109,10 @@ class AutoSyncService {
   Future<void> saveMember(Member member) async {
     // Mark as pending update to prevent real-time sync from reverting
     _realtimeSyncService.markMemberForUpdate(member.id);
-    
+
     await _dbService.saveMember(member);
 
-    _syncInBackground(() async {
+    _scheduleDebouncedSync('members:${member.committeeId}', () async {
       await _syncService.syncMembers(member.committeeId);
     });
   }
@@ -99,7 +120,7 @@ class AutoSyncService {
   Future<void> deleteMember(String memberId, String committeeId) async {
     // Mark as pending delete to prevent real-time sync from re-adding
     _realtimeSyncService.markMemberForDelete(memberId);
-    
+
     // Delete locally first for instant UI
     await _dbService.deleteMember(memberId);
 
@@ -125,7 +146,22 @@ class AutoSyncService {
   ) async {
     await _dbService.updateMemberPayoutOrder(memberId, order);
 
-    _syncInBackground(() async {
+    _scheduleDebouncedSync('members:$committeeId', () async {
+      await _syncService.syncMembers(committeeId);
+    });
+  }
+
+  Future<void> updateMemberPayoutOrdersBatch(
+    List<Member> orderedMembers,
+    String committeeId,
+  ) async {
+    for (int i = 0; i < orderedMembers.length; i++) {
+      final member = orderedMembers[i];
+      _realtimeSyncService.markMemberForUpdate(member.id);
+      await _dbService.updateMemberPayoutOrder(member.id, i + 1);
+    }
+
+    _scheduleDebouncedSync('members:$committeeId', () async {
       await _syncService.syncMembers(committeeId);
     });
   }
@@ -135,10 +171,10 @@ class AutoSyncService {
   Future<void> savePayment(Payment payment) async {
     // Mark as pending update
     _realtimeSyncService.markPaymentForUpdate(payment.id);
-    
+
     await _dbService.savePayment(payment);
 
-    _syncInBackground(() async {
+    _scheduleDebouncedSync('payments:${payment.committeeId}', () async {
       await _syncService.syncPayments(payment.committeeId);
     });
   }
@@ -152,10 +188,10 @@ class AutoSyncService {
     // Mark payment as pending to prevent real-time sync from reverting
     final paymentId = '${memberId}_${date.toIso8601String()}';
     _realtimeSyncService.markPaymentForUpdate(paymentId);
-    
+
     await _dbService.togglePayment(memberId, committeeId, date, hostId);
 
-    _syncInBackground(() async {
+    _scheduleDebouncedSync('payments:$committeeId', () async {
       await _syncService.syncPayments(committeeId);
     });
   }
@@ -171,15 +207,15 @@ class AutoSyncService {
     // Fall back to original local-first approach since Firestore writes are timing out
     // This is the same as togglePayment but with a different name for API compatibility
     final paymentId = '${memberId}_${date.toIso8601String()}';
-    
+
     // Mark payment as pending to prevent real-time sync from reverting
     _realtimeSyncService.markPaymentForUpdate(paymentId);
-    
+
     // Save locally first (fast, reliable)
     await _dbService.togglePayment(memberId, committeeId, date, hostId);
 
     // Sync in background (may fail on web, but data is safe locally)
-    _syncInBackground(() async {
+    _scheduleDebouncedSync('payments:$committeeId', () async {
       await _syncService.syncPayments(committeeId);
     });
   }
