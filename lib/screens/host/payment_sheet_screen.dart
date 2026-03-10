@@ -55,6 +55,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   List<DateTime> _dates = [];
   Map<String, Map<String, bool>> _paymentGrid = {};
   bool _isLoading = true;
+  bool _isOverviewExpanded = false;
   int _selectedCycle = 1;
   int _maxCycles = 1;
 
@@ -574,13 +575,69 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Cycle Overview',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: _textPrimary,
-                              ),
+                            Row(
+                              children: [
+                                Text(
+                                  'Cycle Overview',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: _textPrimary,
+                                  ),
+                                ),
+                                const Spacer(),
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(999),
+                                  onTap: () {
+                                    setState(() {
+                                      _isOverviewExpanded =
+                                          !_isOverviewExpanded;
+                                    });
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    curve: Curves.easeOut,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          _isOverviewExpanded
+                                              ? AppColors.cFFE9EEFC
+                                              : AppColors.cFFF8FAFF,
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: AppColors.cFFD0D9EE,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          _isOverviewExpanded
+                                              ? 'Hide Details'
+                                              : 'Show Details',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: _primary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          _isOverviewExpanded
+                                              ? AppIcons
+                                                  .keyboard_arrow_up_rounded
+                                              : AppIcons
+                                                  .keyboard_arrow_down_rounded,
+                                          size: 18,
+                                          color: _primary,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 8),
                             Row(
@@ -614,77 +671,105 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    totalPending == 0
-                                        ? _success.withOpacity(0.1)
-                                        : _warning.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    totalPending == 0
-                                        ? 'All Paid:'
-                                        : 'Pending Dues:',
-                                    style: GoogleFonts.inter(
-                                      color: _textSecondary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Text(
-                                    totalPending == 0
-                                        ? 'No Pending ✓'
-                                        : '${widget.committee.currency} ${totalPending.toInt()}',
-                                    style: GoogleFonts.inter(
-                                      color:
-                                          totalPending == 0
-                                              ? _success
-                                              : _warning,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: () => this._showReminderSheet(),
-                                icon: const Icon(AppIcons.reminder, size: 16),
-                                label: const Text('Send Reminders'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _primary,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Collection: ${widget.committee.frequency.toUpperCase()} • Payout: Every ${widget.committee.paymentIntervalDays} Days',
-                              style: GoogleFonts.inter(
-                                fontSize: 10,
-                                color: _textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeInOut,
+                              child:
+                                  _isOverviewExpanded
+                                      ? Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const SizedBox(height: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  totalPending == 0
+                                                      ? _success.withOpacity(
+                                                        0.1,
+                                                      )
+                                                      : _warning.withOpacity(
+                                                        0.1,
+                                                      ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  totalPending == 0
+                                                      ? 'All Paid:'
+                                                      : 'Pending Dues:',
+                                                  style: GoogleFonts.inter(
+                                                    color: _textSecondary,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  totalPending == 0
+                                                      ? 'No Pending ✓'
+                                                      : '${widget.committee.currency} ${totalPending.toInt()}',
+                                                  style: GoogleFonts.inter(
+                                                    color:
+                                                        totalPending == 0
+                                                            ? _success
+                                                            : _warning,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: ElevatedButton.icon(
+                                              onPressed:
+                                                  () =>
+                                                      this._showReminderSheet(),
+                                              icon: const Icon(
+                                                AppIcons.reminder,
+                                                size: 16,
+                                              ),
+                                              label: const Text(
+                                                'Send Reminders',
+                                              ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: _primary,
+                                                foregroundColor: Colors.white,
+                                                elevation: 0,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            'Collection: ${widget.committee.frequency.toUpperCase()} • Payout: Every ${widget.committee.paymentIntervalDays} Days',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 10,
+                                              color: _textSecondary,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                      : const SizedBox.shrink(),
                             ),
                           ],
                         ),

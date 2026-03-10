@@ -82,6 +82,25 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
     }
   }
 
+  Future<void> _toggleCollectionDetailsWithRefresh() async {
+    setState(() {
+      _showCollectionDetails = !_showCollectionDetails;
+    });
+
+    _loadMembers();
+
+    try {
+      await _syncService.syncPayments(_committee.id);
+      await _syncService.syncMembers(_committee.id);
+      if (!mounted) return;
+      setState(() {});
+    } catch (e) {
+      debugPrint('Collection refresh error: $e');
+      if (!mounted) return;
+      setState(() {});
+    }
+  }
+
   void _showShareOptions() {
     // Share committee info only (no member codes)
     String message =
@@ -402,7 +421,11 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     value: 'edit',
                     child: Row(
                       children: [
-                        const Icon(AppIcons.edit, size: 18, color: _textSecondary),
+                        const Icon(
+                          AppIcons.edit,
+                          size: 18,
+                          color: _textSecondary,
+                        ),
                         const SizedBox(width: 8),
                         const Text(
                           'Edit Committee',
@@ -619,11 +642,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _showCollectionDetails = !_showCollectionDetails;
-                        });
-                      },
+                      onTap: _toggleCollectionDetailsWithRefresh,
                       child: Row(
                         children: [
                           Container(
@@ -657,7 +676,8 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                                     Icon(
                                       _showCollectionDetails
                                           ? AppIcons.keyboard_arrow_up_rounded
-                                          : AppIcons.keyboard_arrow_down_rounded,
+                                          : AppIcons
+                                              .keyboard_arrow_down_rounded,
                                       size: 16,
                                       color: _textSecondary,
                                     ),
@@ -836,8 +856,8 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     title: 'Payment Sheet',
                     subtitle: 'Mark dues',
                     color: _success,
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder:
@@ -845,6 +865,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                                   PaymentSheetScreen(committee: _committee),
                         ),
                       );
+                      await _refreshCommittee();
                     },
                   ),
                   _buildActionTile(
@@ -1075,7 +1096,11 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Icon(AppIcons.chevron_right_rounded, size: 16, color: color),
+                    Icon(
+                      AppIcons.chevron_right_rounded,
+                      size: 16,
+                      color: color,
+                    ),
                   ],
                 ),
               ),

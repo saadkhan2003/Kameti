@@ -29,20 +29,36 @@ extension _PaymentSheetRemindersPart on _PaymentSheetScreenState {
     final dateFormatter = DateFormat('dd MMM yyyy');
 
     final dueDateLines = dueDates
-        .take(6)
-        .map((date) => '- ${dateFormatter.format(date)}')
+        .asMap()
+        .entries
+        .map(
+          (entry) => '${entry.key + 1}) ${dateFormatter.format(entry.value)}',
+        )
         .join('\n');
-    final extraLine =
-        dueDates.length > 6 ? '\n- ...and ${dueDates.length - 6} more' : '';
 
-    return 'Assalam o Alaikum ${member.name},\\n\\n'
-        'Reminder from ${widget.committee.name}\\n'
-        'Cycle $_selectedCycle\\n\\n'
-        'Pending installments: $dueCount\\n'
-        'Amount per installment: ${widget.committee.currency} ${amountPerInstallment.toStringAsFixed(0)}\\n'
-        'Total due: ${widget.committee.currency} ${totalDue.toStringAsFixed(0)}\\n\\n'
-        'Due dates:\\n$dueDateLines$extraLine\\n\\n'
-        'Please clear your dues at your earliest convenience. Thank you.';
+    return '''
+  *Payment Reminder* 📌
+
+  Hi *${member.name}* 👋
+
+  *Kameti:* ${widget.committee.name}
+  *Cycle:* $_selectedCycle
+  *Frequency:* ${widget.committee.frequency.toUpperCase()}
+
+  *Pending Summary*
+  - Pending installments: *$dueCount*
+  - Per installment: *${widget.committee.currency} ${amountPerInstallment.toStringAsFixed(0)}*
+  - Total due amount: *${widget.committee.currency} ${totalDue.toStringAsFixed(0)}*
+
+  *Pending Due Dates*
+  $dueDateLines
+
+  Please clear your pending dues at your  earliest convenience.
+  _Thank you_ 🙏
+
+  ────────────────────
+  _Sent via KAMETI • Committee Management_
+  '''.trim();
   }
 
   Future<void> _sendWhatsAppReminder(
