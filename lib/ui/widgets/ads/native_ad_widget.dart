@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../../services/ad_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// A professional, non-intrusive native ad card that blends naturally
 /// into the committee list. Uses AdMob's medium native template styled
@@ -27,11 +28,11 @@ class _NativeAdWidgetState extends State<NativeAdWidget>
   late final Animation<double> _fadeAnimation;
 
   // ─────────────────────────── colours ────────────────────────────────────────
-  static const Color _cardBg = Color(0xFF1E293B); // darkSurface
-  static const Color _primaryColor = Color(0xFF6366F1); // indigo purple
+  static const Color _cardBg = AppColors.darkSurface;
+  static const Color _primaryColor = AppColors.primary;
   static const Color _textPrimary = Colors.white;
-  static const Color _textSecondary = Color(0xFF94A3B8);
-  static const Color _ctaBg = Color(0xFF6366F1);
+  static const Color _textSecondary = AppColors.textLight;
+  static const Color _ctaBg = AppColors.primary;
 
   @override
   void initState() {

@@ -9,6 +9,7 @@ import '../../services/currency_service.dart';
 import '../../services/haptic_service.dart';
 import '../../models/committee.dart';
 import '../../utils/code_generator.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import '../../ui/widgets/micro_animations.dart';
 
 class CreateCommitteeScreen extends StatefulWidget {
@@ -19,11 +20,11 @@ class CreateCommitteeScreen extends StatefulWidget {
 }
 
 class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -197,7 +198,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                 decoration: BoxDecoration(
                   color: _surface,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFDCE4F7)),
+                  border: Border.all(color: AppColors.lightBorder),
                 ),
                 child: Row(
                   children: [
@@ -208,7 +209,10 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                         color: _primary.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.groups_rounded, color: _primary),
+                      child: const Icon(
+                        AppIcons.groups_rounded,
+                        color: _primary,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -240,7 +244,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
 
               _buildSectionCard(
                 title: 'Basics',
-                icon: Icons.edit_note_rounded,
+                icon: AppIcons.edit_note_rounded,
                 child: Column(
                   children: [
                     TextFormField(
@@ -252,7 +256,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                       decoration: _inputDecoration(
                         label: 'Kameti Name',
                         hint: 'e.g., Family Committee',
-                        icon: Icons.group_outlined,
+                        icon: AppIcons.group_outlined,
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -272,7 +276,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                       decoration: _inputDecoration(
                         label: 'Amount Per Collection',
                         hint: 'e.g., 1000',
-                        icon: Icons.payments_outlined,
+                        icon: AppIcons.payout,
                         prefixText: '$_selectedCurrency ',
                       ),
                       validator: (value) {
@@ -292,7 +296,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
 
               _buildSectionCard(
                 title: 'Collection Rules',
-                icon: Icons.tune_rounded,
+                icon: AppIcons.tune_rounded,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -370,7 +374,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                         decoration: _inputDecoration(
                           label: 'Days per Cycle',
                           hint: 'e.g., 10, 45, 90',
-                          icon: Icons.timer_outlined,
+                          icon: AppIcons.timer_outlined,
                         ),
                         validator: (value) {
                           if (_payoutFrequency == 'custom') {
@@ -393,7 +397,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
 
               _buildSectionCard(
                 title: 'Regional & Start Date',
-                icon: Icons.public_rounded,
+                icon: AppIcons.public_rounded,
                 child: Column(
                   children: [
                     InkWell(
@@ -402,9 +406,9 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFF),
+                          color: AppColors.cFFF8FAFF,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFDCE4F7)),
+                          border: Border.all(color: AppColors.lightBorder),
                         ),
                         child: Row(
                           children: [
@@ -436,7 +440,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                               ),
                             ),
                             const Icon(
-                              Icons.chevron_right_rounded,
+                              AppIcons.chevron_right_rounded,
                               color: _textSecondary,
                             ),
                           ],
@@ -450,14 +454,14 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFF),
+                          color: AppColors.cFFF8FAFF,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFDCE4F7)),
+                          border: Border.all(color: AppColors.lightBorder),
                         ),
                         child: Row(
                           children: [
                             const Icon(
-                              Icons.calendar_today_outlined,
+                              AppIcons.calendar_today_outlined,
                               color: _primary,
                               size: 20,
                             ),
@@ -472,7 +476,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                             ),
                             const Spacer(),
                             const Icon(
-                              Icons.chevron_right_rounded,
+                              AppIcons.chevron_right_rounded,
                               color: _textSecondary,
                             ),
                           ],
@@ -488,7 +492,9 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                 onPressed: _isLoading ? null : _createCommittee,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primary,
+                  disabledBackgroundColor: _primary,
                   foregroundColor: Colors.white,
+                  disabledForegroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -548,14 +554,14 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
       ),
       prefixIcon: Icon(icon, color: _textSecondary),
       filled: true,
-      fillColor: const Color(0xFFF8FAFF),
+      fillColor: AppColors.cFFF8FAFF,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFDCE4F7)),
+        borderSide: const BorderSide(color: AppColors.lightBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFDCE4F7)),
+        borderSide: const BorderSide(color: AppColors.lightBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -574,7 +580,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -620,10 +626,10 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? _primary : const Color(0xFFF8FAFF),
+          color: selected ? _primary : AppColors.cFFF8FAFF,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? _primary : const Color(0xFFDCE4F7),
+            color: selected ? _primary : AppColors.lightBorder,
           ),
         ),
         child: Text(
@@ -657,7 +663,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.currency_exchange, color: _primary),
+                      const Icon(AppIcons.currency_exchange, color: _primary),
                       const SizedBox(width: 12),
                       Text(
                         'Select Currency',
@@ -670,7 +676,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                     ],
                   ),
                 ),
-                const Divider(color: Color(0xFFE2E8F0)),
+                const Divider(color: AppColors.borderMuted),
                 Flexible(
                   child: ListView.builder(
                     shrinkWrap: true,
@@ -704,7 +710,7 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                         trailing:
                             isSelected
                                 ? const Icon(
-                                  Icons.check_circle,
+                                  AppIcons.check_circle,
                                   color: _primary,
                                 )
                                 : null,

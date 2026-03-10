@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:math' as math;
 import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../models/payment.dart';
 import '../../services/database_service.dart';
 import '../../services/currency_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 class CommitteeAnalyticsScreen extends StatefulWidget {
   final Committee committee;
@@ -19,14 +21,14 @@ class CommitteeAnalyticsScreen extends StatefulWidget {
 
 class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
     with SingleTickerProviderStateMixin {
-  static const Color _bg = Color(0xFFF6F8FD);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _danger = Color(0xFFDC2626);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _warning = AppColors.warning;
+  static const Color _danger = AppColors.error;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final _dbService = DatabaseService();
   List<Member> _members = [];
@@ -67,9 +69,93 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
 
   // ============ COMPUTED DATA ============
 
-  int get _totalPayments => _payments.length;
-  int get _paidPayments => _payments.where((p) => p.isPaid).length;
-  int get _unpaidPayments => _totalPayments - _paidPayments;
+  int get _memberCount {
+    if (_members.isNotEmpty) return _members.length;
+    return widget.committee.totalMembers > 0
+        ? widget.committee.totalMembers
+        : 0;
+  }
+
+  int get _collectionIntervalDays {
+    switch (widget.committee.frequency) {
+      case 'daily':
+        return 1;
+      case 'weekly':
+        return 7;
+      case 'monthly':
+      default:
+        return 30;
+    }
+  }
+
+  int get _periodsPerPayout {
+    final interval = _collectionIntervalDays;
+    if (interval <= 0) return 1;
+    return math.max(
+      1,
+      (widget.committee.paymentIntervalDays / interval).ceil(),
+    );
+  }
+
+  int get _configuredCycles {
+    if (widget.committee.totalCycles > 0) return widget.committee.totalCycles;
+    if (_memberCount > 0) return _memberCount;
+    return 1;
+  }
+
+  int get _maxPeriods => _configuredCycles * _periodsPerPayout;
+
+  List<DateTime> get _dueDatesUpToNow {
+    final now = DateTime.now();
+    final start = DateTime(
+      widget.committee.startDate.year,
+      widget.committee.startDate.month,
+      widget.committee.startDate.day,
+    );
+
+    if (start.isAfter(now) || _maxPeriods <= 0) return <DateTime>[];
+
+    final dates = <DateTime>[];
+    DateTime current = start;
+    int safety = 0;
+
+    while (!current.isAfter(now) &&
+        dates.length < _maxPeriods &&
+        safety < 1200) {
+      dates.add(current);
+      if (widget.committee.frequency == 'monthly') {
+        current = _addMonths(current, 1);
+      } else {
+        current = current.add(Duration(days: _collectionIntervalDays));
+      }
+      safety++;
+    }
+
+    return dates;
+  }
+
+  int get _duePeriods => _dueDatesUpToNow.length;
+
+  int get _totalPayments => _duePeriods * _memberCount;
+
+  int get _paidPayments {
+    if (_totalPayments == 0) return 0;
+
+    final now = DateTime.now();
+    final memberIds = _members.map((m) => m.id).toSet();
+    final paidKeys = <String>{};
+
+    for (final payment in _payments) {
+      if (!payment.isPaid || payment.date.isAfter(now)) continue;
+      if (memberIds.isNotEmpty && !memberIds.contains(payment.memberId))
+        continue;
+      paidKeys.add('${payment.memberId}_${_dateKey(payment.date)}');
+    }
+
+    return math.min(paidKeys.length, _totalPayments);
+  }
+
+  int get _unpaidPayments => math.max(0, _totalPayments - _paidPayments);
 
   double get _collectionRate =>
       _totalPayments == 0 ? 0 : (_paidPayments / _totalPayments) * 100;
@@ -85,10 +171,19 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
       _members.where((m) => m.hasReceivedPayout).length;
 
   List<_MemberStat> get _memberStats {
+    final duePeriods = _duePeriods;
+    final now = DateTime.now();
+
     return _members.map((m) {
-        final memberPayments = _payments.where((p) => p.memberId == m.id);
-        final total = memberPayments.length;
-        final paid = memberPayments.where((p) => p.isPaid).length;
+        final paidKeys =
+            _payments
+                .where(
+                  (p) => p.memberId == m.id && p.isPaid && !p.date.isAfter(now),
+                )
+                .map((p) => _dateKey(p.date))
+                .toSet();
+        final paid = math.min(paidKeys.length, duePeriods);
+        final total = duePeriods;
         final rate = total == 0 ? 0.0 : (paid / total) * 100;
         return _MemberStat(name: m.name, paid: paid, total: total, rate: rate);
       }).toList()
@@ -96,19 +191,23 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
   }
 
   List<_DateCollection> get _collectionTrend {
-    final paymentsByDate = <String, _DateCollection>{};
+    final dueDates = _dueDatesUpToNow;
+    if (dueDates.isEmpty || _memberCount == 0) return [];
+
+    final now = DateTime.now();
+    final paidByDate = <String, int>{};
+
     for (final p in _payments) {
-      final key =
-          '${p.date.year}-${p.date.month.toString().padLeft(2, '0')}-${p.date.day.toString().padLeft(2, '0')}';
-      paymentsByDate.putIfAbsent(
-        key,
-        () => _DateCollection(date: p.date, paid: 0, total: 0),
-      );
-      paymentsByDate[key]!.total++;
-      if (p.isPaid) paymentsByDate[key]!.paid++;
+      if (!p.isPaid || p.date.isAfter(now)) continue;
+      final key = _dateKey(p.date);
+      paidByDate[key] = (paidByDate[key] ?? 0) + 1;
     }
-    return paymentsByDate.values.toList()
-      ..sort((a, b) => a.date.compareTo(b.date));
+
+    return dueDates.map((date) {
+      final key = _dateKey(date);
+      final paid = math.min(paidByDate[key] ?? 0, _memberCount);
+      return _DateCollection(date: date, paid: paid, total: _memberCount);
+    }).toList();
   }
 
   @override
@@ -149,8 +248,8 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
               // Payment Donut
               _buildSectionHeader(
                 'Payment Breakdown',
-                Icons.pie_chart_rounded,
-                const Color(0xFF7C4DFF),
+                AppIcons.pie,
+                AppColors.accent,
               ),
               const SizedBox(height: 12),
               _buildPaymentDonut(),
@@ -160,8 +259,8 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
               if (_collectionTrend.length >= 2) ...[
                 _buildSectionHeader(
                   'Collection Trend',
-                  Icons.trending_up_rounded,
-                  const Color(0xFF00BCD4),
+                  AppIcons.trend,
+                  AppColors.cFF00BCD4,
                 ),
                 const SizedBox(height: 12),
                 _buildCollectionTrendChart(),
@@ -171,8 +270,8 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
               // Member Leaderboard
               _buildSectionHeader(
                 'Member Leaderboard',
-                Icons.leaderboard_rounded,
-                const Color(0xFFFFB74D),
+                AppIcons.leaderboard,
+                AppColors.cFFFFB74D,
               ),
               const SizedBox(height: 12),
               _buildMemberLeaderboard(),
@@ -181,8 +280,8 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
               // Payout Progress
               _buildSectionHeader(
                 'Payout Progress',
-                Icons.payments_rounded,
-                const Color(0xFF448AFF),
+                AppIcons.payments_rounded,
+                AppColors.cFF448AFF,
               ),
               const SizedBox(height: 12),
               _buildPayoutProgress(),
@@ -204,13 +303,13 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFEDF2FF), Color(0xFFE4ECFF)],
+          colors: [AppColors.cFFEDF2FF, AppColors.cFFE4ECFF],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFD2DDF8)),
+        border: Border.all(color: AppColors.cFFD2DDF8),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3347A8).withOpacity(0.1),
+            color: AppColors.primary.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -280,7 +379,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
                 Container(
                   height: 8,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFCFD9EF),
+                    color: AppColors.cFFCFD9EF,
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
@@ -290,7 +389,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
                     height: 8,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [_success, Color(0xFF34D399)],
+                        colors: [_success, AppColors.cFF34D399],
                       ),
                       borderRadius: BorderRadius.circular(6),
                       boxShadow: [
@@ -317,28 +416,28 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
       children: [
         Expanded(
           child: _buildMiniStat(
-            icon: Icons.receipt_long_rounded,
+            icon: AppIcons.receipt_long_rounded,
             label: 'Payments',
             value: '$_paidPayments/$_totalPayments',
-            color: const Color(0xFF7C4DFF),
+            color: AppColors.accent,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _buildMiniStat(
-            icon: Icons.group_rounded,
+            icon: AppIcons.group_rounded,
             label: 'Members',
             value: '${_members.length}',
-            color: const Color(0xFF448AFF),
+            color: AppColors.cFF448AFF,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _buildMiniStat(
-            icon: Icons.schedule_rounded,
+            icon: AppIcons.schedule_rounded,
             label: 'Pending',
             value: '$_currencySymbol${_formatCompact(_totalPending)}',
-            color: const Color(0xFFFFB74D),
+            color: AppColors.cFFFFB74D,
           ),
         ),
       ],
@@ -418,7 +517,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Row(
         children: [
@@ -502,7 +601,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
                   _danger,
                 ),
                 const SizedBox(height: 16),
-                Divider(color: const Color(0xFFE2E8F0), height: 1),
+                Divider(color: AppColors.borderMuted, height: 1),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -589,7 +688,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Column(
         children: [
@@ -603,7 +702,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
                   horizontalInterval: 1,
                   getDrawingHorizontalLine:
                       (value) => FlLine(
-                        color: const Color(0xFFE2E8F0),
+                        color: AppColors.borderMuted,
                         strokeWidth: 1,
                       ),
                 ),
@@ -650,7 +749,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
                     ),
                     isCurved: true,
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF06B6D4), _success],
+                      colors: [AppColors.cFF06B6D4, _success],
                     ),
                     barWidth: 3,
                     dotData: FlDotData(
@@ -681,7 +780,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
                       (i) => FlSpot(i.toDouble(), trends[i].total.toDouble()),
                     ),
                     isCurved: true,
-                    color: const Color(0xFF94A3B8),
+                    color: AppColors.textLight,
                     barWidth: 1.5,
                     dashArray: [6, 4],
                     dotData: FlDotData(show: false),
@@ -756,7 +855,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Column(
         children: [
@@ -801,7 +900,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
               ],
             ),
           ),
-          const Divider(color: Color(0xFFE2E8F0), height: 1),
+          const Divider(color: AppColors.borderMuted, height: 1),
           ...stats.take(8).toList().asMap().entries.map((entry) {
             final i = entry.key;
             final stat = entry.value;
@@ -818,7 +917,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
               decoration: BoxDecoration(
                 color: isTop3 ? barColor.withOpacity(0.08) : Colors.transparent,
                 border: const Border(
-                  bottom: BorderSide(color: Color(0xFFF0F3FA)),
+                  bottom: BorderSide(color: AppColors.cFFF0F3FA),
                 ),
               ),
               child: Row(
@@ -855,7 +954,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
                           borderRadius: BorderRadius.circular(3),
                           child: LinearProgressIndicator(
                             value: stat.rate / 100,
-                            backgroundColor: const Color(0xFFE2E8F0),
+                            backgroundColor: AppColors.borderMuted,
                             valueColor: AlwaysStoppedAnimation<Color>(barColor),
                             minHeight: 4,
                           ),
@@ -910,7 +1009,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Column(
         children: [
@@ -926,7 +1025,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
                   child: CircularProgressIndicator(
                     value: progress,
                     strokeWidth: 12,
-                    backgroundColor: const Color(0xFFE2E8F0),
+                    backgroundColor: AppColors.borderMuted,
                     valueColor: const AlwaysStoppedAnimation<Color>(_primary),
                     strokeCap: StrokeCap.round,
                   ),
@@ -1028,7 +1127,7 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Center(
         child: Text(
@@ -1050,6 +1149,18 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
     if (amount >= 1000000) return '${(amount / 1000000).toStringAsFixed(1)}M';
     if (amount >= 1000) return '${(amount / 1000).toStringAsFixed(1)}K';
     return amount.toStringAsFixed(0);
+  }
+
+  String _dateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  DateTime _addMonths(DateTime date, int monthsToAdd) {
+    final month = date.month - 1 + monthsToAdd;
+    final year = date.year + month ~/ 12;
+    final newMonth = month % 12 + 1;
+    final day = math.min(date.day, DateTime(year, newMonth + 1, 0).day);
+    return DateTime(year, newMonth, day);
   }
 }
 

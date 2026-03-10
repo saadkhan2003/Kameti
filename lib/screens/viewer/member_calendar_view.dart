@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../services/database_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import 'member_dashboard_screen.dart';
 
 class MemberCalendarView extends StatefulWidget {
@@ -40,14 +41,14 @@ class MemberCalendarView extends StatefulWidget {
 }
 
 class _MemberCalendarViewState extends State<MemberCalendarView> {
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _info = Color(0xFF2563EB);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _warning = AppColors.warning;
+  static const Color _info = AppColors.info;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
   final _dbService = DatabaseService();
 
   late DateTime _selectedMonth;
@@ -248,7 +249,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _textPrimary),
+          icon: const Icon(AppIcons.arrow_back, color: _textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -270,7 +271,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: _textSecondary),
+            icon: const Icon(AppIcons.refresh, color: _textSecondary),
             onPressed: widget.onRefresh,
           ),
         ],
@@ -283,10 +284,10 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
             decoration: BoxDecoration(
               color: _surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFDCE4F7)),
+              border: Border.all(color: AppColors.lightBorder),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0F172A).withOpacity(0.05),
+                  color: AppColors.darkBg.withOpacity(0.05),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),
@@ -311,33 +312,33 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                       child: _buildStatItem(
                         'Paid',
                         '${_calculateCyclePaidCount()} / ${_cycleDates.length}',
-                        Icons.check_circle,
+                        AppIcons.check_circle,
                         _success,
                       ),
                     ),
                     Container(
                       width: 1,
                       height: 40,
-                      color: const Color(0xFFE2E8F0),
+                      color: AppColors.borderMuted,
                     ),
                     Flexible(
                       child: _buildStatItem(
                         'Contributed',
                         '${widget.committee.currency} ${_calculateCycleTotalContribution().toStringAsFixed(0)}',
-                        Icons.account_balance_wallet,
+                        AppIcons.account_balance_wallet,
                         _primary,
                       ),
                     ),
                     Container(
                       width: 1,
                       height: 40,
-                      color: const Color(0xFFE2E8F0),
+                      color: AppColors.borderMuted,
                     ),
                     Flexible(
                       child: _buildStatItem(
                         _getFrequencyLabel(),
                         '${widget.committee.currency} ${widget.committee.contributionAmount.toStringAsFixed(0)}',
-                        Icons.calendar_today,
+                        AppIcons.calendar_today,
                         _warning,
                       ),
                     ),
@@ -358,7 +359,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.star_rounded, color: _info, size: 18),
+                        const Icon(AppIcons.star_rounded, color: _info, size: 18),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
@@ -414,7 +415,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
               decoration: BoxDecoration(
                 color: _surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFDCE4F7)),
+                border: Border.all(color: AppColors.lightBorder),
               ),
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -473,7 +474,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                               color:
                                   isCurrentMonth
                                       ? _textPrimary
-                                      : const Color(0xFFA2ADBF),
+                                      : AppColors.cFFA2ADBF,
                               fontWeight:
                                   isToday ? FontWeight.w700 : FontWeight.w500,
                               fontSize: 12,
@@ -483,8 +484,8 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                             const SizedBox(height: 2),
                             Icon(
                               isPaid
-                                  ? Icons.check_circle_rounded
-                                  : Icons.circle_outlined,
+                                  ? AppIcons.paid
+                                  : AppIcons.circle_outlined,
                               size: 13,
                               color: isPaid ? _success : _warning,
                             ),
@@ -534,7 +535,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                     ),
                   );
                 },
-                icon: const Icon(Icons.dashboard_rounded),
+                icon: const Icon(AppIcons.dashboard_rounded),
                 label: const Text('More Details'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primary,
@@ -560,16 +561,16 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDCE4F7), width: 1),
+        border: Border.all(color: AppColors.lightBorder, width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
             icon: Icon(
-              Icons.chevron_left,
+              AppIcons.chevron_left,
               color:
-                  _selectedCycle > 1 ? _textPrimary : const Color(0xFFB0B8C9),
+                  _selectedCycle > 1 ? _textPrimary : AppColors.cFFB0B8C9,
             ),
             onPressed: _selectedCycle > 1 ? () => _changeCycle(-1) : null,
           ),
@@ -602,11 +603,11 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
           ),
           IconButton(
             icon: Icon(
-              Icons.chevron_right,
+              AppIcons.chevron_right,
               color:
                   _selectedCycle < _maxCycles
                       ? _textPrimary
-                      : const Color(0xFFB0B8C9),
+                      : AppColors.cFFB0B8C9,
             ),
             onPressed:
                 _selectedCycle < _maxCycles ? () => _changeCycle(1) : null,
@@ -623,13 +624,13 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left, color: _textPrimary),
+            icon: const Icon(AppIcons.chevron_left, color: _textPrimary),
             onPressed: () {
               setState(() {
                 _selectedMonth = DateTime(
@@ -648,7 +649,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right, color: _textPrimary),
+            icon: const Icon(AppIcons.chevron_right, color: _textPrimary),
             onPressed: () {
               setState(() {
                 _selectedMonth = DateTime(
@@ -697,7 +698,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
             borderRadius: BorderRadius.circular(4),
             border: Border.all(color: _success),
           ),
-          child: const Icon(Icons.check, size: 12, color: _success),
+          child: const Icon(AppIcons.check, size: 12, color: _success),
         ),
         const SizedBox(width: 8),
         Text(
@@ -719,7 +720,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
             borderRadius: BorderRadius.circular(4),
             border: Border.all(color: _info),
           ),
-          child: const Icon(Icons.check, size: 12, color: _info),
+          child: const Icon(AppIcons.check, size: 12, color: _info),
         ),
         const SizedBox(width: 8),
         Text(
@@ -737,7 +738,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
           width: 16,
           height: 16,
           alignment: Alignment.center,
-          child: const Icon(Icons.circle_outlined, size: 14, color: _warning),
+          child: const Icon(AppIcons.circle_outlined, size: 14, color: _warning),
         ),
         const SizedBox(width: 8),
         Text(
@@ -820,10 +821,10 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                       ),
                       child: Icon(
                         isAdvancePaid
-                            ? Icons.star_rounded
+                            ? AppIcons.star_rounded
                             : isPaid
-                            ? Icons.check_circle_rounded
-                            : Icons.schedule,
+                            ? AppIcons.paid
+                            : AppIcons.schedule,
                         color:
                             isAdvancePaid
                                 ? _info

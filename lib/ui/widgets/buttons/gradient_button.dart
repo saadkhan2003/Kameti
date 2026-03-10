@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_decorations.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// Gradient button with primary theme colors
 /// 
@@ -10,7 +11,7 @@ import '../../theme/app_decorations.dart';
 /// GradientButton(
 ///   text: 'Submit',
 ///   onPressed: () => handleSubmit(),
-///   icon: Icons.check,
+///   icon: AppIcons.check,
 ///   isLoading: false,
 /// )
 /// ```

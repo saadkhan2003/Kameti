@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// Empty state widget for when there's no data
 /// 
 /// Example usage:
 /// ```dart
 /// EmptyState(
-///   icon: Icons.inbox_outlined,
+///   icon: AppIcons.inbox_outlined,
 ///   title: 'No Items',
 ///   subtitle: 'Add your first item to get started',
 ///   actionLabel: 'Add Item',
@@ -79,7 +80,7 @@ class EmptyState extends StatelessWidget {
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: onAction,
-                icon: const Icon(Icons.add),
+                icon: const Icon(AppIcons.add),
                 label: Text(actionLabel!),
               ),
             ],
@@ -147,7 +148,7 @@ class ErrorState extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.error_outline,
+                AppIcons.error_outline,
                 size: 60,
                 color: AppColors.error,
               ),
@@ -174,7 +175,7 @@ class ErrorState extends StatelessWidget {
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: onAction,
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(AppIcons.refresh),
                 label: Text(actionLabel!),
               ),
             ],

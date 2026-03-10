@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import '../host/payment_sheet_screen.dart';
 
 class JoinCommitteeScreen extends StatefulWidget {
@@ -14,13 +15,13 @@ class JoinCommitteeScreen extends StatefulWidget {
 }
 
 class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
-  static const Color _bg = Color(0xFFF6F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _accent = Color(0xFF059669);
-  static const Color _danger = Color(0xFFDC2626);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _accent = AppColors.success;
+  static const Color _danger = AppColors.error;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final _committeeCodeController = TextEditingController();
   final _memberCodeController = TextEditingController();
@@ -253,7 +254,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF3347A8), Color(0xFF4F46E5)],
+          colors: [AppColors.primary, AppColors.primaryLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -279,7 +280,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
-                  Icons.visibility_rounded,
+                  AppIcons.visibility_rounded,
                   color: Colors.white,
                   size: 24,
                 ),
@@ -320,7 +321,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.history_rounded, color: _primary, size: 20),
+              const Icon(AppIcons.history_rounded, color: _primary, size: 20),
               const SizedBox(width: 8),
               Text(
                 'Recent Kametis',
@@ -341,9 +342,9 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                 bottom: index == _recentCommittees.length - 1 ? 0 : 10,
               ),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFF),
+                color: AppColors.cFFF8FAFF,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFDDE6FA)),
+                border: Border.all(color: AppColors.cFFDDE6FA),
               ),
               child: ListTile(
                 onTap: () => _fillFromRecent(item),
@@ -355,7 +356,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
-                    Icons.group_rounded,
+                    AppIcons.group_rounded,
                     color: _primary,
                     size: 18,
                   ),
@@ -378,7 +379,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                 ),
                 trailing: IconButton(
                   icon: const Icon(
-                    Icons.delete_outline_rounded,
+                    AppIcons.delete_outline_rounded,
                     color: _danger,
                     size: 20,
                   ),
@@ -425,7 +426,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
               child: Row(
                 children: [
                   const Icon(
-                    Icons.error_outline_rounded,
+                    AppIcons.syncError,
                     color: _danger,
                     size: 18,
                   ),
@@ -464,11 +465,11 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                 fontWeight: FontWeight.w500,
               ),
               prefixIcon: const Icon(
-                Icons.group_outlined,
+                AppIcons.group_outlined,
                 color: _textSecondary,
               ),
               filled: true,
-              fillColor: const Color(0xFFF8FAFF),
+              fillColor: AppColors.cFFF8FAFF,
               border: _inputBorder(),
               enabledBorder: _inputBorder(),
               focusedBorder: _inputBorder(color: _primary),
@@ -516,11 +517,11 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                 fontWeight: FontWeight.w500,
               ),
               prefixIcon: const Icon(
-                Icons.person_outline_rounded,
+                AppIcons.person_outline_rounded,
                 color: _textSecondary,
               ),
               filled: true,
-              fillColor: const Color(0xFFF8FAFF),
+              fillColor: AppColors.cFFF8FAFF,
               border: _inputBorder(),
               enabledBorder: _inputBorder(),
               focusedBorder: _inputBorder(color: _primary),
@@ -547,7 +548,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
                           color: Colors.white,
                         ),
                       )
-                      : const Icon(Icons.visibility_rounded),
+                      : const Icon(AppIcons.visibility_rounded),
               label: Text(_isLoading ? 'Loading...' : 'View My Payments'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _accent,
@@ -587,7 +588,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
-              Icons.help_outline_rounded,
+              AppIcons.help_outline_rounded,
               color: _primary,
               size: 18,
             ),
@@ -625,7 +626,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
   OutlineInputBorder _inputBorder({Color? color}) {
     return OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: color ?? const Color(0xFFDDE5F6)),
+      borderSide: BorderSide(color: color ?? AppColors.cFFDDE5F6),
     );
   }
 
@@ -633,10 +634,10 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
     return BoxDecoration(
       color: _surface,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: const Color(0xFFDCE5F6)),
+      border: Border.all(color: AppColors.cFFDCE5F6),
       boxShadow: [
         BoxShadow(
-          color: const Color(0xFF0F172A).withOpacity(0.05),
+          color: AppColors.darkBg.withOpacity(0.05),
           blurRadius: 12,
           offset: const Offset(0, 5),
         ),

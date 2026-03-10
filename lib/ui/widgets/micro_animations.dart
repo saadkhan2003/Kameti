@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../utils/app_theme.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// Shows an animated success overlay with checkmark animation.
 /// Call: SuccessAnimation.show(context) — auto-dismisses after 1.5s.
@@ -122,7 +123,7 @@ class _SuccessDialogState extends State<_SuccessDialog>
                       end: Alignment.bottomRight,
                       colors: [
                         AppTheme.secondaryColor,
-                        Color(0xFF00C853),
+                        AppColors.cFF00C853,
                       ],
                     ),
                     boxShadow: [

@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_decorations.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// Reusable stat card widget for displaying metrics
 /// 
 /// Example usage:
 /// ```dart
 /// StatCard(
-///   icon: Icons.group_rounded,
+///   icon: AppIcons.group_rounded,
 ///   value: '12',
 ///   label: 'Active',
 ///   backgroundColor: AppColors.pastelLavender,

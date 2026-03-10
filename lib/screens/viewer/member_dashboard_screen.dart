@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../services/database_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 class MemberDashboardScreen extends StatefulWidget {
   final Committee committee;
@@ -21,15 +22,15 @@ class MemberDashboardScreen extends StatefulWidget {
 }
 
 class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
-  static const Color _bg = Color(0xFFF6F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _primarySoft = Color(0xFFEAF0FF);
-  static const Color _success = Color(0xFF059669);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _danger = Color(0xFFDC2626);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _primarySoft = AppColors.softPrimary;
+  static const Color _success = AppColors.success;
+  static const Color _warning = AppColors.warning;
+  static const Color _danger = AppColors.error;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final _dbService = DatabaseService();
 
@@ -175,7 +176,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _textPrimary),
+          icon: const Icon(AppIcons.arrow_back, color: _textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -225,7 +226,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF3347A8), Color(0xFF4F46E5)],
+          colors: [AppColors.primary, AppColors.primaryLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -264,15 +265,15 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
             runSpacing: 8,
             children: [
               _buildHeroChip(
-                Icons.calendar_month_rounded,
+                AppIcons.calendar_month_rounded,
                 _capitalize(widget.committee.frequency),
               ),
               _buildHeroChip(
-                Icons.payments_rounded,
+                AppIcons.payments_rounded,
                 '${widget.committee.currency} ${NumberFormat('#,###').format(widget.committee.contributionAmount.toInt())}',
               ),
               _buildHeroChip(
-                Icons.format_list_numbered,
+                AppIcons.format_list_numbered,
                 'Cycle $_selectedCycle/$_maxCycles',
               ),
             ],
@@ -317,9 +318,9 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
           IconButton(
             onPressed: _selectedCycle > 1 ? () => _changeCycle(-1) : null,
             icon: Icon(
-              Icons.chevron_left_rounded,
+              AppIcons.chevron_left_rounded,
               color:
-                  _selectedCycle > 1 ? _textPrimary : const Color(0xFFB2BCD0),
+                  _selectedCycle > 1 ? _textPrimary : AppColors.cFFB2BCD0,
             ),
           ),
           Expanded(
@@ -348,11 +349,11 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
             onPressed:
                 _selectedCycle < _maxCycles ? () => _changeCycle(1) : null,
             icon: Icon(
-              Icons.chevron_right_rounded,
+              AppIcons.chevron_right_rounded,
               color:
                   _selectedCycle < _maxCycles
                       ? _textPrimary
-                      : const Color(0xFFB2BCD0),
+                      : AppColors.cFFB2BCD0,
             ),
           ),
         ],
@@ -411,7 +412,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                     color:
                         isPaid
                             ? _success.withOpacity(0.45)
-                            : const Color(0xFFD7E3FF),
+                            : AppColors.cFFD7E3FF,
                   ),
                 ),
                 child: Column(
@@ -419,8 +420,8 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                   children: [
                     Icon(
                       isPaid
-                          ? Icons.check_circle_rounded
-                          : Icons.schedule_rounded,
+                          ? AppIcons.paid
+                          : AppIcons.schedule_rounded,
                       color: isPaid ? _success : _warning,
                       size: 16,
                     ),
@@ -483,7 +484,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     final highlight = hasPayout ? _success : _warning;
 
     return _buildInfoCard(
-      icon: Icons.account_balance_wallet_rounded,
+      icon: AppIcons.account_balance_wallet_rounded,
       title: 'Your Payout',
       content:
           hasPayout
@@ -519,7 +520,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.analytics_rounded, color: _primary),
+              const Icon(AppIcons.analytics, color: _primary),
               const SizedBox(width: 10),
               Text(
                 'Your Payment Status',
@@ -571,7 +572,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
             child: LinearProgressIndicator(
               value: progressPercent / 100,
               minHeight: 10,
-              backgroundColor: const Color(0xFFE5EAF6),
+              backgroundColor: AppColors.cFFE5EAF6,
               valueColor: AlwaysStoppedAnimation<Color>(progressColor),
             ),
           ),
@@ -610,7 +611,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
 
   Widget _buildNextPaymentCard() {
     return _buildInfoCard(
-      icon: Icons.calendar_today_rounded,
+      icon: AppIcons.calendar_today_rounded,
       title: 'Next Payment',
       content:
           _nextPaymentDate != null
@@ -673,7 +674,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.group_rounded, color: _primary),
+              const Icon(AppIcons.group_rounded, color: _primary),
               const SizedBox(width: 10),
               Text(
                 'Payout Schedule',
@@ -707,13 +708,13 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color:
-                      isCurrentMember ? _primarySoft : const Color(0xFFF8FAFF),
+                      isCurrentMember ? _primarySoft : AppColors.cFFF8FAFF,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color:
                         isCurrentMember
                             ? _primary.withOpacity(0.35)
-                            : const Color(0xFFE6ECF8),
+                            : AppColors.cFFE6ECF8,
                   ),
                 ),
                 child: Row(
@@ -813,8 +814,8 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                         children: [
                           Icon(
                             member.hasReceivedPayout
-                                ? Icons.check_circle_rounded
-                                : Icons.schedule_rounded,
+                                ? AppIcons.paid
+                                : AppIcons.schedule_rounded,
                             size: 13,
                             color:
                                 member.hasReceivedPayout ? _success : _warning,
@@ -934,10 +935,10 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     return BoxDecoration(
       color: _surface,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: borderColor ?? const Color(0xFFDDE5F5)),
+      border: Border.all(color: borderColor ?? AppColors.cFFDDE5F5),
       boxShadow: [
         BoxShadow(
-          color: const Color(0xFF0F172A).withOpacity(0.05),
+          color: AppColors.darkBg.withOpacity(0.05),
           blurRadius: 12,
           offset: const Offset(0, 5),
         ),

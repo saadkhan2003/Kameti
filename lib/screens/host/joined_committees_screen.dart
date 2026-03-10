@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/database_service.dart';
 import '../../services/toast_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import '../viewer/join_committee_screen.dart';
 import 'payment_sheet_screen.dart';
 
@@ -13,13 +14,13 @@ class JoinedCommitteesScreen extends StatefulWidget {
 }
 
 class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _danger = Color(0xFFDC2626);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _danger = AppColors.error;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final _dbService = DatabaseService();
   List<Map> _joinedCommittees = [];
@@ -136,19 +137,19 @@ class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
                     decoration: BoxDecoration(
                       color: _surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFDCE4F7)),
+                      border: Border.all(color: AppColors.lightBorder),
                     ),
                     child: Row(
                       children: [
                         _buildTopStat(
-                          icon: Icons.groups_rounded,
+                          icon: AppIcons.groups_rounded,
                           label: 'Joined',
                           value: '${_joinedCommittees.length}',
                           tone: _primary,
                         ),
                         const SizedBox(width: 10),
                         _buildTopStat(
-                          icon: Icons.verified_user_rounded,
+                          icon: AppIcons.verified_user_rounded,
                           label: 'Active',
                           value: '${_joinedCommittees.length}',
                           tone: _success,
@@ -172,7 +173,7 @@ class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
         },
         backgroundColor: _primary,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
+        icon: const Icon(AppIcons.add),
         label: const Text('Join New'),
       ),
     );
@@ -233,11 +234,11 @@ class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
             width: 92,
             height: 92,
             decoration: BoxDecoration(
-              color: const Color(0xFFE9EEFC),
+              color: AppColors.cFFE9EEFC,
               borderRadius: BorderRadius.circular(24),
             ),
             child: const Icon(
-              Icons.group_off_outlined,
+              AppIcons.group_off_outlined,
               size: 42,
               color: _primary,
             ),
@@ -278,7 +279,7 @@ class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFDCE4F7)),
+        side: const BorderSide(color: AppColors.lightBorder),
       ),
       child: InkWell(
         onTap: () => _viewCommittee(joined),
@@ -294,7 +295,7 @@ class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
                   color: _primary.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.group_rounded, color: _primary),
+                child: const Icon(AppIcons.group_rounded, color: _primary),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -344,7 +345,10 @@ class _JoinedCommitteesScreenState extends State<JoinedCommitteesScreen> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.delete_outline, color: _textSecondary),
+                icon: const Icon(
+                  AppIcons.delete_outline,
+                  color: _textSecondary,
+                ),
                 onPressed: () => _showRemoveDialog(committeeCode),
               ),
             ],

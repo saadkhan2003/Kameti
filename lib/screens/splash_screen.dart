@@ -15,6 +15,7 @@ import '../screens/lock_screen.dart';
 import '../screens/force_update_screen.dart';
 import '../services/remote_config_service.dart';
 import '../screens/auth/reset_password_screen.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -39,14 +40,14 @@ class _SplashScreenState extends State<SplashScreen>
   bool _isComplete = false;
   String _appVersion = '';
 
-  static const Color _bgTop = Color(0xFFF7F8FC);
-  static const Color _bgBottom = Color(0xFFEEF1F8);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _primarySoft = Color(0xFFE8EDFF);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
-  static const Color _textTertiary = Color(0xFF94A3B8);
+  static const Color _bgTop = AppColors.bg;
+  static const Color _bgBottom = AppColors.bgAlt;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _primarySoft = AppColors.softPrimary;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
+  static const Color _textTertiary = AppColors.textLight;
 
   @override
   void initState() {
@@ -329,7 +330,7 @@ class _SplashScreenState extends State<SplashScreen>
             child: Container(
               height: 2,
               margin: const EdgeInsets.symmetric(horizontal: 6),
-              color: active ? _primary : const Color(0xFFDDE3F1),
+              color: active ? _primary : AppColors.cFFDDE3F1,
             ),
           );
         }
@@ -349,23 +350,23 @@ class _SplashScreenState extends State<SplashScreen>
                 color:
                     completed
                         ? _primary
-                        : (active ? _primarySoft : const Color(0xFFE2E8F0)),
+                        : (active ? _primarySoft : AppColors.borderMuted),
                 shape: BoxShape.circle,
                 border: Border.all(
                   color:
                       completed
                           ? _primary
-                          : (active ? _primary : const Color(0xFFCBD5E1)),
+                          : (active ? _primary : AppColors.cFFCBD5E1),
                   width: 1.5,
                 ),
               ),
               child: Icon(
-                completed ? Icons.check_rounded : Icons.circle,
+                completed ? AppIcons.check_rounded : AppIcons.circle,
                 size: completed ? 14 : 8,
                 color:
                     completed
                         ? Colors.white
-                        : (active ? _primary : const Color(0xFF94A3B8)),
+                        : (active ? _primary : AppColors.textLight),
               ),
             ),
             const SizedBox(height: 6),
@@ -401,7 +402,7 @@ class _SplashScreenState extends State<SplashScreen>
             borderRadius: BorderRadius.circular(99),
             child: LinearProgressIndicator(
               minHeight: 6,
-              backgroundColor: const Color(0xFFE2E8F0),
+              backgroundColor: AppColors.borderMuted,
               valueColor: const AlwaysStoppedAnimation<Color>(_primary),
               value: _isComplete ? 1 : null,
             ),
@@ -465,7 +466,7 @@ class _SplashScreenState extends State<SplashScreen>
                               height: 28,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE9EEFC),
+                                color: AppColors.cFFE9EEFC,
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: const Text(
@@ -507,7 +508,7 @@ class _SplashScreenState extends State<SplashScreen>
                                     ],
                                   ),
                                   child: const Icon(
-                                    Icons.account_balance_wallet_rounded,
+                                    AppIcons.account_balance_wallet_rounded,
                                     size: 44,
                                     color: _primary,
                                   ),
@@ -567,7 +568,7 @@ class _SplashScreenState extends State<SplashScreen>
                                     Row(
                                       children: [
                                         const Icon(
-                                          Icons.sync_rounded,
+                                          AppIcons.sync,
                                           size: 16,
                                           color: _primary,
                                         ),
@@ -586,7 +587,7 @@ class _SplashScreenState extends State<SplashScreen>
                                         ),
                                         if (_isComplete)
                                           const Icon(
-                                            Icons.check_circle_rounded,
+                                            AppIcons.paid,
                                             size: 18,
                                             color: _primary,
                                           ),
@@ -619,7 +620,7 @@ class _SplashScreenState extends State<SplashScreen>
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE9EEFC),
+                        color: AppColors.cFFE9EEFC,
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(

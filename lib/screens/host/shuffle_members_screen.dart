@@ -7,6 +7,7 @@ import '../../services/auto_sync_service.dart';
 import '../../services/toast_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 class ShuffleMembersScreen extends StatefulWidget {
   final Committee committee;
@@ -19,13 +20,13 @@ class ShuffleMembersScreen extends StatefulWidget {
 
 class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
     with SingleTickerProviderStateMixin {
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _warning = AppColors.warning;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final _dbService = DatabaseService();
   final _syncService = SyncService();
@@ -163,10 +164,10 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                 hintText: 'e.g., 1',
                 helperText: 'Enter 1 to ${_members.length}',
                 filled: true,
-                fillColor: const Color(0xFFF8FAFF),
+                fillColor: AppColors.cFFF8FAFF,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFD0D9EE)),
+                  borderSide: const BorderSide(color: AppColors.cFFD0D9EE),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -287,7 +288,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                   });
                 },
                 icon: Icon(
-                  _isReordering ? Icons.check : Icons.edit,
+                  _isReordering ? AppIcons.check : AppIcons.edit,
                   size: 18,
                   color: _isReordering ? _success : _textSecondary,
                 ),
@@ -316,7 +317,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                         color: _surface,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: const Color(0xFFDCE4F7),
+                          color: AppColors.lightBorder,
                           width: 1,
                         ),
                       ),
@@ -329,29 +330,29 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                               _buildStatColumn(
                                 '${_members.length}',
                                 'Members',
-                                Icons.people_outline,
+                                AppIcons.people_outline,
                                 _primary,
                               ),
                               Container(
                                 height: 40,
                                 width: 1,
-                                color: const Color(0xFFE2E8F0),
+                                color: AppColors.borderMuted,
                               ),
                               _buildStatColumn(
                                 '$receivedCount',
                                 'Received',
-                                Icons.check_circle_outline,
+                                AppIcons.check_circle_outline,
                                 _success,
                               ),
                               Container(
                                 height: 40,
                                 width: 1,
-                                color: const Color(0xFFE2E8F0),
+                                color: AppColors.borderMuted,
                               ),
                               _buildStatColumn(
                                 '${_members.length - receivedCount}',
                                 'Pending',
-                                Icons.pending_outlined,
+                                AppIcons.pending_outlined,
                                 _warning,
                               ),
                             ],
@@ -373,7 +374,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                                         ),
                                       )
                                       : const Icon(
-                                        Icons.shuffle_rounded,
+                                        AppIcons.shuffle_rounded,
                                         size: 20,
                                       ),
                               label: Text(
@@ -408,14 +409,14 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE9EEFC),
+                                color: AppColors.cFFE9EEFC,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.info_outline,
+                                    AppIcons.info_outline,
                                     size: 16,
                                     color: _primary,
                                   ),
@@ -516,10 +517,14 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFFE9EEFC),
+              color: AppColors.cFFE9EEFC,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.people_outline, size: 60, color: _primary),
+            child: const Icon(
+              AppIcons.people_outline,
+              size: 60,
+              color: _primary,
+            ),
           ),
           const SizedBox(height: 20),
           Text(
@@ -552,8 +557,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
         color: hasReceived ? _success.withOpacity(0.08) : _surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color:
-              hasReceived ? _success.withOpacity(0.3) : const Color(0xFFDCE4F7),
+          color: hasReceived ? _success.withOpacity(0.3) : AppColors.lightBorder,
           width: 1,
         ),
       ),
@@ -579,7 +583,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                                     : [_primary, _primary.withOpacity(0.8)],
                           )
                           : null,
-                  color: hasOrder ? null : const Color(0xFF94A3B8),
+                  color: hasOrder ? null : AppColors.textLight,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow:
                       hasOrder
@@ -605,7 +609,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                             ),
                           )
                           : const Icon(
-                            Icons.help_outline,
+                            AppIcons.help_outline,
                             color: Colors.white54,
                             size: 20,
                           ),
@@ -635,7 +639,11 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                       if (hasReceived)
                         Row(
                           children: [
-                            Icon(Icons.check_circle, size: 12, color: _success),
+                            Icon(
+                              AppIcons.check_circle,
+                              size: 12,
+                              color: _success,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'Received',
@@ -666,7 +674,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
               hasReceived
                   ? IconButton(
                     icon: Icon(
-                      Icons.undo_rounded,
+                      AppIcons.undo_rounded,
                       color: _textSecondary,
                       size: 20,
                     ),
@@ -702,7 +710,7 @@ class _ShuffleMembersScreenState extends State<ShuffleMembersScreen>
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   child: Icon(
-                    Icons.drag_indicator,
+                    AppIcons.drag_indicator,
                     color: _textSecondary,
                     size: 20,
                   ),

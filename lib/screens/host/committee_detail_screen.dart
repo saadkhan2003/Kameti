@@ -11,6 +11,7 @@ import 'member_management_screen.dart';
 import 'payment_sheet_screen.dart';
 import 'shuffle_members_screen.dart';
 import 'committee_analytics_screen.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import '../../ui/widgets/sync_status_widget.dart';
 
 class CommitteeDetailScreen extends StatefulWidget {
@@ -23,15 +24,15 @@ class CommitteeDetailScreen extends StatefulWidget {
 }
 
 class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
-  static const Color _bgTop = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _purple = Color(0xFF7C4DFF);
-  static const Color _danger = Color(0xFFDC2626);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bgTop = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _warning = AppColors.warning;
+  static const Color _purple = AppColors.accent;
+  static const Color _danger = AppColors.error;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final _dbService = DatabaseService();
   final _syncService = SyncService();
@@ -135,16 +136,16 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                 decoration: InputDecoration(
                   labelText: 'Kameti Name',
                   labelStyle: const TextStyle(color: _textSecondary),
-                  hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                  hintStyle: const TextStyle(color: AppColors.textLight),
                   prefixIcon: const Icon(
-                    Icons.group_outlined,
+                    AppIcons.group_outlined,
                     color: _textSecondary,
                   ),
                   filled: true,
-                  fillColor: const Color(0xFFF8FAFF),
+                  fillColor: AppColors.cFFF8FAFF,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFD0D9EE)),
+                    borderSide: const BorderSide(color: AppColors.cFFD0D9EE),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -163,12 +164,12 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                 decoration: InputDecoration(
                   labelText: 'Contribution Amount',
                   labelStyle: const TextStyle(color: _textSecondary),
-                  hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                  hintStyle: const TextStyle(color: AppColors.textLight),
                   filled: true,
-                  fillColor: const Color(0xFFF8FAFF),
+                  fillColor: AppColors.cFFF8FAFF,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFD0D9EE)),
+                    borderSide: const BorderSide(color: AppColors.cFFD0D9EE),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -376,17 +377,17 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
           SyncStatusWidget(compact: true, onTap: _refreshCommittee),
           const SizedBox(width: 4),
           IconButton(
-            icon: const Icon(Icons.share_rounded, color: _textSecondary),
+            icon: const Icon(AppIcons.share, color: _textSecondary),
             onPressed: _showShareOptions,
             tooltip: 'Share Code',
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: _textSecondary),
+            icon: const Icon(AppIcons.more, color: _textSecondary),
             color: _surface,
             elevation: 8,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Color(0xFFDCE5F6)),
+              side: const BorderSide(color: AppColors.cFFDCE5F6),
             ),
             onSelected: (value) {
               if (value == 'edit') {
@@ -401,7 +402,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     value: 'edit',
                     child: Row(
                       children: [
-                        const Icon(Icons.edit, size: 18, color: _textSecondary),
+                        const Icon(AppIcons.edit, size: 18, color: _textSecondary),
                         const SizedBox(width: 8),
                         const Text(
                           'Edit Committee',
@@ -414,7 +415,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     value: 'delete',
                     child: Row(
                       children: [
-                        const Icon(Icons.delete, size: 18, color: _danger),
+                        const Icon(AppIcons.delete, size: 18, color: _danger),
                         const SizedBox(width: 8),
                         Text(
                           'Delete Committee',
@@ -445,7 +446,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF0F172A).withOpacity(0.08),
+                      color: AppColors.darkBg.withOpacity(0.08),
                       blurRadius: 24,
                       offset: const Offset(0, 10),
                     ),
@@ -460,11 +461,11 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE9EEFC),
+                            color: AppColors.cFFE9EEFC,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
-                            Icons.group_rounded,
+                            AppIcons.group_rounded,
                             color: _primary,
                           ),
                         ),
@@ -498,7 +499,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE9EEFC),
+                            color: AppColors.cFFE9EEFC,
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: InkWell(
@@ -529,7 +530,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                                 ),
                                 const SizedBox(width: 6),
                                 const Icon(
-                                  Icons.copy_rounded,
+                                  AppIcons.copy_rounded,
                                   size: 13,
                                   color: _primary,
                                 ),
@@ -545,19 +546,19 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                         _buildStatItem(
                           'Members',
                           '${_members.length}',
-                          Icons.people_outline_rounded,
+                          AppIcons.people_outline_rounded,
                         ),
                         const SizedBox(width: 10),
                         _buildStatItem(
                           'Per Member',
                           '${_committee.currency} ${_formatAmount(_committee.contributionAmount)}',
-                          Icons.payments_outlined,
+                          AppIcons.payout,
                         ),
                         const SizedBox(width: 10),
                         _buildStatItem(
                           'Pool',
                           '${_committee.currency} ${_formatAmount(totalAmount)}',
-                          Icons.account_balance_wallet_outlined,
+                          AppIcons.account_balance_wallet_outlined,
                         ),
                       ],
                     ),
@@ -571,7 +572,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                 decoration: BoxDecoration(
                   color: _surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFD0D9EE)),
+                  border: Border.all(color: AppColors.cFFD0D9EE),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -588,7 +589,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     LinearProgressIndicator(
                       value:
                           _members.isEmpty ? 0 : paidMembers / _members.length,
-                      backgroundColor: const Color(0xFFE2E8F0),
+                      backgroundColor: AppColors.borderMuted,
                       valueColor: const AlwaysStoppedAnimation<Color>(_success),
                       minHeight: 8,
                       borderRadius: BorderRadius.circular(999),
@@ -612,7 +613,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                 decoration: BoxDecoration(
                   color: _surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFCFE8D9)),
+                  border: Border.all(color: AppColors.cFFCFE8D9),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -628,11 +629,11 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFECFDF3),
+                              color: AppColors.cFFECFDF3,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(
-                              Icons.account_balance_wallet_rounded,
+                              AppIcons.account_balance_wallet_rounded,
                               color: _success,
                               size: 20,
                             ),
@@ -655,8 +656,8 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                                     const SizedBox(width: 4),
                                     Icon(
                                       _showCollectionDetails
-                                          ? Icons.keyboard_arrow_up_rounded
-                                          : Icons.keyboard_arrow_down_rounded,
+                                          ? AppIcons.keyboard_arrow_up_rounded
+                                          : AppIcons.keyboard_arrow_down_rounded,
                                       size: 16,
                                       color: _textSecondary,
                                     ),
@@ -681,9 +682,9 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFF),
+                          color: AppColors.cFFF8FAFF,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFD0D9EE)),
+                          border: Border.all(color: AppColors.cFFD0D9EE),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -709,7 +710,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                       ),
                     ],
                     const SizedBox(height: 10),
-                    const Divider(color: Color(0xFFE2E8F0)),
+                    const Divider(color: AppColors.borderMuted),
                     const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -753,7 +754,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                       title: 'Collected',
                       value:
                           '${_committee.currency} ${_formatAmount(totalCollected)}',
-                      icon: Icons.account_balance_wallet_outlined,
+                      icon: AppIcons.account_balance_wallet_outlined,
                       toneColor: _success,
                     ),
                   ),
@@ -763,7 +764,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                       title: 'Current Cycle',
                       value:
                           '${_committee.currency} ${_formatAmount(currentCycleCollected)}',
-                      icon: Icons.stacked_line_chart_rounded,
+                      icon: AppIcons.stacked_line_chart_rounded,
                       toneColor: _primary,
                     ),
                   ),
@@ -777,7 +778,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                       title: 'Per Payout',
                       value:
                           '${_members.length * collectionsPerPayout} payments',
-                      icon: Icons.repeat_rounded,
+                      icon: AppIcons.repeat_rounded,
                       toneColor: _warning,
                     ),
                   ),
@@ -787,7 +788,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                       title: 'Start Date',
                       value:
                           '${_committee.startDate.day}/${_committee.startDate.month}/${_committee.startDate.year}',
-                      icon: Icons.event_available_rounded,
+                      icon: AppIcons.event_available_rounded,
                       toneColor: _purple,
                     ),
                   ),
@@ -814,7 +815,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                 childAspectRatio: 0.93,
                 children: [
                   _buildActionTile(
-                    icon: Icons.people_rounded,
+                    icon: AppIcons.people_rounded,
                     title: 'Manage Members',
                     subtitle: 'Add or edit',
                     color: _primary,
@@ -831,7 +832,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     },
                   ),
                   _buildActionTile(
-                    icon: Icons.grid_on_rounded,
+                    icon: AppIcons.grid_on_rounded,
                     title: 'Payment Sheet',
                     subtitle: 'Mark dues',
                     color: _success,
@@ -847,7 +848,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     },
                   ),
                   _buildActionTile(
-                    icon: Icons.shuffle_rounded,
+                    icon: AppIcons.shuffle_rounded,
                     title: 'Shuffle Order',
                     subtitle: 'Assign payout',
                     color: _warning,
@@ -864,7 +865,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     },
                   ),
                   _buildActionTile(
-                    icon: Icons.analytics_rounded,
+                    icon: AppIcons.analytics,
                     title: 'Analytics',
                     subtitle: 'Insights',
                     color: _purple,
@@ -900,7 +901,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -944,9 +945,9 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFF),
+          color: AppColors.cFFF8FAFF,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFD0D9EE)),
+          border: Border.all(color: AppColors.cFFD0D9EE),
         ),
         child: Column(
           children: [
@@ -988,7 +989,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
           decoration: BoxDecoration(
             color: _surface,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFDCE4F7)),
+            border: Border.all(color: AppColors.lightBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1010,12 +1011,12 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFF),
+                      color: AppColors.cFFF8FAFF,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFDCE4F7)),
+                      border: Border.all(color: AppColors.lightBorder),
                     ),
                     child: Icon(
-                      Icons.arrow_outward_rounded,
+                      AppIcons.arrow_outward_rounded,
                       size: 16,
                       color: color,
                     ),
@@ -1074,7 +1075,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Icon(Icons.chevron_right_rounded, size: 16, color: color),
+                    Icon(AppIcons.chevron_right_rounded, size: 16, color: color),
                   ],
                 ),
               ),

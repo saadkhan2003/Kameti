@@ -9,6 +9,7 @@ import '../../services/toast_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../utils/code_generator.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import '../../ui/widgets/ads/banner_ad_widget.dart';
 
 class MemberManagementScreen extends StatefulWidget {
@@ -21,14 +22,14 @@ class MemberManagementScreen extends StatefulWidget {
 }
 
 class _MemberManagementScreenState extends State<MemberManagementScreen> {
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _danger = Color(0xFFDC2626);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _warning = AppColors.warning;
+  static const Color _danger = AppColors.error;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final _dbService = DatabaseService();
   final _autoSyncService = AutoSyncService();
@@ -148,14 +149,14 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                   prefixIcon: const Icon(
-                    Icons.person_outline,
+                    AppIcons.person_outline,
                     color: _textSecondary,
                   ),
                   filled: true,
-                  fillColor: const Color(0xFFF8FAFF),
+                  fillColor: AppColors.cFFF8FAFF,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFD0D9EE)),
+                    borderSide: const BorderSide(color: AppColors.cFFD0D9EE),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -186,14 +187,14 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                   prefixIcon: const Icon(
-                    Icons.phone_outlined,
+                    AppIcons.phone_outlined,
                     color: _textSecondary,
                   ),
                   filled: true,
-                  fillColor: const Color(0xFFF8FAFF),
+                  fillColor: AppColors.cFFF8FAFF,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFD0D9EE)),
+                    borderSide: const BorderSide(color: AppColors.cFFD0D9EE),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -362,26 +363,26 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
               decoration: BoxDecoration(
                 color: _surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFDCE4F7)),
+                border: Border.all(color: AppColors.lightBorder),
               ),
               child: Row(
                 children: [
                   _buildSummaryStat(
-                    icon: Icons.people_rounded,
+                    icon: AppIcons.people_rounded,
                     label: 'Total',
                     value: '${_allMembers.length}',
                     tone: _primary,
                   ),
                   const SizedBox(width: 10),
                   _buildSummaryStat(
-                    icon: Icons.verified_rounded,
+                    icon: AppIcons.verified_rounded,
                     label: 'Paid Out',
                     value: '$paidCount',
                     tone: _success,
                   ),
                   const SizedBox(width: 10),
                   _buildSummaryStat(
-                    icon: Icons.schedule_rounded,
+                    icon: AppIcons.schedule_rounded,
                     label: 'Pending',
                     value: '${(_allMembers.length - paidCount).clamp(0, 999)}',
                     tone: _warning,
@@ -399,11 +400,11 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
               decoration: InputDecoration(
                 hintText: 'Search by name, code, or phone...',
                 hintStyle: GoogleFonts.inter(color: _textSecondary),
-                prefixIcon: const Icon(Icons.search, color: _textSecondary),
+                prefixIcon: const Icon(AppIcons.search, color: _textSecondary),
                 suffixIcon:
                     _searchQuery.isNotEmpty
                         ? IconButton(
-                          icon: const Icon(Icons.clear, color: _textSecondary),
+                          icon: const Icon(AppIcons.clear, color: _textSecondary),
                           onPressed: () {
                             _searchController.clear();
                             _onSearchChanged('');
@@ -414,11 +415,11 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                 fillColor: _surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Color(0xFFDCE4F7)),
+                  borderSide: const BorderSide(color: AppColors.lightBorder),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Color(0xFFDCE4F7)),
+                  borderSide: const BorderSide(color: AppColors.lightBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -441,7 +442,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(
-                            Icons.search_off_rounded,
+                            AppIcons.search_off_rounded,
                             size: 56,
                             color: _textSecondary,
                           ),
@@ -472,7 +473,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
         onPressed: () => _showAddMemberDialog(),
         backgroundColor: _primary,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.person_add_alt_1_rounded),
+        icon: const Icon(AppIcons.person_add_alt_1_rounded),
         label: const Text('Add Member'),
       ),
       bottomNavigationBar: const BannerAdWidget(),
@@ -527,11 +528,11 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
             width: 86,
             height: 86,
             decoration: BoxDecoration(
-              color: const Color(0xFFE9EEFC),
+              color: AppColors.cFFE9EEFC,
               borderRadius: BorderRadius.circular(24),
             ),
             child: const Icon(
-              Icons.people_outline_rounded,
+              AppIcons.people_outline_rounded,
               size: 42,
               color: _primary,
             ),
@@ -553,7 +554,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () => _showAddMemberDialog(),
-            icon: const Icon(Icons.person_add),
+            icon: const Icon(AppIcons.person_add),
             label: const Text('Add First Member'),
             style: ElevatedButton.styleFrom(
               backgroundColor: _primary,
@@ -577,7 +578,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
       color: _surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFDCE4F7)),
+        side: const BorderSide(color: AppColors.lightBorder),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -648,7 +649,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                           ),
                           const SizedBox(width: 4),
                           Icon(
-                            Icons.copy,
+                            AppIcons.copy,
                             size: 12,
                             color: _success.withOpacity(0.7),
                           ),
@@ -682,12 +683,12 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                 ),
               ),
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: _textSecondary),
+              icon: const Icon(AppIcons.more, color: _textSecondary),
               color: _surface,
               elevation: 8,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Color(0xFFDCE5F6)),
+                side: const BorderSide(color: AppColors.cFFDCE5F6),
               ),
               onSelected: (value) {
                 if (value == 'edit') {
@@ -704,7 +705,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                       value: 'share',
                       child: Row(
                         children: [
-                          Icon(Icons.share, size: 18, color: _primary),
+                          Icon(AppIcons.share, size: 18, color: _primary),
                           SizedBox(width: 8),
                           Text(
                             'Share Code',
@@ -717,7 +718,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                       value: 'edit',
                       child: Row(
                         children: [
-                          Icon(Icons.edit, size: 18, color: _textSecondary),
+                          Icon(AppIcons.edit, size: 18, color: _textSecondary),
                           SizedBox(width: 8),
                           Text('Edit', style: TextStyle(color: _textPrimary)),
                         ],
@@ -727,7 +728,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                       value: 'delete',
                       child: Row(
                         children: [
-                          Icon(Icons.delete, size: 18, color: _danger),
+                          Icon(AppIcons.delete, size: 18, color: _danger),
                           SizedBox(width: 8),
                           Text('Delete', style: TextStyle(color: _danger)),
                         ],

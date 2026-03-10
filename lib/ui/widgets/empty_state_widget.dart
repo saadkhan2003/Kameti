@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../utils/app_theme.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// A beautiful, animated empty state widget with illustration-like icons
 /// and call-to-action support.
 ///
 /// Usage:
 ///   EmptyStateWidget(
-///     icon: Icons.group_off_rounded,
+///     icon: AppIcons.group_off_rounded,
 ///     title: 'No Committees Yet',
 ///     subtitle: 'Create your first committee to get started',
 ///     actionLabel: 'Create Committee',
@@ -115,7 +116,7 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
                   style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0F172A),
+                    color: AppColors.darkBg,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -125,7 +126,7 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 14,
-                    color: const Color(0xFF64748B),
+                    color: AppColors.textMedium,
                     height: 1.4,
                   ),
                 ),
@@ -135,7 +136,7 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
                   ElevatedButton.icon(
                     onPressed: widget.onAction,
                     icon: Icon(
-                      widget.actionIcon ?? Icons.add_rounded,
+                      widget.actionIcon ?? AppIcons.add_rounded,
                       size: 20,
                     ),
                     label: Text(

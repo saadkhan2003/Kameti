@@ -7,6 +7,7 @@ import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/toast_service.dart';
 import '../../services/localization_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import '../home_screen.dart';
 import '../settings_screen.dart';
 
@@ -18,13 +19,13 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _danger = Color(0xFFDC2626);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _danger = AppColors.error;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   String _appVersion = '';
 
@@ -85,10 +86,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               decoration: BoxDecoration(
                 color: _surface,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFDCE4F7)),
+                border: Border.all(color: AppColors.lightBorder),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0F172A).withOpacity(0.05),
+                    color: AppColors.darkBg.withOpacity(0.05),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
@@ -103,7 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [_primary, Color(0xFF5B6FD6)],
+                        colors: [_primary, AppColors.cFF5B6FD6],
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
@@ -148,13 +149,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Row(
                     children: [
                       _buildTopChip(
-                        icon: Icons.verified_user_rounded,
+                        icon: AppIcons.verified_user_rounded,
                         label: 'Account Active',
                         color: _success,
                       ),
                       const SizedBox(width: 8),
                       _buildTopChip(
-                        icon: Icons.info_outline_rounded,
+                        icon: AppIcons.info_outline_rounded,
                         label: _appVersion.isEmpty ? 'App' : _appVersion,
                         color: _primary,
                       ),
@@ -166,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 14),
 
             _buildInfoCard(
-              icon: Icons.email_outlined,
+              icon: AppIcons.email_outlined,
               label: 'Email',
               value: email,
             ),
@@ -174,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             if (joinedDate != null)
               _buildInfoCard(
-                icon: Icons.calendar_today_outlined,
+                icon: AppIcons.calendar_today_outlined,
                 label: 'member_since'.tr,
                 value: joinedDate,
               ),
@@ -193,12 +194,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                   if (mounted) setState(() {});
                 },
-                icon: const Icon(Icons.settings_outlined),
+                icon: const Icon(AppIcons.settings_outlined),
                 label: Text('settings'.tr),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _textPrimary,
                   backgroundColor: _surface,
-                  side: const BorderSide(color: Color(0xFFDCE4F7)),
+                  side: const BorderSide(color: AppColors.lightBorder),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -266,7 +267,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     }
                   }
                 },
-                icon: const Icon(Icons.logout_rounded),
+                icon: const Icon(AppIcons.logout_rounded),
                 label: const Text('Logout'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _danger,
@@ -286,12 +287,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: OutlinedButton.icon(
                 onPressed:
                     () => _showChangePasswordDialog(context, authService),
-                icon: const Icon(Icons.lock_outline),
+                icon: const Icon(AppIcons.lock_outline),
                 label: const Text('Change Password'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _primary,
                   backgroundColor: _surface,
-                  side: const BorderSide(color: Color(0xFFC9D8FF)),
+                  side: const BorderSide(color: AppColors.cFFC9D8FF),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -305,12 +306,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () => _showDeleteAccountDialog(context, authService),
-                icon: const Icon(Icons.delete_forever_rounded),
+                icon: const Icon(AppIcons.delete_forever_rounded),
                 label: const Text('Delete Account'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _danger,
                   backgroundColor: _surface,
-                  side: const BorderSide(color: Color(0xFFF2C9CF)),
+                  side: const BorderSide(color: AppColors.cFFF2C9CF),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -376,7 +377,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Row(
         children: [
@@ -431,7 +432,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             title: Row(
               children: [
-                const Icon(Icons.lock_outline, color: _primary),
+                const Icon(AppIcons.lock_outline, color: _primary),
                 const SizedBox(width: 8),
                 Text(
                   'Change Password',
@@ -513,7 +514,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             title: Row(
               children: [
-                const Icon(Icons.warning_rounded, color: _danger),
+                const Icon(AppIcons.warning_rounded, color: _danger),
                 const SizedBox(width: 8),
                 Text(
                   'Delete Account?',
@@ -547,7 +548,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: const Row(
                       children: [
-                        Icon(Icons.info_outline, color: _danger, size: 18),
+                        Icon(AppIcons.info_outline, color: _danger, size: 18),
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -574,18 +575,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: InputDecoration(
                       hintText: 'Password',
                       prefixIcon: const Icon(
-                        Icons.lock_outline,
+                        AppIcons.lock_outline,
                         color: _textSecondary,
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFF),
+                      fillColor: AppColors.cFFF8FAFF,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDCE4F7)),
+                        borderSide: const BorderSide(color: AppColors.lightBorder),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFFDCE4F7)),
+                        borderSide: const BorderSide(color: AppColors.lightBorder),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -702,7 +703,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          const Icon(Icons.remove_circle_outline, color: _danger, size: 16),
+          const Icon(AppIcons.remove_circle_outline, color: _danger, size: 16),
           const SizedBox(width: 8),
           Text(text, style: const TextStyle(color: _textSecondary)),
         ],

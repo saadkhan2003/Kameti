@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:in_app_review/in_app_review.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// Handles in-app review logic with "reviewed" and "maybe later" persistence.
 ///
@@ -93,7 +94,7 @@ class ReviewService {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            backgroundColor: const Color(0xFF1E1E2E),
+            backgroundColor: AppColors.cFF1E1E2E,
             title: const Column(
               children: [
                 Text('⭐', style: TextStyle(fontSize: 40)),
@@ -136,7 +137,7 @@ class ReviewService {
                     await _requestNativeReview();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6C63FF),
+                    backgroundColor: AppColors.cFF6C63FF,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

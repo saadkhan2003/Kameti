@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -10,12 +11,12 @@ class AboutScreen extends StatefulWidget {
 }
 
 class _AboutScreenState extends State<AboutScreen> {
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   String _version = '';
 
@@ -60,7 +61,7 @@ class _AboutScreenState extends State<AboutScreen> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [_primary, Color(0xFF5B6FD6)],
+                colors: [_primary, AppColors.cFF5B6FD6],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -83,7 +84,7 @@ class _AboutScreenState extends State<AboutScreen> {
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: const Icon(
-                    Icons.groups_rounded,
+                    AppIcons.groups_rounded,
                     color: _primary,
                     size: 42,
                   ),
@@ -129,19 +130,19 @@ class _AboutScreenState extends State<AboutScreen> {
                 Row(
                   children: [
                     _buildTopMetric(
-                      icon: Icons.shield_rounded,
+                      icon: AppIcons.shield_rounded,
                       title: 'Secure',
                       value: 'Cloud Sync',
                     ),
                     const SizedBox(width: 8),
                     _buildTopMetric(
-                      icon: Icons.bolt_rounded,
+                      icon: AppIcons.bolt_rounded,
                       title: 'Fast',
                       value: 'Real-time',
                     ),
                     const SizedBox(width: 8),
                     _buildTopMetric(
-                      icon: Icons.groups_rounded,
+                      icon: AppIcons.groups_rounded,
                       title: 'Built For',
                       value: 'Committees',
                     ),
@@ -154,7 +155,7 @@ class _AboutScreenState extends State<AboutScreen> {
 
           _buildSection(
             title: 'About the App',
-            icon: Icons.info_outline_rounded,
+            icon: AppIcons.info_outline_rounded,
             content:
                 'Kameti is your all-in-one solution for managing rotating savings committees (ROSCA). Whether you are a host organizing multiple committees or a member tracking payments, the app keeps everything structured and transparent.',
           ),
@@ -167,7 +168,7 @@ class _AboutScreenState extends State<AboutScreen> {
             decoration: BoxDecoration(
               color: _surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFDCE4F7)),
+              border: Border.all(color: AppColors.lightBorder),
             ),
             child: Column(
               children: [
@@ -243,7 +244,7 @@ class _AboutScreenState extends State<AboutScreen> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,7 +302,7 @@ class _AboutScreenState extends State<AboutScreen> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,7 +317,7 @@ class _AboutScreenState extends State<AboutScreen> {
                   borderRadius: BorderRadius.circular(9),
                 ),
                 child: const Icon(
-                  Icons.auto_awesome_rounded,
+                  AppIcons.auto_awesome_rounded,
                   color: _success,
                   size: 17,
                 ),

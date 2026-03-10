@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/remote_config_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// Force Update Screen - Blocks app usage until user updates
 class ForceUpdateScreen extends StatelessWidget {
   final UpdateStatus updateStatus;
 
-  static const Color _bgTop = Color(0xFFF7F8FC);
-  static const Color _bgBottom = Color(0xFFEEF1F8);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bgTop = AppColors.bg;
+  static const Color _bgBottom = AppColors.bgAlt;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   const ForceUpdateScreen({super.key, required this.updateStatus});
 
@@ -86,7 +87,7 @@ class ForceUpdateScreen extends StatelessWidget {
                               height: 30,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE9EEFC),
+                                color: AppColors.cFFE9EEFC,
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: const Text(
@@ -104,11 +105,11 @@ class ForceUpdateScreen extends StatelessWidget {
                               width: 92,
                               height: 92,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE9EEFC),
+                                color: AppColors.cFFE9EEFC,
                                 borderRadius: BorderRadius.circular(24),
                               ),
                               child: const Icon(
-                                Icons.system_update_alt_rounded,
+                                AppIcons.system_update_alt_rounded,
                                 size: 46,
                                 color: _primary,
                               ),
@@ -141,10 +142,10 @@ class ForceUpdateScreen extends StatelessWidget {
                               width: double.infinity,
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFF),
+                                color: AppColors.cFFF8FAFF,
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: const Color(0xFFD0D9EE),
+                                  color: AppColors.cFFD0D9EE,
                                 ),
                               ),
                               child: Column(
@@ -152,9 +153,9 @@ class ForceUpdateScreen extends StatelessWidget {
                                   Row(
                                     children: [
                                       const Icon(
-                                        Icons.phone_android_rounded,
+                                        AppIcons.phone_android_rounded,
                                         size: 16,
-                                        color: Color(0xFF64748B),
+                                        color: AppColors.textMedium,
                                       ),
                                       const SizedBox(width: 8),
                                       const Expanded(
@@ -179,7 +180,7 @@ class ForceUpdateScreen extends StatelessWidget {
                                   Row(
                                     children: [
                                       const Icon(
-                                        Icons.new_releases_rounded,
+                                        AppIcons.new_releases_rounded,
                                         size: 16,
                                         color: _primary,
                                       ),
@@ -220,7 +221,7 @@ class ForceUpdateScreen extends StatelessWidget {
                                 ),
                                 onPressed: _openStore,
                                 icon: const Icon(
-                                  Icons.download_rounded,
+                                  AppIcons.download_rounded,
                                   size: 20,
                                 ),
                                 label: const Text(

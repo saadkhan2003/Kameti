@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _warning = AppColors.warning;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   @override
   Widget build(BuildContext context) {
@@ -39,13 +40,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
           Row(
             children: [
               _buildMetaChip(
-                icon: Icons.lock_outline_rounded,
+                icon: AppIcons.lock_outline_rounded,
                 label: 'Secure by default',
                 color: _success,
               ),
               const SizedBox(width: 8),
               _buildMetaChip(
-                icon: Icons.update_rounded,
+                icon: AppIcons.update_rounded,
                 label: 'Updated Feb 2026',
                 color: _primary,
               ),
@@ -164,7 +165,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: _surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFDCE4F7)),
+          border: Border.all(color: AppColors.lightBorder),
         ),
         child: Row(
           children: [
@@ -202,7 +203,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_primary, Color(0xFF5B6FD6)],
+          colors: [_primary, AppColors.cFF5B6FD6],
         ),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
@@ -223,7 +224,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
-              Icons.privacy_tip_rounded,
+              AppIcons.privacy_tip_rounded,
               color: Colors.white,
               size: 30,
             ),
@@ -266,7 +267,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,17 +318,17 @@ class PrivacyPolicyScreen extends StatelessWidget {
   }
 
   IconData _iconForSection(String title) {
-    if (title.contains('Introduction')) return Icons.info_outline_rounded;
-    if (title.contains('Information')) return Icons.badge_outlined;
-    if (title.contains('Use')) return Icons.settings_suggest_rounded;
-    if (title.contains('Storage')) return Icons.storage_rounded;
-    if (title.contains('Advertising')) return Icons.campaign_outlined;
-    if (title.contains('Sharing')) return Icons.share_outlined;
-    if (title.contains('Rights')) return Icons.verified_user_outlined;
-    if (title.contains('Deletion')) return Icons.delete_outline_rounded;
-    if (title.contains('Third-Party')) return Icons.hub_outlined;
-    if (title.contains('Children')) return Icons.child_care_outlined;
-    if (title.contains('Contact')) return Icons.mail_outline_rounded;
-    return Icons.article_outlined;
+    if (title.contains('Introduction')) return AppIcons.info_outline_rounded;
+    if (title.contains('Information')) return AppIcons.badge_outlined;
+    if (title.contains('Use')) return AppIcons.settings_suggest_rounded;
+    if (title.contains('Storage')) return AppIcons.storage_rounded;
+    if (title.contains('Advertising')) return AppIcons.campaign_outlined;
+    if (title.contains('Sharing')) return AppIcons.share_outlined;
+    if (title.contains('Rights')) return AppIcons.verified_user_outlined;
+    if (title.contains('Deletion')) return AppIcons.delete_outline_rounded;
+    if (title.contains('Third-Party')) return AppIcons.hub_outlined;
+    if (title.contains('Children')) return AppIcons.child_care_outlined;
+    if (title.contains('Contact')) return AppIcons.mail_outline_rounded;
+    return AppIcons.article_outlined;
   }
 }

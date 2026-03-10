@@ -6,6 +6,7 @@ import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import '../../ui/widgets/ads/banner_ad_widget.dart';
 
 class MemberViewScreen extends StatefulWidget {
@@ -23,14 +24,14 @@ class MemberViewScreen extends StatefulWidget {
 }
 
 class _MemberViewScreenState extends State<MemberViewScreen> {
-  static const Color _bg = Color(0xFFF6F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _primarySoft = Color(0xFFEAF0FF);
-  static const Color _success = Color(0xFF059669);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _primarySoft = AppColors.softPrimary;
+  static const Color _success = AppColors.success;
+  static const Color _warning = AppColors.warning;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final _dbService = DatabaseService();
   final _syncService = SyncService();
@@ -311,7 +312,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                 ),
               )
               : IconButton(
-                icon: const Icon(Icons.refresh_rounded, color: _textSecondary),
+                icon: const Icon(AppIcons.refresh, color: _textSecondary),
                 tooltip: 'Refresh from cloud',
                 onPressed: _refreshFromCloud,
               ),
@@ -341,7 +342,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF3347A8), Color(0xFF4F46E5)],
+          colors: [AppColors.primary, AppColors.primaryLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -389,7 +390,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(
-                        Icons.restart_alt_rounded,
+                        AppIcons.restart_alt_rounded,
                         color: Colors.white,
                         size: 14,
                       ),
@@ -413,7 +414,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
             children: [
               Expanded(
                 child: _buildHeroStat(
-                  Icons.check_circle_rounded,
+                  AppIcons.paid,
                   'Paid',
                   '$_paidCount / $_totalDays',
                 ),
@@ -421,7 +422,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: _buildHeroStat(
-                  Icons.payments_rounded,
+                  AppIcons.payments_rounded,
                   'Contributed',
                   '${widget.committee.currency} ${contribution.toStringAsFixed(0)}',
                 ),
@@ -429,7 +430,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: _buildHeroStat(
-                  Icons.calendar_today_rounded,
+                  AppIcons.calendar_today_rounded,
                   'Per ${_periodLabel()}',
                   '${widget.committee.currency} ${widget.committee.contributionAmount.toStringAsFixed(0)}',
                 ),
@@ -489,9 +490,9 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
           IconButton(
             onPressed: _selectedCycle > 1 ? () => _changeCycle(-1) : null,
             icon: Icon(
-              Icons.chevron_left_rounded,
+              AppIcons.chevron_left_rounded,
               color:
-                  _selectedCycle > 1 ? _textPrimary : const Color(0xFFB8C3D8),
+                  _selectedCycle > 1 ? _textPrimary : AppColors.cFFB8C3D8,
             ),
           ),
           Expanded(
@@ -547,11 +548,11 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
             onPressed:
                 _selectedCycle < _maxCycles ? () => _changeCycle(1) : null,
             icon: Icon(
-              Icons.chevron_right_rounded,
+              AppIcons.chevron_right_rounded,
               color:
                   _selectedCycle < _maxCycles
                       ? _textPrimary
-                      : const Color(0xFFB8C3D8),
+                      : AppColors.cFFB8C3D8,
             ),
           ),
         ],
@@ -606,7 +607,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 10,
-              backgroundColor: const Color(0xFFE4EAF7),
+              backgroundColor: AppColors.cFFE4EAF7,
               valueColor: const AlwaysStoppedAnimation<Color>(_primary),
             ),
           ),
@@ -686,7 +687,7 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                     color:
                         isPaid
                             ? _success.withOpacity(0.35)
-                            : const Color(0xFFD7E3FF),
+                            : AppColors.cFFD7E3FF,
                   ),
                 ),
                 child: Column(
@@ -694,8 +695,8 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                   children: [
                     Icon(
                       isPaid
-                          ? Icons.check_circle_rounded
-                          : Icons.schedule_rounded,
+                          ? AppIcons.paid
+                          : AppIcons.schedule_rounded,
                       size: 14,
                       color: isPaid ? _success : _warning,
                     ),
@@ -756,10 +757,10 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
     return BoxDecoration(
       color: _surface,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: const Color(0xFFDCE5F6)),
+      border: Border.all(color: AppColors.cFFDCE5F6),
       boxShadow: [
         BoxShadow(
-          color: const Color(0xFF0F172A).withOpacity(0.05),
+          color: AppColors.darkBg.withOpacity(0.05),
           blurRadius: 12,
           offset: const Offset(0, 5),
         ),

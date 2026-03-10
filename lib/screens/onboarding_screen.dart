@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../services/database_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import 'home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -12,12 +13,12 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  static const Color _bg = Color(0xFFF4F7FF);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _primaryDark = Color(0xFF25348A);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _primaryDark = AppColors.primaryDark;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final PageController _pageController = PageController();
   int _currentIndex = 0;
@@ -27,8 +28,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'Welcome to Kameti',
       description:
           'Run your committee smoothly with one place for members, collections, and payout tracking.',
-      icon: Icons.groups_rounded,
-      accent: Color(0xFF3347A8),
+      icon: AppIcons.groups_rounded,
+      accent: AppColors.primary,
       label: 'Overview',
       points: ['Structured committee flow', 'Smart status visibility'],
     ),
@@ -36,8 +37,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'Create in Minutes',
       description:
           'Set amount, cycle, and member count, then share the join code with your group instantly.',
-      icon: Icons.add_task_rounded,
-      accent: Color(0xFF2563EB),
+      icon: AppIcons.add_task_rounded,
+      accent: AppColors.secondary,
       label: 'Setup',
       points: ['Fast configuration', 'Instant join-code sharing'],
     ),
@@ -45,8 +46,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'Track Every Payment',
       description:
           'Mark paid and pending contributions quickly, and always know each cycle status clearly.',
-      icon: Icons.payments_rounded,
-      accent: Color(0xFF059669),
+      icon: AppIcons.payments_rounded,
+      accent: AppColors.success,
       label: 'Payments',
       points: ['Daily/weekly/monthly support', 'Member-level transparency'],
     ),
@@ -54,8 +55,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'Clear Payout Visibility',
       description:
           'Keep payout order transparent for everyone, with updates your members can trust.',
-      icon: Icons.emoji_events_rounded,
-      accent: Color(0xFFF59E0B),
+      icon: AppIcons.emoji_events_rounded,
+      accent: AppColors.cFFF59E0B,
       label: 'Payouts',
       points: ['Predictable payout timeline', 'Trust through clarity'],
     ),
@@ -96,9 +97,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFE9EEFC),
+            color: AppColors.cFFE9EEFC,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: const Color(0xFFD8E2F8)),
+            border: Border.all(color: AppColors.cFFD8E2F8),
           ),
           child: Text(
             '${_currentIndex + 1}/${_steps.length}',
@@ -138,7 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             margin: EdgeInsets.only(right: index == _steps.length - 1 ? 0 : 8),
             height: 6,
             decoration: BoxDecoration(
-              color: active || passed ? tone : const Color(0xFFD7DEEE),
+              color: active || passed ? tone : AppColors.cFFD7DEEE,
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -153,7 +154,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF3347A8), Color(0xFF4F46E5)],
+          colors: [AppColors.primary, AppColors.primaryLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -176,7 +177,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
-              Icons.auto_awesome_rounded,
+              AppIcons.auto_awesome_rounded,
               color: Colors.white,
               size: 24,
             ),
@@ -218,10 +219,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFDDE6F7)),
+        border: Border.all(color: AppColors.cFFDDE6F7),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.06),
+            color: AppColors.darkBg.withOpacity(0.06),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -284,7 +285,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Row(
                   children: [
                     Icon(
-                      Icons.check_circle_rounded,
+                      AppIcons.paid,
                       size: 14,
                       color: step.accent,
                     ),
@@ -294,7 +295,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         point,
                         style: GoogleFonts.inter(
                           fontSize: 12,
-                          color: const Color(0xFF475569),
+                          color: AppColors.cFF475569,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -307,13 +308,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Row(
               children: [
                 _buildMiniPoint(
-                  icon: Icons.security_rounded,
+                  icon: AppIcons.security_rounded,
                   text: 'Secure',
                   color: step.accent,
                 ),
                 const SizedBox(width: 10),
                 _buildMiniPoint(
-                  icon: Icons.sync_rounded,
+                  icon: AppIcons.sync,
                   text: 'Synced',
                   color: step.accent,
                 ),
@@ -363,7 +364,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           child: OutlinedButton(
             onPressed: _currentIndex == 0 ? null : _previousPage,
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFFC9D4EE)),
+              side: const BorderSide(color: AppColors.cFFC9D4EE),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -372,7 +373,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: Text(
               'Back',
               style: GoogleFonts.inter(
-                color: const Color(0xFF475569),
+                color: AppColors.cFF475569,
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
               ),

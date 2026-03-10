@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// A shimmer/skeleton loading effect widget.
 /// Wraps its child in a shimmering animation to indicate loading state.
@@ -45,9 +46,9 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
               begin: Alignment(_animation.value - 1, 0),
               end: Alignment(_animation.value + 1, 0),
               colors: const [
-                Color(0xFF2A2A2E),
-                Color(0xFF3A3A40),
-                Color(0xFF2A2A2E),
+                AppColors.cFF2A2A2E,
+                AppColors.cFF3A3A40,
+                AppColors.cFF2A2A2E,
               ],
               stops: const [0.0, 0.5, 1.0],
             ).createShader(bounds);
@@ -80,7 +81,7 @@ class SkeletonBox extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2E),
+        color: AppColors.cFF2A2A2E,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
     );
@@ -102,7 +103,7 @@ class DashboardSkeleton extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             margin: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF2A2A2E),
+              color: AppColors.cFF2A2A2E,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
@@ -144,7 +145,7 @@ class _CommitteeCardSkeleton extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E22),
+        color: AppColors.cFF1E1E22,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white10),
       ),
@@ -187,7 +188,7 @@ class PaymentSheetSkeleton extends StatelessWidget {
                   margin: EdgeInsets.only(right: index < 2 ? 12 : 0),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E22),
+                    color: AppColors.cFF1E1E22,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -207,7 +208,7 @@ class PaymentSheetSkeleton extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E22),
+                  color: AppColors.cFF1E1E22,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -251,7 +252,7 @@ class MemberListSkeleton extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E22),
+                color: AppColors.cFF1E1E22,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

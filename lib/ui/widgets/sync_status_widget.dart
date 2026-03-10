@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/sync_status_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// A minimal sync status icon button for the AppBar.
 /// Shows a cloud icon that changes color and icon based on sync state.
@@ -8,39 +9,35 @@ class SyncStatusWidget extends StatelessWidget {
   final VoidCallback? onTap;
   final bool compact;
 
-  const SyncStatusWidget({
-    super.key,
-    this.onTap,
-    this.compact = false,
-  });
+  const SyncStatusWidget({super.key, this.onTap, this.compact = false});
 
   Color _getColor(SyncState state) {
     switch (state) {
       case SyncState.synced:
-        return const Color(0xFF00C853);
+        return AppColors.success;
       case SyncState.syncing:
-        return const Color(0xFF448AFF);
+        return AppColors.info;
       case SyncState.pending:
-        return const Color(0xFFFFB74D);
+        return AppColors.warning;
       case SyncState.offline:
         return Colors.grey;
       case SyncState.error:
-        return const Color(0xFFFF5252);
+        return AppColors.error;
     }
   }
 
   IconData _getIcon(SyncState state) {
     switch (state) {
       case SyncState.synced:
-        return Icons.cloud_done_rounded;
+        return AppIcons.synced;
       case SyncState.syncing:
-        return Icons.sync_rounded;
+        return AppIcons.sync;
       case SyncState.pending:
-        return Icons.cloud_upload_rounded;
+        return AppIcons.pending;
       case SyncState.offline:
-        return Icons.cloud_off_rounded;
+        return AppIcons.offline;
       case SyncState.error:
-        return Icons.error_outline_rounded;
+        return AppIcons.syncError;
     }
   }
 
@@ -72,9 +69,10 @@ class SyncStatusWidget extends StatelessWidget {
         return IconButton(
           onPressed: onTap,
           tooltip: _getTooltip(syncStatus),
-          icon: syncStatus.state == SyncState.syncing
-              ? _SpinningIcon(icon: icon, color: color)
-              : Icon(icon, color: color, size: 22),
+          icon:
+              syncStatus.state == SyncState.syncing
+                  ? _SpinningIcon(icon: icon, color: color)
+                  : Icon(icon, color: color, size: 22),
         );
       },
     );
@@ -108,7 +106,7 @@ class _SpinningIconState extends State<_SpinningIcon>
   @override
   Widget build(BuildContext context) {
     return RotationTransition(
-      turns: _controller,
+      turns: Tween<double>(begin: 0, end: -1).animate(_controller),
       child: Icon(widget.icon, color: widget.color, size: 22),
     );
   }

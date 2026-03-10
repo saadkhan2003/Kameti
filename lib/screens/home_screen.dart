@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../services/haptic_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import '../utils/page_transitions.dart';
 import 'auth/login_screen.dart';
 import 'viewer/join_committee_screen.dart';
@@ -14,20 +15,20 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const Color _bg = Color(0xFFF4F7FF);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _primaryDark = Color(0xFF25348A);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _primaryDark = AppColors.primaryDark;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   Widget _buildSignalChip({required IconData icon, required String label}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF0FF),
+        color: AppColors.softPrimary,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFD7E1FB)),
+        border: Border.all(color: AppColors.cFFD7E1FB),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -64,11 +65,11 @@ class _HomeScreenState extends State<HomeScreen> {
         color: _surface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: emphasized ? const Color(0xFFCFDBFF) : const Color(0xFFE3EAF9),
+          color: emphasized ? AppColors.cFFCFDBFF : AppColors.cFFE3EAF9,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.06),
+            color: AppColors.darkBg.withOpacity(0.06),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -85,8 +86,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color:
                       emphasized
-                          ? const Color(0xFFE8EEFF)
-                          : const Color(0xFFF1F5FF),
+                          ? AppColors.cFFE8EEFF
+                          : AppColors.cFFF1F5FF,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: _primary, size: 22),
@@ -102,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF4FF),
+                        color: AppColors.cFFEFF4FF,
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
@@ -145,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 children: [
                   const Icon(
-                    Icons.check_circle_rounded,
+                    AppIcons.paid,
                     size: 14,
                     color: _primary,
                   ),
@@ -155,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       bullet,
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: const Color(0xFF475569),
+                        color: AppColors.cFF475569,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -169,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: onTap,
-              icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+              icon: const Icon(AppIcons.arrow_forward_rounded, size: 18),
               label: Text(cta),
               style: ElevatedButton.styleFrom(
                 elevation: 0,
@@ -178,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 side:
                     emphasized
                         ? null
-                        : const BorderSide(color: Color(0xFFD1DCF7)),
+                        : const BorderSide(color: AppColors.cFFD1DCF7),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(13),
                 ),
@@ -210,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF3347A8), Color(0xFF4F46E5)],
+                    colors: [AppColors.primary, AppColors.primaryLight],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -236,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Icon(
-                            Icons.account_balance_wallet_rounded,
+                            AppIcons.account_balance_wallet_rounded,
                             color: Colors.white,
                             size: 28,
                           ),
@@ -282,15 +283,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       runSpacing: 8,
                       children: [
                         _buildSignalChip(
-                          icon: Icons.lock_rounded,
+                          icon: AppIcons.lock_rounded,
                           label: 'Secure',
                         ),
                         _buildSignalChip(
-                          icon: Icons.cloud_done_rounded,
+                          icon: AppIcons.synced,
                           label: 'Synced',
                         ),
                         _buildSignalChip(
-                          icon: Icons.groups_rounded,
+                          icon: AppIcons.groups_rounded,
                           label: 'Community',
                         ),
                       ],
@@ -300,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 18),
               _buildRoleCard(
-                icon: Icons.admin_panel_settings_rounded,
+                icon: AppIcons.admin_panel_settings_rounded,
                 badge: 'HOST',
                 title: "I'm a Host",
                 description:
@@ -322,7 +323,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 12),
               _buildRoleCard(
-                icon: Icons.group_rounded,
+                icon: AppIcons.group_rounded,
                 badge: 'MEMBER',
                 title: "I'm a Member",
                 description:

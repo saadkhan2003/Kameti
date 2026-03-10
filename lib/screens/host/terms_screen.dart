@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 class TermsScreen extends StatelessWidget {
   const TermsScreen({super.key});
 
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _warning = AppColors.warning;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   @override
   Widget build(BuildContext context) {
@@ -39,13 +40,13 @@ class TermsScreen extends StatelessWidget {
           Row(
             children: [
               _buildMetaChip(
-                icon: Icons.rule_rounded,
+                icon: AppIcons.rule_rounded,
                 label: 'Binding Terms',
                 color: _warning,
               ),
               const SizedBox(width: 8),
               _buildMetaChip(
-                icon: Icons.update_rounded,
+                icon: AppIcons.update_rounded,
                 label: 'Updated Dec 2025',
                 color: _primary,
               ),
@@ -152,7 +153,7 @@ class TermsScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: _surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFDCE4F7)),
+          border: Border.all(color: AppColors.lightBorder),
         ),
         child: Row(
           children: [
@@ -190,7 +191,7 @@ class TermsScreen extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_primary, Color(0xFF5B6FD6)],
+          colors: [_primary, AppColors.cFF5B6FD6],
         ),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
@@ -211,7 +212,7 @@ class TermsScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
-              Icons.article_rounded,
+              AppIcons.article_rounded,
               color: Colors.white,
               size: 30,
             ),
@@ -254,7 +255,7 @@ class TermsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,18 +305,18 @@ class TermsScreen extends StatelessWidget {
   }
 
   IconData _iconForSection(String title) {
-    if (title.startsWith('1')) return Icons.how_to_reg_outlined;
-    if (title.startsWith('2')) return Icons.description_outlined;
-    if (title.startsWith('3')) return Icons.person_outline_rounded;
-    if (title.startsWith('4')) return Icons.rule_outlined;
-    if (title.startsWith('5')) return Icons.privacy_tip_outlined;
-    if (title.startsWith('6')) return Icons.copyright_outlined;
-    if (title.startsWith('7')) return Icons.warning_amber_rounded;
-    if (title.startsWith('8')) return Icons.gavel_rounded;
-    if (title.startsWith('9')) return Icons.block_rounded;
-    if (title.startsWith('10')) return Icons.update_rounded;
-    if (title.startsWith('11')) return Icons.balance_rounded;
-    if (title.startsWith('12')) return Icons.contact_mail_outlined;
-    return Icons.article_outlined;
+    if (title.startsWith('1')) return AppIcons.how_to_reg_outlined;
+    if (title.startsWith('2')) return AppIcons.description_outlined;
+    if (title.startsWith('3')) return AppIcons.person_outline_rounded;
+    if (title.startsWith('4')) return AppIcons.rule_outlined;
+    if (title.startsWith('5')) return AppIcons.privacy_tip_outlined;
+    if (title.startsWith('6')) return AppIcons.copyright_outlined;
+    if (title.startsWith('7')) return AppIcons.warning;
+    if (title.startsWith('8')) return AppIcons.gavel_rounded;
+    if (title.startsWith('9')) return AppIcons.block_rounded;
+    if (title.startsWith('10')) return AppIcons.update_rounded;
+    if (title.startsWith('11')) return AppIcons.balance_rounded;
+    if (title.startsWith('12')) return AppIcons.contact_mail_outlined;
+    return AppIcons.article_outlined;
   }
 }

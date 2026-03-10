@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/remote_config_service.dart';
 import '../../services/toast_service.dart';
 import '../../utils/app_theme.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 class AdminConfigScreen extends StatefulWidget {
   const AdminConfigScreen({super.key});
@@ -14,15 +15,15 @@ class AdminConfigScreen extends StatefulWidget {
 }
 
 class _AdminConfigScreenState extends State<AdminConfigScreen> {
-  static const Color _bg = Color(0xFFF5F8FF);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _primaryDark = Color(0xFF25348A);
-  static const Color _danger = Color(0xFFDC2626);
-  static const Color _success = Color(0xFF059669);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _primaryDark = AppColors.primaryDark;
+  static const Color _danger = AppColors.error;
+  static const Color _success = AppColors.success;
+  static const Color _warning = AppColors.warning;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final _supabase = Supabase.instance.client;
   final _minVersionController = TextEditingController();
@@ -154,7 +155,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
         actions: [
           if (!_isLoading)
             IconButton(
-              icon: const Icon(Icons.refresh_rounded, color: _textSecondary),
+              icon: const Icon(AppIcons.refresh, color: _textSecondary),
               onPressed: _loadCurrentConfig,
               tooltip: 'Refresh',
             ),
@@ -177,9 +178,9 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
                       subtitle: 'Enable or disable mandatory app updates.',
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF7FAFF),
+                          color: AppColors.cFFF7FAFF,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFDCE5F6)),
+                          border: Border.all(color: AppColors.cFFDCE5F6),
                         ),
                         child: SwitchListTile(
                           contentPadding: const EdgeInsets.symmetric(
@@ -220,7 +221,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
                         controller: _minVersionController,
                         label: 'Minimum Android Version',
                         hint: 'e.g., 2.0.0',
-                        icon: Icons.phone_android_rounded,
+                        icon: AppIcons.phone_android_rounded,
                         helperText: 'Users below this version will be blocked.',
                       ),
                     ),
@@ -235,14 +236,14 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
                             controller: _updateTitleController,
                             label: 'Dialog Title',
                             hint: 'Update Required',
-                            icon: Icons.title_rounded,
+                            icon: AppIcons.title_rounded,
                           ),
                           const SizedBox(height: 12),
                           _buildTextField(
                             controller: _updateMessageController,
                             label: 'Dialog Message',
                             hint: 'Please update to the latest version...',
-                            icon: Icons.message_rounded,
+                            icon: AppIcons.message_rounded,
                             maxLines: 3,
                           ),
                         ],
@@ -257,7 +258,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
                         label: 'Play Store URL',
                         hint:
                             'https://play.google.com/store/apps/details?id=...',
-                        icon: Icons.storefront_rounded,
+                        icon: AppIcons.storefront_rounded,
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -270,9 +271,9 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF7FAFF),
+                            color: AppColors.cFFF7FAFF,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFDCE5F6)),
+                            border: Border.all(color: AppColors.cFFDCE5F6),
                           ),
                           child: Row(
                             children: [
@@ -284,7 +285,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Icon(
-                                  Icons.lock_reset_rounded,
+                                  AppIcons.lock_reset_rounded,
                                   color: _primary,
                                   size: 20,
                                 ),
@@ -313,7 +314,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
                                 ),
                               ),
                               const Icon(
-                                Icons.arrow_forward_ios_rounded,
+                                AppIcons.arrow_forward_ios_rounded,
                                 size: 14,
                                 color: _textSecondary,
                               ),
@@ -350,7 +351,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                                : const Icon(Icons.save_rounded),
+                                : const Icon(AppIcons.save_rounded),
                         label: Text(
                           _isSaving ? 'Saving...' : 'Save Configuration',
                         ),
@@ -370,7 +371,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF3347A8), Color(0xFF4F46E5)],
+          colors: [AppColors.primary, AppColors.primaryLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -396,7 +397,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
-                  Icons.tune_rounded,
+                  AppIcons.tune_rounded,
                   color: Colors.white,
                   size: 22,
                 ),
@@ -438,7 +439,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: _warning, size: 20),
+          const Icon(AppIcons.warning, color: _warning, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -466,10 +467,10 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDDE6F7)),
+        border: Border.all(color: AppColors.cFFDDE6F7),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.05),
+            color: AppColors.darkBg.withOpacity(0.05),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),
@@ -516,10 +517,10 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
         helperText: helperText,
         prefixIcon: Icon(icon, color: _primary),
         labelStyle: GoogleFonts.inter(color: _textSecondary),
-        hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8)),
+        hintStyle: GoogleFonts.inter(color: AppColors.textLight),
         helperStyle: GoogleFonts.inter(color: _textSecondary, fontSize: 11),
         filled: true,
-        fillColor: const Color(0xFFF8FAFF),
+        fillColor: AppColors.cFFF8FAFF,
         border: _inputBorder(),
         enabledBorder: _inputBorder(),
         focusedBorder: _inputBorder(color: _primary, width: 2),
@@ -531,7 +532,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
     return OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide(
-        color: color ?? const Color(0xFFD7E1F5),
+        color: color ?? AppColors.cFFD7E1F5,
         width: width,
       ),
     );
@@ -544,14 +545,14 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDDE6F7)),
+        border: Border.all(color: AppColors.cFFDDE6F7),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.info_outline_rounded, color: _primary, size: 20),
+              const Icon(AppIcons.info_outline_rounded, color: _primary, size: 20),
               const SizedBox(width: 8),
               Text(
                 'How It Works',
@@ -587,7 +588,7 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 2),
-            child: Icon(Icons.circle, size: 6, color: _textSecondary),
+            child: Icon(AppIcons.circle, size: 6, color: _textSecondary),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -630,8 +631,8 @@ class _AdminConfigScreenState extends State<AdminConfigScreen> {
                 children: [
                   Icon(
                     _forceUpdateEnabled
-                        ? Icons.warning_amber_rounded
-                        : Icons.check_circle_rounded,
+                        ? AppIcons.warning
+                        : AppIcons.paid,
                     color: _forceUpdateEnabled ? _danger : _success,
                     size: 22,
                   ),
@@ -805,7 +806,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Row(
         children: [
-          const Icon(Icons.lock_reset_rounded, color: Colors.orange),
+          const Icon(AppIcons.lock_reset_rounded, color: Colors.orange),
           const SizedBox(width: 10),
           Text(
             'Change Admin PIN',
@@ -829,19 +830,19 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
             _buildPinField(
               controller: _currentPinController,
               label: 'Current PIN',
-              icon: Icons.lock_outline_rounded,
+              icon: AppIcons.lock_outline_rounded,
             ),
             const SizedBox(height: 14),
             _buildPinField(
               controller: _newPinController,
               label: 'New PIN',
-              icon: Icons.lock_open_rounded,
+              icon: AppIcons.lock_open_rounded,
             ),
             const SizedBox(height: 14),
             _buildPinField(
               controller: _confirmPinController,
               label: 'Confirm New PIN',
-              icon: Icons.check_circle_outline_rounded,
+              icon: AppIcons.check_circle_outline_rounded,
             ),
           ],
         ),

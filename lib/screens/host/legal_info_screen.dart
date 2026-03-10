@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 class LegalInfoScreen extends StatefulWidget {
   const LegalInfoScreen({super.key});
@@ -10,13 +11,13 @@ class LegalInfoScreen extends StatefulWidget {
 }
 
 class _LegalInfoScreenState extends State<LegalInfoScreen> {
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _warning = AppColors.warning;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   String _version = '';
 
@@ -57,7 +58,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [_primary, Color(0xFF5B6FD6)],
+                colors: [_primary, AppColors.cFF5B6FD6],
               ),
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
@@ -70,7 +71,11 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
             ),
             child: Column(
               children: [
-                const Icon(Icons.policy_rounded, color: Colors.white, size: 40),
+                const Icon(
+                  AppIcons.policy_rounded,
+                  color: Colors.white,
+                  size: 40,
+                ),
                 const SizedBox(height: 10),
                 Text(
                   'Trust & Legal Center',
@@ -99,7 +104,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
             children: [
               Expanded(
                 child: _buildTopStat(
-                  icon: Icons.verified_user_rounded,
+                  icon: AppIcons.verified_user_rounded,
                   label: 'Privacy',
                   value: 'Protected',
                   tone: _success,
@@ -108,7 +113,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: _buildTopStat(
-                  icon: Icons.rule_folder_outlined,
+                  icon: AppIcons.rule_folder_outlined,
                   label: 'Terms',
                   value: 'Transparent',
                   tone: _warning,
@@ -119,7 +124,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
           const SizedBox(height: 14),
 
           _buildCard(
-            icon: Icons.info_outline,
+            icon: AppIcons.info_outline,
             title: 'App Information',
             children: [
               _buildInfoRow('App Name', 'Kameti - Committee Manager'),
@@ -134,11 +139,11 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
           const SizedBox(height: 16),
 
           _buildCard(
-            icon: Icons.gavel,
+            icon: AppIcons.gavel,
             title: 'Legal',
             children: [
               _buildLinkTile(
-                icon: Icons.privacy_tip_outlined,
+                icon: AppIcons.privacy_tip_outlined,
                 title: 'Privacy Policy',
                 onTap:
                     () => _showLegalPage(
@@ -148,7 +153,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
                     ),
               ),
               _buildLinkTile(
-                icon: Icons.article_outlined,
+                icon: AppIcons.article_outlined,
                 title: 'Terms of Service',
                 onTap:
                     () => _showLegalPage(
@@ -158,7 +163,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
                     ),
               ),
               _buildLinkTile(
-                icon: Icons.security_outlined,
+                icon: AppIcons.security_outlined,
                 title: 'Data Safety',
                 onTap:
                     () => _showLegalPage(context, 'Data Safety', _dataSafety),
@@ -168,7 +173,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
           const SizedBox(height: 16),
 
           _buildCard(
-            icon: Icons.favorite_outline,
+            icon: AppIcons.favorite_outline,
             title: 'Credits',
             children: [
               _buildInfoRow('Framework', 'Flutter'),
@@ -200,7 +205,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Row(
         children: [
@@ -251,7 +256,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,7 +286,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          const Divider(height: 1, color: AppColors.borderMuted),
           ...children,
         ],
       ),
@@ -330,7 +335,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
                 ),
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: _textSecondary),
+            const Icon(AppIcons.chevron_right_rounded, color: _textSecondary),
           ],
         ),
       ),
@@ -362,7 +367,7 @@ class _LegalInfoScreenState extends State<LegalInfoScreen> {
                   decoration: BoxDecoration(
                     color: _surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFDCE4F7)),
+                    border: Border.all(color: AppColors.lightBorder),
                   ),
                   child: Text(
                     content,

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../utils/app_theme.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 enum ToastType { success, error, warning, info }
 
@@ -87,34 +88,34 @@ class ToastService {
     switch (type) {
       case ToastType.success:
         return _ToastConfig(
-          icon: Icons.check_circle_rounded,
-          accentColor: const Color(0xFF059669),
-          bgGradient: const [Color(0xFFF3FBF7), Color(0xFFEAF8F0)],
-          borderColor: const Color(0xFFBEE9D0),
+          icon: AppIcons.paid,
+          accentColor: AppColors.success,
+          bgGradient: const [AppColors.cFFF3FBF7, AppColors.cFFEAF8F0],
+          borderColor: AppColors.cFFBEE9D0,
           defaultTitle: 'Success',
         );
       case ToastType.error:
         return _ToastConfig(
-          icon: Icons.error_rounded,
-          accentColor: const Color(0xFFDC2626),
-          bgGradient: const [Color(0xFFFEF4F4), Color(0xFFFDEAEA)],
-          borderColor: const Color(0xFFF6C8C8),
+          icon: AppIcons.error_rounded,
+          accentColor: AppColors.error,
+          bgGradient: const [AppColors.cFFFEF4F4, AppColors.cFFFDEAEA],
+          borderColor: AppColors.cFFF6C8C8,
           defaultTitle: 'Error',
         );
       case ToastType.warning:
         return _ToastConfig(
-          icon: Icons.warning_amber_rounded,
-          accentColor: const Color(0xFFD97706),
-          bgGradient: const [Color(0xFFFFF8F0), Color(0xFFFFF2E4)],
-          borderColor: const Color(0xFFF5D7AE),
+          icon: AppIcons.warning,
+          accentColor: AppColors.warning,
+          bgGradient: const [AppColors.cFFFFF8F0, AppColors.cFFFFF2E4],
+          borderColor: AppColors.cFFF5D7AE,
           defaultTitle: 'Warning',
         );
       case ToastType.info:
         return _ToastConfig(
-          icon: Icons.info_rounded,
+          icon: AppIcons.info_rounded,
           accentColor: AppTheme.primaryColor,
-          bgGradient: const [Color(0xFFF3F6FF), Color(0xFFEAF0FF)],
-          borderColor: const Color(0xFFCCDAFF),
+          bgGradient: const [AppColors.cFFF3F6FF, AppColors.softPrimary],
+          borderColor: AppColors.cFFCCDAFF,
           defaultTitle: 'Info',
         );
     }
@@ -302,7 +303,7 @@ class _AnimatedToastState extends State<_AnimatedToast>
               border: Border.all(color: widget.config.borderColor, width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0F172A).withOpacity(0.08),
+                  color: AppColors.darkBg.withOpacity(0.08),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -336,7 +337,7 @@ class _AnimatedToastState extends State<_AnimatedToast>
                             Text(
                               widget.title,
                               style: GoogleFonts.inter(
-                                color: const Color(0xFF0F172A),
+                                color: AppColors.darkBg,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 12,
                               ),
@@ -345,7 +346,7 @@ class _AnimatedToastState extends State<_AnimatedToast>
                             Text(
                               widget.message,
                               style: GoogleFonts.inter(
-                                color: const Color(0xFF475569),
+                                color: AppColors.cFF475569,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 height: 1.3,
@@ -359,8 +360,8 @@ class _AnimatedToastState extends State<_AnimatedToast>
                       IconButton(
                         onPressed: _dismiss,
                         icon: const Icon(
-                          Icons.close_rounded,
-                          color: Color(0xFF64748B),
+                          AppIcons.close,
+                          color: AppColors.textMedium,
                           size: 18,
                         ),
                         splashRadius: 18,
@@ -379,7 +380,7 @@ class _AnimatedToastState extends State<_AnimatedToast>
                       ),
                       child: LinearProgressIndicator(
                         value: 1 - _progressController.value,
-                        backgroundColor: const Color(0xFFE2E8F0),
+                        backgroundColor: AppColors.borderMuted,
                         valueColor: AlwaysStoppedAnimation<Color>(
                           widget.config.accentColor,
                         ),

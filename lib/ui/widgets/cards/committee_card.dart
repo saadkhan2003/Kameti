@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_decorations.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// Reusable committee card widget
 /// 
@@ -72,7 +73,7 @@ class CommitteeCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(
-                        Icons.group_rounded,
+                        AppIcons.group_rounded,
                         color: AppColors.primary,
                         size: 26,
                       ),
@@ -118,7 +119,7 @@ class CommitteeCard extends StatelessWidget {
                     // Menu button
                     if (onArchive != null || onDelete != null)
                       PopupMenuButton<String>(
-                        icon: Icon(Icons.more_vert, color: Colors.grey[400]),
+                        icon: Icon(AppIcons.more, color: Colors.grey[400]),
                         onSelected: (value) {
                           if (value == 'archive') {
                             onArchive?.call();
@@ -130,7 +131,7 @@ class CommitteeCard extends StatelessWidget {
                               value: 'archive',
                               child: Row(
                                 children: [
-                                  Icon(Icons.archive_outlined, size: 20),
+                                  Icon(AppIcons.archive_outlined, size: 20),
                                   SizedBox(width: 8),
                                   Text('Archive'),
                                 ],
@@ -141,7 +142,7 @@ class CommitteeCard extends StatelessWidget {
                               value: 'delete',
                               child: Row(
                                 children: [
-                                  Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                                  Icon(AppIcons.delete_outline, size: 20, color: Colors.red),
                                   SizedBox(width: 8),
                                   Text('Delete', style: TextStyle(color: Colors.red)),
                                 ],

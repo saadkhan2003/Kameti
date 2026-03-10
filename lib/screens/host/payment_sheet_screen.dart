@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Project imports
 import '../../services/auth_service.dart';
@@ -10,10 +11,16 @@ import '../../services/auto_sync_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/analytics_service.dart';
 import '../../services/toast_service.dart';
+import '../../services/currency_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import 'member_management_screen.dart';
 import '../viewer/member_calendar_view.dart';
+
+part 'payment_sheet_export.part.dart';
+part 'payment_sheet_reminders.part.dart';
+part 'payment_sheet_widgets.part.dart';
 
 class PaymentSheetScreen extends StatefulWidget {
   final Committee committee;
@@ -30,13 +37,13 @@ class PaymentSheetScreen extends StatefulWidget {
 }
 
 class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _warning = Color(0xFFD97706);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _warning = AppColors.warning;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final _dbService = DatabaseService();
   final _authService = AuthService();
@@ -501,277 +508,10 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     }
   }
 
-  void _showExportOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: _surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder:
-          (context) => Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCBD5E1),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Export Payment Sheet',
-                  style: GoogleFonts.inter(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: _textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Select a cycle to export',
-                  style: GoogleFonts.inter(
-                    color: _textSecondary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Cycle selection chips
-                SizedBox(
-                  height: 44,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _maxCycles + 1, // +1 for "All Cycles" option
-                    itemBuilder: (context, index) {
-                      final isAllCycles = index == 0;
-                      final cycleNum = index;
-                      final isOngoing =
-                          !isAllCycles &&
-                          _exportService.isCycleOngoing(
-                            widget.committee,
-                            cycleNum,
-                          );
-                      final isCompleted =
-                          !isAllCycles &&
-                          _exportService.isCycleCompleted(
-                            widget.committee,
-                            cycleNum,
-                          );
-
-                      String label;
-                      Color bgColor;
-                      Color textColor;
-                      Color borderColor;
-                      if (isAllCycles) {
-                        label = 'All Cycles';
-                        bgColor = _primary.withOpacity(0.12);
-                        textColor = _primary;
-                        borderColor = _primary.withOpacity(0.35);
-                      } else if (isOngoing) {
-                        label = 'Cycle $cycleNum (Ongoing)';
-                        bgColor = _warning.withOpacity(0.14);
-                        textColor = _warning;
-                        borderColor = _warning.withOpacity(0.35);
-                      } else if (isCompleted) {
-                        label = 'Cycle $cycleNum';
-                        bgColor = _success.withOpacity(0.12);
-                        textColor = _success;
-                        borderColor = _success.withOpacity(0.35);
-                      } else {
-                        label = 'Cycle $cycleNum (Upcoming)';
-                        bgColor = const Color(0xFFF1F5F9);
-                        textColor = _textSecondary;
-                        borderColor = const Color(0xFFD7DFEE);
-                      }
-
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () {
-                              Navigator.pop(context);
-                              _showExportFormatDialog(
-                                isAllCycles ? null : cycleNum,
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: bgColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: borderColor),
-                              ),
-                              child: Text(
-                                label,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: textColor,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Tap a cycle above to export, or scroll for more cycles',
-                  style: GoogleFonts.inter(color: _textSecondary, fontSize: 11),
-                ),
-              ],
-            ),
-          ),
-    );
-  }
-
-  void _showExportFormatDialog(int? cycle) {
-    final cycleLabel = cycle != null ? 'Cycle $cycle' : 'All Cycles';
-    String? dateRange;
-    if (cycle != null) {
-      final range = _exportService.getCycleDateRange(widget.committee, cycle);
-      final start = range['start']!;
-      final end = range['end']!;
-      dateRange = '${_formatDate(start)} - ${_formatDate(end)}';
-    }
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: _surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder:
-          (context) => Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCBD5E1),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Export $cycleLabel',
-                  style: GoogleFonts.inter(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: _textPrimary,
-                  ),
-                ),
-                if (dateRange != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    dateRange,
-                    style: GoogleFonts.inter(
-                      color: _textSecondary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                  ),
-                  title: Text(
-                    'Export as PDF',
-                    style: GoogleFonts.inter(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Print or share as document',
-                    style: GoogleFonts.inter(
-                      color: _textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    ToastService.info(context, 'Generating PDF...');
-                    await _exportService.exportToPdf(
-                      widget.committee,
-                      cycle: cycle,
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.table_chart, color: Colors.green),
-                  ),
-                  title: Text(
-                    'Export as CSV (Excel)',
-                    style: GoogleFonts.inter(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Open in Excel or Google Sheets',
-                    style: GoogleFonts.inter(
-                      color: _textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    ToastService.info(context, 'Generating CSV...');
-                    await _exportService.exportToCsv(
-                      widget.committee,
-                      cycle: cycle,
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
-
   @override
   Widget build(BuildContext context) {
     if (widget.viewAsMember != null) {
-      return _buildMemberPersonalView();
+      return this._buildMemberPersonalView();
     }
 
     final amountPerCell = widget.committee.contributionAmount;
@@ -782,7 +522,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: _textPrimary),
+          icon: const Icon(AppIcons.back, color: _textPrimary),
           onPressed: () => Navigator.pop(context),
           tooltip: 'Back',
         ),
@@ -795,15 +535,17 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(
-              Icons.file_download_outlined,
-              color: _textSecondary,
-            ),
-            tooltip: 'Export',
-            onPressed: _showExportOptions,
+            icon: const Icon(AppIcons.reminder, color: _textSecondary),
+            tooltip: 'Send Reminders',
+            onPressed: () => this._showReminderSheet(),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh, color: _textSecondary),
+            icon: const Icon(AppIcons.download, color: _textSecondary),
+            tooltip: 'Export',
+            onPressed: () => this._showExportOptions(),
+          ),
+          IconButton(
+            icon: const Icon(AppIcons.refresh, color: _textSecondary),
             onPressed: () => _syncAndLoad(waitForSync: true),
           ),
         ],
@@ -812,7 +554,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _members.isEmpty
-              ? _buildEmptyState()
+              ? this._buildEmptyState()
               : Column(
                 children: [
                   // Stats Card
@@ -827,7 +569,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                         decoration: BoxDecoration(
                           color: _surface,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFDCE4F7)),
+                          border: Border.all(color: AppColors.lightBorder),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -844,8 +586,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: _buildStatItem(
-                                    icon: Icons.check_circle,
+                                  child: this._buildStatItem(
+                                    icon: AppIcons.check_circle,
                                     color: _success,
                                     value: '${stats['totalPaid']}',
                                     label: 'Paid',
@@ -853,8 +595,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: _buildStatItem(
-                                    icon: Icons.cancel,
+                                  child: this._buildStatItem(
+                                    icon: AppIcons.cancel,
                                     color: _warning,
                                     value: '${stats['totalUnpaid']}',
                                     label: 'Unpaid',
@@ -862,8 +604,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: _buildStatItem(
-                                    icon: Icons.payments_outlined,
+                                  child: this._buildStatItem(
+                                    icon: AppIcons.payout,
                                     color: _primary,
                                     value:
                                         '${widget.committee.currency} ${(stats['currentCycleCollected'] as double).toInt()}',
@@ -915,6 +657,26 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                 ],
                               ),
                             ),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () => this._showReminderSheet(),
+                                icon: const Icon(AppIcons.reminder, size: 18),
+                                label: const Text('Send Reminders'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _primary,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             Text(
                               'Collection: ${widget.committee.frequency.toUpperCase()} • Payout: Every ${widget.committee.paymentIntervalDays} Days',
@@ -943,7 +705,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                           color: _surface,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: const Color(0xFFDCE4F7),
+                            color: AppColors.lightBorder,
                             width: 1,
                           ),
                         ),
@@ -952,7 +714,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                             value: _selectedCycle,
                             isDense: true,
                             icon: const Icon(
-                              Icons.keyboard_arrow_down_rounded,
+                              AppIcons.keyboard_arrow_down_rounded,
                               color: _primary,
                               size: 20,
                             ),
@@ -1014,10 +776,10 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                       decoration: BoxDecoration(
                         color: _surface,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0xFFDCE4F7)),
+                        border: Border.all(color: AppColors.lightBorder),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0F172A).withOpacity(0.04),
+                            color: AppColors.darkBg.withOpacity(0.04),
                             blurRadius: 16,
                             offset: const Offset(0, 8),
                           ),
@@ -1039,21 +801,24 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                   ),
                                 ),
                                 const Spacer(),
-                                _buildLegendChip(
-                                  icon: Icons.check_rounded,
+                                this._buildLegendChip(
+                                  icon: AppIcons.check_rounded,
                                   label: 'Paid',
                                   color: _success,
                                 ),
                                 const SizedBox(width: 6),
-                                _buildLegendChip(
-                                  icon: Icons.star_rounded,
+                                this._buildLegendChip(
+                                  icon: AppIcons.star_rounded,
                                   label: 'Payout',
                                   color: _warning,
                                 ),
                               ],
                             ),
                           ),
-                          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                          const Divider(
+                            height: 1,
+                            color: AppColors.borderMuted,
+                          ),
                           Expanded(
                             child: SingleChildScrollView(
                               scrollDirection: Axis.vertical,
@@ -1061,7 +826,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                 scrollDirection: Axis.horizontal,
                                 child: Padding(
                                   padding: const EdgeInsets.all(10),
-                                  child: _buildGrid(amountPerCell),
+                                  child: this._buildGrid(amountPerCell),
                                 ),
                               ),
                             ),
@@ -1072,651 +837,6 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                   ),
                 ],
               ),
-    );
-  }
-
-  Widget _buildGrid(double amountPerCell) {
-    final totals = List<double>.generate(_dates.length, (index) {
-      double total = 0;
-      final date = _dates[index];
-      for (var member in _members) {
-        if (_isPaymentMarked(member.id, date)) {
-          total += amountPerCell;
-        }
-      }
-      return total;
-    });
-
-    final targetAmount = amountPerCell * _members.length;
-    final payoutInterval = widget.committee.paymentIntervalDays;
-    final startDate = widget.committee.startDate;
-    const double memberColWidth = 190;
-    const double dateColWidth = 56;
-    const double duesColWidth = 120;
-
-    final now = DateTime.now();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFF),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFDCE4F7)),
-          ),
-          child: Row(
-            children: [
-              _buildMatrixHeaderCell('Member', memberColWidth, isStart: true),
-              ..._dates.asMap().entries.map((entry) {
-                final index = entry.key;
-                final date = entry.value;
-                final isFutureDate = date.isAfter(now);
-                final format =
-                    widget.committee.frequency == 'monthly'
-                        ? DateFormat('MMM')
-                        : DateFormat('dd/MM');
-                final daysElapsed = date.difference(startDate).inDays + 1;
-                final isPayoutDay =
-                    payoutInterval > 0 &&
-                    daysElapsed > 0 &&
-                    (daysElapsed % payoutInterval == 0);
-
-                return _buildDateHeaderCell(
-                  width: dateColWidth,
-                  label: format.format(date),
-                  isFutureDate: isFutureDate,
-                  isPayoutDay: isPayoutDay,
-                  progress: totals[index] / targetAmount,
-                );
-              }),
-              _buildMatrixHeaderCell('Dues', duesColWidth, isEnd: true),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        ..._members.asMap().entries.map((entry) {
-          final memberIndex = entry.key;
-          final member = entry.value;
-          final memberDebt = _calculateMemberDebt(member.id);
-          final isDefaulter = memberDebt['isDefaulter'] as bool;
-          final unpaidCount = memberDebt['unpaidCount'] as int;
-          final memberAdvance = _calculateMemberAdvance(member.id);
-          final hasAdvance = memberAdvance['hasAdvance'] as bool;
-          final advanceCount = memberAdvance['advanceCount'] as int;
-
-          return Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: _surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color:
-                    isDefaulter
-                        ? _warning.withOpacity(0.35)
-                        : const Color(0xFFE5ECF9),
-              ),
-            ),
-            child: Row(
-              children: [
-                _buildMemberInfoCell(
-                  member: member,
-                  width: memberColWidth,
-                  isDefaulter: isDefaulter,
-                  hasAdvance: hasAdvance,
-                  advanceCount: advanceCount,
-                ),
-                ..._dates.map((date) {
-                  final isPaid = _isPaymentMarked(member.id, date);
-
-                  final daysElapsed = date.difference(startDate).inDays;
-                  final currentRound =
-                      payoutInterval > 0 ? (daysElapsed ~/ payoutInterval) : 0;
-                  final receiverIndex = currentRound % _members.length;
-                  final isPayoutReceiver = receiverIndex == memberIndex;
-
-                  final isPayoutDay =
-                      payoutInterval > 0 &&
-                      ((daysElapsed + 1) % payoutInterval == 0);
-                  final isPayoutCell = isPayoutReceiver && isPayoutDay;
-
-                  return _buildPaymentCell(
-                    width: dateColWidth,
-                    isPaid: isPaid,
-                    isPayoutCell: isPayoutCell,
-                    onTap: () => _togglePayment(member.id, date),
-                  );
-                }),
-                _buildDuesCell(
-                  width: duesColWidth,
-                  isDefaulter: isDefaulter,
-                  unpaidCount: unpaidCount,
-                  hasAdvance: hasAdvance,
-                  advanceCount: advanceCount,
-                ),
-              ],
-            ),
-          );
-        }),
-        Container(
-          margin: const EdgeInsets.only(top: 2),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFF),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFDCE4F7)),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: memberColWidth,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'Collected',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                      color: _textSecondary,
-                    ),
-                  ),
-                ),
-              ),
-              ...totals.map((total) {
-                final isMet = total >= targetAmount;
-                return SizedBox(
-                  width: dateColWidth,
-                  child: Text(
-                    '${total.toInt()}',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: isMet ? _success : _textSecondary,
-                    ),
-                  ),
-                );
-              }),
-              SizedBox(
-                width: duesColWidth,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        _calculateTotalDebt() > 0
-                            ? _warning.withOpacity(0.14)
-                            : _success.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _calculateTotalDebt() > 0
-                        ? '${widget.committee.currency} ${_calculateTotalDebt().toInt()}'
-                        : 'All Paid ✓',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: _calculateTotalDebt() > 0 ? _warning : _success,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLegendChip({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMatrixHeaderCell(
-    String title,
-    double width, {
-    bool isStart = false,
-    bool isEnd = false,
-  }) {
-    return Container(
-      width: width,
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      alignment: Alignment.centerLeft,
-      decoration: BoxDecoration(
-        border: Border(
-          right: BorderSide(
-            color: const Color(0xFFE5ECF9),
-            width: isEnd ? 0 : 1,
-          ),
-        ),
-      ),
-      child: Text(
-        title,
-        style: GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: _textPrimary,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDateHeaderCell({
-    required double width,
-    required String label,
-    required bool isFutureDate,
-    required bool isPayoutDay,
-    required double progress,
-  }) {
-    return Container(
-      width: width,
-      height: 56,
-      decoration: const BoxDecoration(
-        border: Border(right: BorderSide(color: Color(0xFFE5ECF9), width: 1)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color:
-                  isFutureDate
-                      ? _primary
-                      : (isPayoutDay ? _warning : _textSecondary),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            width: 20,
-            height: 3,
-            decoration: BoxDecoration(
-              color: progress >= 1 ? _success : const Color(0xFFD7E0F2),
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMemberInfoCell({
-    required Member member,
-    required double width,
-    required bool isDefaulter,
-    required bool hasAdvance,
-    required int advanceCount,
-  }) {
-    return SizedBox(
-      width: width,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8EEFA),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                '#${member.payoutOrder}',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: _primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                member.name,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                  color:
-                      isDefaulter
-                          ? _warning
-                          : hasAdvance
-                          ? _primary
-                          : _textPrimary,
-                ),
-              ),
-            ),
-            if (isDefaulter)
-              const Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Icon(
-                  Icons.warning_amber_rounded,
-                  size: 14,
-                  color: _warning,
-                ),
-              ),
-            if (hasAdvance)
-              Container(
-                margin: const EdgeInsets.only(left: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                decoration: BoxDecoration(
-                  color: _primary.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  '+$advanceCount',
-                  style: GoogleFonts.inter(
-                    fontSize: 9,
-                    color: _primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPaymentCell({
-    required double width,
-    required bool isPaid,
-    required bool isPayoutCell,
-    required VoidCallback onTap,
-  }) {
-    return SizedBox(
-      width: width,
-      child: Center(
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: isPaid ? _success : const Color(0xFFEEF2FA),
-              borderRadius: BorderRadius.circular(8),
-              border:
-                  isPayoutCell
-                      ? Border.all(color: _warning, width: 2)
-                      : Border.all(
-                        color: isPaid ? _success : const Color(0xFFD3DDEF),
-                        width: 1,
-                      ),
-              boxShadow:
-                  isPayoutCell
-                      ? [
-                        BoxShadow(
-                          color: _warning.withOpacity(0.2),
-                          blurRadius: 5,
-                        ),
-                      ]
-                      : null,
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                if (isPaid)
-                  const Icon(
-                    Icons.check_rounded,
-                    color: Colors.white,
-                    size: 17,
-                  ),
-                if (isPayoutCell && !isPaid)
-                  const Icon(
-                    Icons.star_outline_rounded,
-                    color: _warning,
-                    size: 16,
-                  ),
-                if (isPayoutCell && isPaid)
-                  const Positioned(
-                    right: 1,
-                    top: 1,
-                    child: Icon(Icons.star_rounded, color: _warning, size: 8),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDuesCell({
-    required double width,
-    required bool isDefaulter,
-    required int unpaidCount,
-    required bool hasAdvance,
-    required int advanceCount,
-  }) {
-    return SizedBox(
-      width: width,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          decoration: BoxDecoration(
-            color:
-                isDefaulter
-                    ? _warning.withOpacity(0.14)
-                    : hasAdvance
-                    ? _primary.withOpacity(0.12)
-                    : _success.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (isDefaulter) ...[
-                Text(
-                  '${widget.committee.currency} ${(unpaidCount * widget.committee.contributionAmount).toInt()}',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: _warning,
-                  ),
-                ),
-                Text(
-                  '$unpaidCount unpaid',
-                  style: GoogleFonts.inter(fontSize: 9, color: _textSecondary),
-                ),
-              ] else if (hasAdvance) ...[
-                Text(
-                  '+$advanceCount',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: _primary,
-                  ),
-                ),
-                Text(
-                  'advance',
-                  style: GoogleFonts.inter(fontSize: 9, color: _textSecondary),
-                ),
-              ] else ...[
-                const Icon(Icons.verified_rounded, color: _success, size: 14),
-                Text(
-                  'clear',
-                  style: GoogleFonts.inter(
-                    fontSize: 9,
-                    color: _success,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem({
-    required IconData icon,
-    required Color color,
-    required String value,
-    required String label,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              color: _textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 92,
-            height: 92,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE9EEFC),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: const Icon(
-              Icons.grid_off_rounded,
-              size: 44,
-              color: _primary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No Members Yet',
-            style: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: _textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              'Add members to start collecting payments. The Period and Cycle options will appear once members are added.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(color: _textSecondary),
-            ),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-            onPressed: () async {
-              // Navigate to member management to add members
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (_) =>
-                          MemberManagementScreen(committee: widget.committee),
-                ),
-              );
-              _loadData();
-            },
-            icon: const Icon(Icons.person_add_alt_1),
-            label: const Text('Add Members'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMemberPersonalView() {
-    final member = widget.viewAsMember!;
-
-    int paidCount = 0;
-    int advanceCount = 0;
-    final now = DateTime.now();
-
-    for (var date in _dates) {
-      if (_isPaymentMarked(member.id, date)) {
-        paidCount++;
-        if (date.isAfter(now)) advanceCount++;
-      }
-    }
-
-    final totalDue = _dates.length;
-    final totalContribution = paidCount * widget.committee.contributionAmount;
-    final advanceAmount = advanceCount * widget.committee.contributionAmount;
-
-    return MemberCalendarView(
-      member: member,
-      committee: widget.committee,
-      members: _members,
-      dates: _dates,
-      paidCount: paidCount,
-      totalDue: totalDue,
-      totalContribution: totalContribution,
-      advanceCount: advanceCount,
-      advanceAmount: advanceAmount,
-      isPaymentMarked: _isPaymentMarked,
-      onRefresh: () => _syncAndLoad(waitForSync: true),
     );
   }
 }

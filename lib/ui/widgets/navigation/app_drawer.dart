@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// Reusable app drawer widget
 /// 
@@ -13,7 +14,7 @@ import '../../theme/app_colors.dart';
 ///   onSettings: () => navigateToSettings(),
 ///   onLogout: () => logout(),
 ///   additionalItems: [
-///     DrawerMenuItem(icon: Icons.help, label: 'Help', onTap: () {}),
+///     DrawerMenuItem(icon: AppIcons.help, label: 'Help', onTap: () {}),
 ///   ],
 /// )
 /// ```
@@ -66,7 +67,7 @@ class AppDrawer extends StatelessWidget {
                     color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person, color: Colors.white, size: 32),
+                  child: const Icon(AppIcons.person, color: Colors.white, size: 32),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -91,7 +92,7 @@ class AppDrawer extends StatelessWidget {
           // Profile
           if (onProfile != null)
             _buildListTile(
-              icon: Icons.person_outline,
+              icon: AppIcons.person_outline,
               label: 'Profile',
               onTap: onProfile,
             ),
@@ -101,7 +102,7 @@ class AppDrawer extends StatelessWidget {
           // About
           if (onAbout != null)
             _buildListTile(
-              icon: Icons.info_outline,
+              icon: AppIcons.info_outline,
               label: 'About',
               onTap: onAbout,
             ),
@@ -109,7 +110,7 @@ class AppDrawer extends StatelessWidget {
           // Settings
           if (onSettings != null)
             _buildListTile(
-              icon: Icons.settings_outlined,
+              icon: AppIcons.settings_outlined,
               label: 'Settings',
               onTap: onSettings,
             ),
@@ -117,7 +118,7 @@ class AppDrawer extends StatelessWidget {
           // Terms
           if (onTerms != null)
             _buildListTile(
-              icon: Icons.article_outlined,
+              icon: AppIcons.article_outlined,
               label: 'Terms & Conditions',
               onTap: onTerms,
             ),
@@ -125,7 +126,7 @@ class AppDrawer extends StatelessWidget {
           // Privacy
           if (onPrivacy != null)
             _buildListTile(
-              icon: Icons.privacy_tip_outlined,
+              icon: AppIcons.privacy_tip_outlined,
               label: 'Privacy Policy',
               onTap: onPrivacy,
             ),
@@ -133,7 +134,7 @@ class AppDrawer extends StatelessWidget {
           // Contact
           if (onContact != null)
             _buildListTile(
-              icon: Icons.mail_outline,
+              icon: AppIcons.mail_outline,
               label: 'Contact Us',
               onTap: onContact,
             ),
@@ -151,7 +152,7 @@ class AppDrawer extends StatelessWidget {
           // Logout
           if (onLogout != null)
             _buildListTile(
-              icon: Icons.logout,
+              icon: AppIcons.logout,
               label: 'Logout',
               onTap: onLogout,
               color: AppColors.error,

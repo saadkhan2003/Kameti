@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/toast_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import '../splash_screen.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
@@ -14,12 +15,12 @@ class EmailVerificationScreen extends StatefulWidget {
 }
 
 class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
-  static const Color _bgTop = Color(0xFFF7F8FC);
-  static const Color _bgBottom = Color(0xFFEEF1F8);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bgTop = AppColors.bg;
+  static const Color _bgBottom = AppColors.bgAlt;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   String _maskedEmail() {
     final email = widget.email.trim();
@@ -178,10 +179,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
               counterText: '',
               contentPadding: const EdgeInsets.symmetric(vertical: 14),
               filled: true,
-              fillColor: const Color(0xFFF8FAFF),
+              fillColor: AppColors.cFFF8FAFF,
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFD0D9EE)),
+                borderSide: const BorderSide(color: AppColors.cFFD0D9EE),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -232,12 +233,12 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: const Color(0xFFDCE5F6),
+                                    color: AppColors.cFFDCE5F6,
                                   ),
                                 ),
                                 child: IconButton(
                                   icon: const Icon(
-                                    Icons.arrow_back_ios_new_rounded,
+                                    AppIcons.arrow_back_ios_new_rounded,
                                     size: 18,
                                     color: _textPrimary,
                                   ),
@@ -273,7 +274,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                               color: _surface,
                               borderRadius: BorderRadius.circular(22),
                               border: Border.all(
-                                color: const Color(0xFFDCE5F6),
+                                color: AppColors.cFFDCE5F6,
                               ),
                               boxShadow: [
                                 BoxShadow(
@@ -293,11 +294,11 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                                     width: 76,
                                     height: 76,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFE9EEFC),
+                                      color: AppColors.cFFE9EEFC,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: const Icon(
-                                      Icons.mark_email_read_rounded,
+                                      AppIcons.mark_email_read_rounded,
                                       size: 38,
                                       color: _primary,
                                     ),
@@ -310,7 +311,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                                     vertical: 10,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF7F9FF),
+                                    color: AppColors.cFFF7F9FF,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Text(
@@ -370,7 +371,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                                       color:
                                           _canResend
                                               ? _primary
-                                              : const Color(0xFF94A3B8),
+                                              : AppColors.textLight,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                     ),

@@ -13,6 +13,7 @@ import '../../services/review_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../utils/page_transitions.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import '../../ui/widgets/ads/native_ad_widget.dart';
 import '../../ui/widgets/empty_state_widget.dart';
 import '../../ui/widgets/sync_status_widget.dart';
@@ -39,14 +40,14 @@ class HostDashboardScreen extends StatefulWidget {
 
 class _HostDashboardScreenState extends State<HostDashboardScreen>
     with SingleTickerProviderStateMixin {
-  static const Color _bgTop = Color(0xFFF7F8FC);
-  static const Color _bgBottom = Color(0xFFEEF1F8);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _danger = Color(0xFFDC2626);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bgTop = AppColors.bg;
+  static const Color _bgBottom = AppColors.bgAlt;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _danger = AppColors.error;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   final _authService = AuthService();
   final _dbService = DatabaseService();
@@ -211,11 +212,11 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE9EEFC),
+                        color: AppColors.cFFE9EEFC,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
-                        Icons.archive_rounded,
+                        AppIcons.archive_rounded,
                         color: _primary,
                         size: 18,
                       ),
@@ -249,11 +250,11 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                           leading: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
+                              color: AppColors.mutedSurface,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
-                              Icons.group,
+                              AppIcons.group,
                               color: _textSecondary,
                             ),
                           ),
@@ -432,7 +433,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           leading: Builder(
             builder:
                 (context) => IconButton(
-                  icon: const Icon(Icons.menu_rounded, color: _primary),
+                  icon: const Icon(AppIcons.menu_rounded, color: _primary),
                   tooltip: 'Menu',
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
@@ -442,7 +443,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
               TextButton.icon(
                 onPressed: _showArchivedSheet,
                 icon: const Icon(
-                  Icons.archive_outlined,
+                  AppIcons.archive_outlined,
                   size: 18,
                   color: _textSecondary,
                 ),
@@ -480,9 +481,9 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                   Container(
                     margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF7ED),
+                      color: AppColors.cFFFFF7ED,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFFED7AA)),
+                      border: Border.all(color: AppColors.cFFFED7AA),
                     ),
                     child: Material(
                       color: Colors.transparent,
@@ -496,12 +497,12 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFED7AA),
+                                color: AppColors.cFFFED7AA,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
-                                Icons.mark_email_unread_outlined,
-                                color: Color(0xFFB45309),
+                                AppIcons.mark_email_unread_outlined,
+                                color: AppColors.cFFB45309,
                                 size: 20,
                               ),
                             ),
@@ -513,7 +514,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                                   Text(
                                     'Confirm Your Email',
                                     style: TextStyle(
-                                      color: Color(0xFF9A3412),
+                                      color: AppColors.cFF9A3412,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
                                     ),
@@ -522,7 +523,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                                   Text(
                                     'Please verify your email address',
                                     style: TextStyle(
-                                      color: Color(0xFFB45309),
+                                      color: AppColors.cFFB45309,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -540,7 +541,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                                 }
                               },
                               style: TextButton.styleFrom(
-                                backgroundColor: const Color(0xFF9A3412),
+                                backgroundColor: AppColors.cFF9A3412,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
@@ -567,7 +568,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0F172A).withOpacity(0.08),
+                        color: AppColors.darkBg.withOpacity(0.08),
                         blurRadius: 24,
                         offset: const Offset(0, 8),
                       ),
@@ -582,11 +583,11 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE9EEFC),
+                              color: AppColors.cFFE9EEFC,
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: const Icon(
-                              Icons.waving_hand_rounded,
+                              AppIcons.waving_hand_rounded,
                               color: _primary,
                             ),
                           ),
@@ -607,9 +608,9 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFF),
+                          color: AppColors.cFFF8FAFF,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFD0D9EE)),
+                          border: Border.all(color: AppColors.cFFD0D9EE),
                         ),
                         child: Row(
                           children: [
@@ -622,7 +623,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                             Container(
                               width: 1,
                               height: 28,
-                              color: const Color(0xFFD0D9EE),
+                              color: AppColors.cFFD0D9EE,
                             ),
                             Expanded(
                               child: _buildHeaderStat(
@@ -634,7 +635,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                             Container(
                               width: 1,
                               height: 28,
-                              color: const Color(0xFFD0D9EE),
+                              color: AppColors.cFFD0D9EE,
                             ),
                             Expanded(
                               child: _buildHeaderStat(
@@ -658,7 +659,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                     children: [
                       Expanded(
                         child: _buildQuickAction(
-                          icon: Icons.add_circle_outline_rounded,
+                          icon: AppIcons.add_circle_outline_rounded,
                           title: 'Create New',
                           subtitle: 'Start committee',
                           onTap: () async {
@@ -675,7 +676,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                       const SizedBox(width: 10),
                       Expanded(
                         child: _buildQuickAction(
-                          icon: Icons.archive_outlined,
+                          icon: AppIcons.archive_outlined,
                           title: 'Archived',
                           subtitle: '${_archivedCommittees.length} items',
                           onTap: _showArchivedSheet,
@@ -709,18 +710,18 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                         decoration: BoxDecoration(
                           color: _surface,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFCCE6D8)),
+                          border: Border.all(color: AppColors.cFFCCE6D8),
                         ),
                         child: Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFECFDF3),
+                                color: AppColors.cFFECFDF3,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(
-                                Icons.visibility_rounded,
+                                AppIcons.visibility_rounded,
                                 color: _success,
                                 size: 24,
                               ),
@@ -750,7 +751,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                               ),
                             ),
                             const Icon(
-                              Icons.chevron_right_rounded,
+                              AppIcons.chevron_right_rounded,
                               color: _textSecondary,
                             ),
                           ],
@@ -804,7 +805,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           },
           backgroundColor: _primary,
           foregroundColor: Colors.white,
-          icon: const Icon(Icons.add_rounded),
+          icon: const Icon(AppIcons.add_rounded),
           label: const Text('New Committee'),
         ),
       ),
@@ -851,7 +852,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           decoration: BoxDecoration(
             color: _surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFDCE4F7)),
+            border: Border.all(color: AppColors.lightBorder),
           ),
           child: Row(
             children: [
@@ -859,7 +860,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE9EEFC),
+                  color: AppColors.cFFE9EEFC,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, size: 18, color: _primary),
@@ -999,7 +1000,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
             decoration: const BoxDecoration(
               color: Colors.white,
               border: Border(
-                bottom: BorderSide(color: Color(0xFFDDE5F6), width: 1),
+                bottom: BorderSide(color: AppColors.cFFDDE5F6, width: 1),
               ),
             ),
             child: Column(
@@ -1010,10 +1011,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Color(0xFFE9EEFC),
+                    color: AppColors.cFFE9EEFC,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person, color: _primary, size: 32),
+                  child: const Icon(AppIcons.person, color: _primary, size: 32),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -1034,7 +1035,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
           // Profile
           ListTile(
-            leading: const Icon(Icons.person_outline, color: _textSecondary),
+            leading: const Icon(AppIcons.person_outline, color: _textSecondary),
             title: Text(
               'profile'.tr,
               style: const TextStyle(color: _textPrimary),
@@ -1048,11 +1049,11 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
             },
           ),
 
-          const Divider(color: Color(0xFFE2E8F0)),
+          const Divider(color: AppColors.borderMuted),
 
           // About
           ListTile(
-            leading: const Icon(Icons.info_outline, color: _textSecondary),
+            leading: const Icon(AppIcons.info_outline, color: _textSecondary),
             title: Text(
               'about'.tr,
               style: const TextStyle(color: _textPrimary),
@@ -1068,7 +1069,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
           // Settings (Long-press for Admin Panel)
           ListTile(
-            leading: const Icon(Icons.settings_outlined, color: _textSecondary),
+            leading: const Icon(AppIcons.settings_outlined, color: _textSecondary),
             title: Text(
               'settings'.tr,
               style: const TextStyle(color: _textPrimary),
@@ -1089,7 +1090,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
           // Terms & Conditions
           ListTile(
-            leading: const Icon(Icons.article_outlined, color: _textSecondary),
+            leading: const Icon(AppIcons.article_outlined, color: _textSecondary),
             title: Text(
               'terms_conditions'.tr,
               style: const TextStyle(color: _textPrimary),
@@ -1106,7 +1107,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
           // Privacy Policy
           ListTile(
             leading: const Icon(
-              Icons.privacy_tip_outlined,
+              AppIcons.privacy_tip_outlined,
               color: _textSecondary,
             ),
             title: Text(
@@ -1126,7 +1127,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
           // Contact Us
           ListTile(
-            leading: const Icon(Icons.mail_outline, color: _textSecondary),
+            leading: const Icon(AppIcons.mail_outline, color: _textSecondary),
             title: Text(
               'contact_us'.tr,
               style: const TextStyle(color: _textPrimary),
@@ -1140,11 +1141,11 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
             },
           ),
 
-          const Divider(color: Color(0xFFE2E8F0)),
+          const Divider(color: AppColors.borderMuted),
 
           // Logout
           ListTile(
-            leading: const Icon(Icons.logout, color: _danger),
+            leading: const Icon(AppIcons.logout, color: _danger),
             title: Text('logout'.tr, style: const TextStyle(color: _danger)),
             onTap: () async {
               Navigator.pop(context);
@@ -1185,12 +1186,12 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
   Widget _buildEmptyState() {
     return EmptyStateWidget(
-      icon: Icons.group_off_rounded,
+      icon: AppIcons.group_off_rounded,
       title: 'No Kametis Yet',
       subtitle:
           'Create your first committee to get started and manage your savings groups',
       actionLabel: 'Create Kameti',
-      actionIcon: Icons.add_rounded,
+      actionIcon: AppIcons.add_rounded,
       onAction: () async {
         final result = await Navigator.push(
           context,
@@ -1239,11 +1240,11 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE9EEFC),
+                      color: AppColors.cFFE9EEFC,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
-                      Icons.group_rounded,
+                      AppIcons.group_rounded,
                       color: _primary,
                       size: 25,
                     ),
@@ -1274,12 +1275,12 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                     ),
                   ),
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, color: _textSecondary),
+                    icon: const Icon(AppIcons.more, color: _textSecondary),
                     color: _surface,
                     elevation: 8,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: Color(0xFFDCE5F6)),
+                      side: const BorderSide(color: AppColors.cFFDCE5F6),
                     ),
                     onSelected: (value) {
                       if (value == 'archive') {
@@ -1295,7 +1296,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                             child: Row(
                               children: [
                                 const Icon(
-                                  Icons.archive_outlined,
+                                  AppIcons.archive_outlined,
                                   size: 20,
                                   color: _textSecondary,
                                 ),
@@ -1312,7 +1313,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                             child: Row(
                               children: [
                                 Icon(
-                                  Icons.delete_outline,
+                                  AppIcons.delete_outline,
                                   size: 20,
                                   color: _danger,
                                 ),
@@ -1338,9 +1339,9 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFF),
+                        color: AppColors.cFFF8FAFF,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFD0D9EE)),
+                        border: Border.all(color: AppColors.cFFD0D9EE),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1374,9 +1375,9 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFF),
+                        color: AppColors.cFFF8FAFF,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFD0D9EE)),
+                        border: Border.all(color: AppColors.cFFD0D9EE),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1412,7 +1413,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                       borderRadius: BorderRadius.circular(999),
                       child: LinearProgressIndicator(
                         minHeight: 6,
-                        backgroundColor: const Color(0xFFE2E8F0),
+                        backgroundColor: AppColors.borderMuted,
                         color: pendingAmount <= 0 ? _success : _primary,
                         value: progressValue,
                       ),
@@ -1427,8 +1428,8 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                     decoration: BoxDecoration(
                       color:
                           pendingAmount <= 0
-                              ? const Color(0xFFECFDF3)
-                              : const Color(0xFFFEF2F2),
+                              ? AppColors.cFFECFDF3
+                              : AppColors.cFFFEF2F2,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
@@ -1440,8 +1441,8 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                         fontWeight: FontWeight.w700,
                         color:
                             pendingAmount <= 0
-                                ? const Color(0xFF047857)
-                                : const Color(0xFFB91C1C),
+                                ? AppColors.cFF047857
+                                : AppColors.cFFB91C1C,
                       ),
                     ),
                   ),
@@ -1457,7 +1458,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE9EEFC),
+                      color: AppColors.cFFE9EEFC,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: InkWell(
@@ -1486,7 +1487,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                           ),
                           const SizedBox(width: 6),
                           const Icon(
-                            Icons.copy_rounded,
+                            AppIcons.copy_rounded,
                             size: 12,
                             color: _primary,
                           ),
@@ -1500,7 +1501,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: AppColors.mutedSurface,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
@@ -1541,7 +1542,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
             ),
             title: Row(
               children: [
-                const Icon(Icons.admin_panel_settings, color: _primary),
+                const Icon(AppIcons.admin_panel_settings, color: _primary),
                 const SizedBox(width: 12),
                 const Text(
                   'Admin Access',
@@ -1577,7 +1578,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                       letterSpacing: 16,
                     ),
                     filled: true,
-                    fillColor: const Color(0xFFF8FAFF),
+                    fillColor: AppColors.cFFF8FAFF,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/biometric_service.dart';
 import '../services/localization_service.dart';
 import '../services/toast_service.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,14 +14,14 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  static const Color _bg = Color(0xFFF4F7FF);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _primaryDark = Color(0xFF25348A);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
-  static const Color _success = Color(0xFF059669);
-  static const Color _muted = Color(0xFFF1F5F9);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _primaryDark = AppColors.primaryDark;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
+  static const Color _success = AppColors.success;
+  static const Color _muted = AppColors.mutedSurface;
 
   bool _biometricEnabled = false;
   bool _biometricAvailable = false;
@@ -108,11 +109,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           decoration: BoxDecoration(
             color: _surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFDDE5F6)),
+            border: Border.all(color: AppColors.cFFDDE5F6),
           ),
           child: IconButton(
             icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
+              AppIcons.arrow_back_ios_new_rounded,
               size: 18,
               color: _textPrimary,
             ),
@@ -140,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF3347A8), Color(0xFF4F46E5)],
+          colors: [AppColors.primary, AppColors.primaryLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -164,8 +165,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: Icon(
               faceMode
-                  ? Icons.face_retouching_natural_rounded
-                  : Icons.fingerprint_rounded,
+                  ? AppIcons.face_retouching_natural_rounded
+                  : AppIcons.fingerprint_rounded,
               color: Colors.white,
               size: 30,
             ),
@@ -224,10 +225,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFD9E3F6)),
+        border: Border.all(color: AppColors.cFFD9E3F6),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.05),
+            color: AppColors.darkBg.withOpacity(0.05),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),
@@ -240,11 +241,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             margin: const EdgeInsets.only(top: 2),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFFE9EEFC),
+              color: AppColors.cFFE9EEFC,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              faceMode ? Icons.face_rounded : Icons.fingerprint_rounded,
+              faceMode ? AppIcons.face_rounded : AppIcons.fingerprint_rounded,
               size: 20,
               color: _primary,
             ),
@@ -280,13 +281,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: _biometricEnabled ? const Color(0xFFECFDF3) : _muted,
+                    color: _biometricEnabled ? AppColors.cFFECFDF3 : _muted,
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
                       color:
                           _biometricEnabled
                               ? _success.withOpacity(0.25)
-                              : const Color(0xFFD7DFEE),
+                              : AppColors.cFFD7DFEE,
                     ),
                   ),
                   child: Text(
@@ -316,9 +317,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFF),
+        color: AppColors.cFFF8FAFF,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,7 +327,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Padding(
             padding: EdgeInsets.only(top: 1),
             child: Icon(
-              Icons.info_outline_rounded,
+              AppIcons.info_outline_rounded,
               size: 16,
               color: _textSecondary,
             ),

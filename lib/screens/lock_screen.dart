@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 import '../services/biometric_service.dart';
 import 'home_screen.dart';
 import 'host/host_dashboard_screen.dart';
@@ -15,12 +16,12 @@ class LockScreen extends StatefulWidget {
 }
 
 class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
-  static const Color _bgTop = Color(0xFFF7F8FC);
-  static const Color _bgBottom = Color(0xFFEEF1F8);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bgTop = AppColors.bg;
+  static const Color _bgBottom = AppColors.bgAlt;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   bool _isAuthenticating = false;
   String _error = '';
@@ -104,8 +105,8 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
 
   IconData _biometricIcon() {
     return _biometricType == 'Face ID'
-        ? Icons.face_rounded
-        : Icons.fingerprint_rounded;
+        ? AppIcons.face_rounded
+        : AppIcons.fingerprint_rounded;
   }
 
   @override
@@ -157,7 +158,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                         height: 30,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE9EEFC),
+                          color: AppColors.cFFE9EEFC,
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
@@ -188,7 +189,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                           ],
                         ),
                         child: const Icon(
-                          Icons.account_balance_wallet_rounded,
+                          AppIcons.account_balance_wallet_rounded,
                           size: 42,
                           color: _primary,
                         ),
@@ -240,12 +241,12 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                               height: 92,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: const Color(0xFFE9EEFC),
+                                color: AppColors.cFFE9EEFC,
                                 border: Border.all(
                                   color:
                                       _isAuthenticating
                                           ? _primary
-                                          : const Color(0xFFC9D4EE),
+                                          : AppColors.cFFC9D4EE,
                                   width: 1.6,
                                 ),
                               ),
@@ -304,7 +305,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                                 ),
                                 icon: Icon(
                                   _isAuthenticating
-                                      ? Icons.hourglass_top_rounded
+                                      ? AppIcons.hourglass_top_rounded
                                       : _biometricIcon(),
                                   size: 18,
                                 ),
@@ -332,16 +333,16 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFF1F2),
+                            color: AppColors.cFFFFF1F2,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFFECACA)),
+                            border: Border.all(color: AppColors.cFFFECACA),
                           ),
                           child: Row(
                             children: [
                               const Icon(
-                                Icons.error_outline_rounded,
+                                AppIcons.syncError,
                                 size: 18,
-                                color: Color(0xFFB91C1C),
+                                color: AppColors.cFFB91C1C,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
@@ -349,7 +350,7 @@ class _LockScreenState extends State<LockScreen> with WidgetsBindingObserver {
                                   _error,
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
-                                    color: const Color(0xFFB91C1C),
+                                    color: AppColors.cFFB91C1C,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),

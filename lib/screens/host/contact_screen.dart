@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 class ContactScreen extends StatelessWidget {
   const ContactScreen({super.key});
 
-  static const Color _bg = Color(0xFFF7F8FC);
-  static const Color _surface = Colors.white;
-  static const Color _primary = Color(0xFF3347A8);
-  static const Color _success = Color(0xFF059669);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _bg = AppColors.bg;
+  static const Color _surface = AppColors.surface;
+  static const Color _primary = AppColors.primary;
+  static const Color _success = AppColors.success;
+  static const Color _textPrimary = AppColors.textPrimary;
+  static const Color _textSecondary = AppColors.textSecondary;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +41,7 @@ class ContactScreen extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [_primary, Color(0xFF5B6FD6)],
+                colors: [_primary, AppColors.cFF5B6FD6],
               ),
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
@@ -54,7 +55,7 @@ class ContactScreen extends StatelessWidget {
             child: Column(
               children: [
                 const Icon(
-                  Icons.support_agent_rounded,
+                  AppIcons.support_agent_rounded,
                   size: 46,
                   color: Colors.white,
                 ),
@@ -106,7 +107,7 @@ class ContactScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildTopStat(
-                  icon: Icons.bolt_rounded,
+                  icon: AppIcons.bolt_rounded,
                   label: 'Fast Reply',
                   value: '< 24h',
                   tone: _success,
@@ -115,7 +116,7 @@ class ContactScreen extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _buildTopStat(
-                  icon: Icons.language_rounded,
+                  icon: AppIcons.language_rounded,
                   label: 'Languages',
                   value: 'EN / UR',
                   tone: _primary,
@@ -126,7 +127,7 @@ class ContactScreen extends StatelessWidget {
           const SizedBox(height: 16),
 
           _buildContactCard(
-            icon: Icons.email_outlined,
+            icon: AppIcons.email_outlined,
             title: 'Email',
             subtitle: 'msaad.official6@gmail.com',
             badge: 'Preferred',
@@ -136,7 +137,7 @@ class ContactScreen extends StatelessWidget {
           const SizedBox(height: 12),
 
           _buildContactCard(
-            icon: Icons.phone_outlined,
+            icon: AppIcons.phone_outlined,
             title: 'Phone',
             subtitle: '+92 321 8685488',
             badge: 'Direct',
@@ -146,7 +147,7 @@ class ContactScreen extends StatelessWidget {
           const SizedBox(height: 12),
 
           _buildContactCard(
-            icon: Icons.chat_outlined,
+            icon: AppIcons.chat_outlined,
             title: 'WhatsApp',
             subtitle: 'Chat with us',
             badge: 'Quick Chat',
@@ -160,14 +161,14 @@ class ContactScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: _surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFDCE4F7)),
+              border: Border.all(color: AppColors.lightBorder),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.help_outline_rounded, color: _primary),
+                    const Icon(AppIcons.help_outline_rounded, color: _primary),
                     const SizedBox(width: 8),
                     Text(
                       'Quick Help',
@@ -223,7 +224,7 @@ class ContactScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFDCE4F7)),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: Row(
         children: [
@@ -281,7 +282,7 @@ class ContactScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: _surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFDCE4F7)),
+          border: Border.all(color: AppColors.lightBorder),
         ),
         child: Row(
           children: [
@@ -336,7 +337,7 @@ class ContactScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: _textSecondary),
+            const Icon(AppIcons.chevron_right_rounded, color: _textSecondary),
           ],
         ),
       ),

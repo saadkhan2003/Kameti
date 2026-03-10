@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../utils/app_theme.dart';
+import 'package:committee_app/ui/theme/theme.dart';
 
 /// Represents a data conflict between local and cloud versions
 class SyncConflict {
@@ -86,15 +87,15 @@ class _ConflictSheet extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFB74D).withAlpha(25),
+                        color: AppColors.cFFFFB74D.withAlpha(25),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: const Color(0xFFFFB74D).withAlpha(60),
+                          color: AppColors.cFFFFB74D.withAlpha(60),
                         ),
                       ),
                       child: const Icon(
-                        Icons.compare_arrows_rounded,
-                        color: Color(0xFFFFB74D),
+                        AppIcons.compare_arrows_rounded,
+                        color: AppColors.cFFFFB74D,
                         size: 24,
                       ),
                     ),
@@ -144,10 +145,10 @@ class _ConflictSheet extends StatelessWidget {
                     Expanded(
                       child: _buildVersionCard(
                         title: 'This Device',
-                        icon: Icons.phone_android_rounded,
+                        icon: AppIcons.phone_android_rounded,
                         value: conflict.localValue,
                         timestamp: conflict.localTimestamp,
-                        color: const Color(0xFF448AFF),
+                        color: AppColors.cFF448AFF,
                         onTap: () {
                           conflict.onKeepLocal();
                           Navigator.pop(context);
@@ -158,10 +159,10 @@ class _ConflictSheet extends StatelessWidget {
                     Expanded(
                       child: _buildVersionCard(
                         title: 'Cloud',
-                        icon: Icons.cloud_rounded,
+                        icon: AppIcons.cloud_rounded,
                         value: conflict.cloudValue,
                         timestamp: conflict.cloudTimestamp,
-                        color: const Color(0xFF00C853),
+                        color: AppColors.cFF00C853,
                         onTap: () {
                           conflict.onKeepCloud();
                           Navigator.pop(context);
@@ -205,7 +206,7 @@ class _ConflictSheet extends StatelessWidget {
                       }
                       Navigator.pop(context);
                     },
-                    icon: const Icon(Icons.auto_fix_high_rounded, size: 18),
+                    icon: const Icon(AppIcons.auto_fix_high_rounded, size: 18),
                     label: const Text('Keep Most Recent'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.grey[300],
