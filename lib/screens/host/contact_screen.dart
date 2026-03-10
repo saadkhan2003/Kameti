@@ -137,6 +137,16 @@ class ContactScreen extends StatelessWidget {
           const SizedBox(height: 12),
 
           _buildContactCard(
+            icon: AppIcons.email_outlined,
+            title: 'Email',
+            subtitle: 'farhanappdev@gmail.com',
+            badge: 'Alternate',
+            badgeColor: _primary,
+            onTap: () => _launchAlternateEmail(),
+          ),
+          const SizedBox(height: 12),
+
+          _buildContactCard(
             icon: AppIcons.phone_outlined,
             title: 'Phone',
             subtitle: '+92 321 8685488',
@@ -370,6 +380,13 @@ class ContactScreen extends StatelessWidget {
 
   Future<void> _launchEmail() async {
     final uri = Uri.parse('mailto:msaad.official6@gmail.com');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _launchAlternateEmail() async {
+    final uri = Uri.parse('mailto:farhanappdev@gmail.com');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }

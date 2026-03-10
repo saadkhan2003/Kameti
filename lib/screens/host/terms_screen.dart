@@ -133,7 +133,7 @@ class TermsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Center(
             child: Text(
-              'Last updated: December 2025',
+              'Last updated: February 2026',
               style: GoogleFonts.inter(color: _textSecondary, fontSize: 12),
             ),
           ),

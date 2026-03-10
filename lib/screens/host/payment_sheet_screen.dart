@@ -564,8 +564,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                       final totalPending = stats['totalPending'] as double;
                       return Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                         decoration: BoxDecoration(
                           color: _surface,
                           borderRadius: BorderRadius.circular(16),
@@ -577,12 +577,12 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                             Text(
                               'Cycle Overview',
                               style: GoogleFonts.inter(
-                                fontSize: 15,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: _textPrimary,
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                             Row(
                               children: [
                                 Expanded(
@@ -614,11 +614,11 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
+                                horizontal: 10,
+                                vertical: 6,
                               ),
                               decoration: BoxDecoration(
                                 color:
@@ -637,7 +637,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                         : 'Pending Dues:',
                                     style: GoogleFonts.inter(
                                       color: _textSecondary,
-                                      fontSize: 12,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -651,18 +651,18 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                               ? _success
                                               : _warning,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 14,
+                                      fontSize: 13,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 8),
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
                                 onPressed: () => this._showReminderSheet(),
-                                icon: const Icon(AppIcons.reminder, size: 18),
+                                icon: const Icon(AppIcons.reminder, size: 16),
                                 label: const Text('Send Reminders'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: _primary,
@@ -672,16 +672,16 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
+                                    vertical: 10,
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 6),
                             Text(
                               'Collection: ${widget.committee.frequency.toUpperCase()} • Payout: Every ${widget.committee.paymentIntervalDays} Days',
                               style: GoogleFonts.inter(
-                                fontSize: 11,
+                                fontSize: 10,
                                 color: _textSecondary,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -696,10 +696,10 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                   if (_members.isNotEmpty)
                     Center(
                       child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        margin: const EdgeInsets.symmetric(vertical: 2),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
-                          vertical: 8,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: _surface,
@@ -772,7 +772,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                   // Custom Payment Matrix
                   Expanded(
                     child: Container(
-                      margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                      margin: const EdgeInsets.fromLTRB(16, 2, 16, 12),
                       decoration: BoxDecoration(
                         color: _surface,
                         borderRadius: BorderRadius.circular(18),

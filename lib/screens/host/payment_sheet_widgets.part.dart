@@ -553,7 +553,7 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
     assert(icon != null || iconText != null);
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(10),
@@ -562,7 +562,7 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (icon != null)
-            Icon(icon, color: color, size: 20)
+            Icon(icon, color: color, size: 18)
           else
             Text(
               iconText!,
@@ -573,12 +573,12 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
                 height: 1,
               ),
             ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             value,
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: color,
             ),
@@ -587,7 +587,7 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
             label,
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
-              fontSize: 11,
+              fontSize: 10,
               color: _PaymentSheetScreenState._textSecondary,
               fontWeight: FontWeight.w500,
             ),
