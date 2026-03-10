@@ -87,7 +87,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
         'Hi ${member.name}! 👋\n\n'
         '*Committee Code:* ${widget.committee.code}\n'
         '*Your Member Code:* ${member.memberCode}\n\n'
-        '_Download Committee App to track your payments!_';
+        '_Download KAMETI App to track your payments!_';
     Share.share(message, subject: '${member.name} - Committee Code');
   }
 

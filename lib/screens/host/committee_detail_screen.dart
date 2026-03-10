@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/auto_sync_service.dart';
+import '../../services/sync_status_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
 import 'member_management_screen.dart';
@@ -37,6 +38,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
   final _dbService = DatabaseService();
   final _syncService = SyncService();
   final _autoSyncService = AutoSyncService();
+  final _syncStatusService = SyncStatusService();
   late Committee _committee;
   List<Member> _members = [];
   bool _showCollectionDetails = false;
@@ -59,6 +61,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
   Future<void> _refreshCommittee() async {
     if (_isRefreshing) return;
     setState(() => _isRefreshing = true);
+    _syncStatusService.setSyncing();
 
     try {
       // Sync only this committee's members and payments
@@ -73,8 +76,11 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
       if (updatedCommittee != null && mounted) {
         setState(() => _committee = updatedCommittee);
       }
+
+      _syncStatusService.setSynced();
     } catch (e) {
       debugPrint('Refresh error: $e');
+      _syncStatusService.setError('Failed to sync committee');
     } finally {
       if (mounted) {
         setState(() => _isRefreshing = false);
@@ -108,7 +114,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
         '*Committee Code:* ${_committee.code}\n'
         '*Contribution:* ${_committee.currency} ${_committee.contributionAmount.toInt()}\n'
         '*Duration:* ${_members.length} months\n\n'
-        '_Download Committee App to view payments!_';
+        '_Download KAMETI App to view payments!_';
     Share.share(message, subject: '${_committee.name} - Committee Details');
   }
 
