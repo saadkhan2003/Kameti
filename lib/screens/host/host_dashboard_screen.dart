@@ -1069,7 +1069,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
           // Settings (Long-press for Admin Panel)
           ListTile(
-            leading: const Icon(AppIcons.settings_outlined, color: _textSecondary),
+            leading: const Icon(
+              AppIcons.settings_outlined,
+              color: _textSecondary,
+            ),
             title: Text(
               'settings'.tr,
               style: const TextStyle(color: _textPrimary),
@@ -1090,7 +1093,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
 
           // Terms & Conditions
           ListTile(
-            leading: const Icon(AppIcons.article_outlined, color: _textSecondary),
+            leading: const Icon(
+              AppIcons.article_outlined,
+              color: _textSecondary,
+            ),
             title: Text(
               'terms_conditions'.tr,
               style: const TextStyle(color: _textPrimary),
@@ -1264,7 +1270,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${_frequencyLabel(committee.frequency)} cycle • ${members.length}/$targetMembers members',
+                          '${_frequencyLabel(committee.frequency)} cycle • $targetMembers members',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: _textSecondary,
