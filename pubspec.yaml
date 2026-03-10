@@ -64,17 +64,16 @@ dependencies:
   url_launcher: ^6.3.2
 
   # New Features
-  introduction_screen: ^3.1.14  # Onboarding
-  local_auth: ^2.3.0            # Biometric Lock
+  introduction_screen: ^3.1.14 # Onboarding
+  local_auth: ^2.3.0 # Biometric Lock
 
   # Ads
-  google_mobile_ads: ^5.1.0     # Google AdMob Native Ads
+  google_mobile_ads: ^5.1.0 # Google AdMob Native Ads
 
   # In-App Update & Review
-  upgrader: ^11.3.0             # In-app update prompts (Android & iOS)
-  in_app_review: ^2.0.9         # In-app review / rating dialog
+  upgrader: ^11.3.0 # In-app update prompts (Android & iOS)
+  in_app_review: ^2.0.9 # In-app review / rating dialog
   fl_chart: ^1.1.1
-
 
 dev_dependencies:
   flutter_test:

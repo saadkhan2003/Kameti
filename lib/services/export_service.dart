@@ -305,7 +305,10 @@ class ExportService {
                       for (var d in dates) {
                         if (_isPaymentMarked(payments, e.value.id, d)) paid++;
                       }
-                      final pct = dates.isNotEmpty ? (paid / dates.length * 100).toInt() : 0;
+                      final pct =
+                          dates.isNotEmpty
+                              ? (paid / dates.length * 100).toInt()
+                              : 0;
                       return pw.TableRow(
                         decoration: pw.BoxDecoration(
                           color: e.key.isEven ? PdfColors.white : _lightBg,
@@ -318,9 +321,17 @@ class ExportService {
                           _td(
                             '$pct%',
                             center: true,
-                            bg: pct >= 80 ? _lightGreen : (pct < 50 ? _lightRed : null),
+                            bg:
+                                pct >= 80
+                                    ? _lightGreen
+                                    : (pct < 50 ? _lightRed : null),
                           ),
-                          _td(_fmtMoney(committee.currency, paid * committee.contributionAmount)),
+                          _td(
+                            _fmtMoney(
+                              committee.currency,
+                              paid * committee.contributionAmount,
+                            ),
+                          ),
                           _td(
                             e.value.hasReceivedPayout ? 'DONE' : 'Pending',
                             center: true,
@@ -377,21 +388,30 @@ class ExportService {
                       final date = entry.value;
                       int paidForDate = 0;
                       for (final member in members) {
-                        if (_isPaymentMarked(payments, member.id, date)) paidForDate++;
+                        if (_isPaymentMarked(payments, member.id, date))
+                          paidForDate++;
                       }
                       final missedForDate = members.length - paidForDate;
-                      final amountForDate = paidForDate * committee.contributionAmount;
-                      final isFull = members.isNotEmpty && paidForDate == members.length;
+                      final amountForDate =
+                          paidForDate * committee.contributionAmount;
+                      final isFull =
+                          members.isNotEmpty && paidForDate == members.length;
                       return pw.TableRow(
                         decoration: pw.BoxDecoration(
                           color: period.isEven ? PdfColors.white : _lightBg,
                         ),
                         children: [
-                          _td(DateFormat('dd MMM yyyy').format(date), center: true),
+                          _td(
+                            DateFormat('dd MMM yyyy').format(date),
+                            center: true,
+                          ),
                           _td('$period', center: true),
                           _td('$paidForDate', center: true),
                           _td('$missedForDate', center: true),
-                          _td(_fmtMoney(committee.currency, amountForDate), center: true),
+                          _td(
+                            _fmtMoney(committee.currency, amountForDate),
+                            center: true,
+                          ),
                           _td(
                             isFull ? 'COMPLETE' : 'PENDING',
                             center: true,
@@ -420,20 +440,33 @@ class ExportService {
                   children: [
                     pw.TableRow(
                       decoration: const pw.BoxDecoration(color: _primaryColor),
-                      children: [_th('#'), _th('Member'), _th('Status'), _th('Payout Date')],
+                      children: [
+                        _th('#'),
+                        _th('Member'),
+                        _th('Status'),
+                        _th('Payout Date'),
+                      ],
                     ),
                     ...members.map(
                       (m) => pw.TableRow(
                         decoration: pw.BoxDecoration(
-                          color: m.hasReceivedPayout ? _lightGreen : PdfColors.white,
+                          color:
+                              m.hasReceivedPayout
+                                  ? _lightGreen
+                                  : PdfColors.white,
                         ),
                         children: [
                           _td('${m.payoutOrder}', center: true),
                           _td(m.name, bold: true),
-                          _td(m.hasReceivedPayout ? 'DONE' : 'PENDING', center: true),
+                          _td(
+                            m.hasReceivedPayout ? 'DONE' : 'PENDING',
+                            center: true,
+                          ),
                           _td(
                             m.payoutDate != null
-                                ? DateFormat('dd MMM yyyy').format(m.payoutDate!)
+                                ? DateFormat(
+                                  'dd MMM yyyy',
+                                ).format(m.payoutDate!)
                                 : '-',
                             center: true,
                           ),
@@ -459,9 +492,7 @@ class ExportService {
       normalized.startsWith('assets/')
           ? normalized.substring('assets/'.length)
           : 'assets/$normalized',
-      normalized.startsWith('assets/')
-          ? 'assets/$normalized'
-          : normalized,
+      normalized.startsWith('assets/') ? 'assets/$normalized' : normalized,
     };
 
     for (final candidate in fallbackCandidates) {
@@ -475,6 +506,7 @@ class ExportService {
     if (assetPath.contains('Italic')) return pw.Font.helveticaOblique();
     return pw.Font.helvetica();
   }
+
   pw.Widget _buildHeader(
     Committee c, {
     String cycleLabel = '',
