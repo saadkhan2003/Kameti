@@ -277,11 +277,11 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
       );
       Navigator.pop(context, true);
     } catch (e) {
-      if (!mounted) return;
-      ToastService.error(
-        context,
-        'Upload failed. Please check your internet and try again.',
-      );
+    if (!mounted) return;
+    ToastService.error(
+      context,
+      e.toString(),
+    );
     } finally {
       if (mounted) {
         setState(() => _isUploading = false);
