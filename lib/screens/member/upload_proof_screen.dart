@@ -348,7 +348,7 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
                     const Padding(
                       padding: EdgeInsets.only(top: 1),
                       child: Icon(
-                        AppIcons.error_outline_rounded,
+                        AppIcons.error_rounded,
                         size: 15,
                         color: AppColors.error,
                       ),

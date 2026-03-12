@@ -215,7 +215,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                             Icon(
                               proof.isApproved
                                   ? AppIcons.check_circle_outline_rounded
-                                  : AppIcons.error_outline_rounded,
+                                  : AppIcons.error_rounded,
                               size: 18,
                               color: tone,
                             ),
