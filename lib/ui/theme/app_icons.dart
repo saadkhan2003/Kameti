@@ -31,14 +31,17 @@ class AppIcons {
 
   // Non-semantic tokens still used in codebase
   static const account_balance_wallet = Icons.account_balance_wallet;
-  static const account_balance_wallet_outlined = Icons.account_balance_wallet_outlined;
-  static const account_balance_wallet_rounded = Icons.account_balance_wallet_rounded;
+  static const account_balance_wallet_outlined =
+      Icons.account_balance_wallet_outlined;
+  static const account_balance_wallet_rounded =
+      Icons.account_balance_wallet_rounded;
   static const add = Icons.add;
   static const add_circle_outline_rounded = Icons.add_circle_outline_rounded;
   static const add_rounded = Icons.add_rounded;
   static const add_task_rounded = Icons.add_task_rounded;
   static const admin_panel_settings = Icons.admin_panel_settings;
-  static const admin_panel_settings_rounded = Icons.admin_panel_settings_rounded;
+  static const admin_panel_settings_rounded =
+      Icons.admin_panel_settings_rounded;
   static const archive_outlined = Icons.archive_outlined;
   static const archive_rounded = Icons.archive_rounded;
   static const arrow_back = Icons.arrow_back;
@@ -65,7 +68,8 @@ class AppIcons {
   static const check = Icons.check;
   static const check_circle = Icons.check_circle;
   static const check_circle_outline = Icons.check_circle_outline;
-  static const check_circle_outline_rounded = Icons.check_circle_outline_rounded;
+  static const check_circle_outline_rounded =
+      Icons.check_circle_outline_rounded;
   static const check_rounded = Icons.check_rounded;
   static const chevron_left = Icons.chevron_left;
   static const chevron_left_rounded = Icons.chevron_left_rounded;
@@ -98,7 +102,8 @@ class AppIcons {
   static const error_outline = Icons.error_outline;
   static const error_rounded = Icons.error_rounded;
   static const event_available_rounded = Icons.event_available_rounded;
-  static const face_retouching_natural_rounded = Icons.face_retouching_natural_rounded;
+  static const face_retouching_natural_rounded =
+      Icons.face_retouching_natural_rounded;
   static const face_rounded = Icons.face_rounded;
   static const favorite_outline = Icons.favorite_outline;
   static const fingerprint_rounded = Icons.fingerprint_rounded;

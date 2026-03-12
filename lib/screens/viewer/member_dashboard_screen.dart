@@ -63,7 +63,10 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
 
   int get _unreadNotificationCount {
     return _memberProofNotifications
-        .where((proof) => !_seenProofNotificationKeys.contains(_proofNotifKey(proof)))
+        .where(
+          (proof) =>
+              !_seenProofNotificationKeys.contains(_proofNotifKey(proof)),
+        )
         .length;
   }
 
@@ -131,9 +134,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
         date != null
             ? DateFormat('MMM d, yyyy').format(date)
             : DateFormat('MMM d, yyyy').format(proof.createdAt);
-    return proof.isApproved
-        ? 'Approved • $dateLabel'
-        : 'Rejected • $dateLabel';
+    return proof.isApproved ? 'Approved • $dateLabel' : 'Rejected • $dateLabel';
   }
 
   String _notifSubtitle(PaymentProof proof) {
