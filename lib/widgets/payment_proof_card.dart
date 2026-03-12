@@ -9,7 +9,8 @@ class PaymentProofCard extends StatelessWidget {
   final PaymentProof proof;
   final String memberName;
   final String committeeName;
-  final String monthLabel;
+  final String periodLabel;
+  final String dueDateLabel;
   final String amountLabel;
   final VoidCallback? onTap;
 
@@ -18,7 +19,8 @@ class PaymentProofCard extends StatelessWidget {
     required this.proof,
     required this.memberName,
     required this.committeeName,
-    required this.monthLabel,
+    required this.periodLabel,
+    required this.dueDateLabel,
     required this.amountLabel,
     this.onTap,
   });
@@ -58,11 +60,20 @@ class PaymentProofCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                '$committeeName • $monthLabel',
+                '$committeeName • $periodLabel',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Due: $dueDateLabel',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 4),
@@ -84,7 +95,7 @@ class PaymentProofCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    _formatDate(proof.createdAt),
+                    'Uploaded ${_formatDate(proof.createdAt)}',
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       color: AppColors.textSecondary,

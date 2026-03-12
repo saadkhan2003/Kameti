@@ -557,62 +557,6 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         ),
         actions: [
           IconButton(
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(
-                  AppIcons.verified_user_rounded,
-                  color: _textSecondary,
-                ),
-                if (_pendingProofRequests > 0)
-                  Positioned(
-                    right: -7,
-                    top: -7,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 1,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.error,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: _bg, width: 1),
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
-                      child: Text(
-                        _pendingProofRequests > 99
-                            ? '99+'
-                            : '$_pendingProofRequests',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            tooltip: 'Payment Proofs',
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) =>
-                          PendingProofsScreen(committeeId: widget.committee.id),
-                ),
-              );
-
-              if (!mounted) return;
-              await _syncAndLoad(waitForSync: true);
-            },
-          ),
-          IconButton(
             icon: const Icon(AppIcons.reminder, color: _textSecondary),
             tooltip: 'Send Reminders',
             onPressed: () => this._showReminderSheet(),
@@ -894,78 +838,158 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
 
                   // Payout Selector - styled with radius
                   if (_members.isNotEmpty)
-                    Center(
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 2),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _surface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppColors.lightBorder,
-                            width: 1,
-                          ),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<int>(
-                            value: _selectedCycle,
-                            isDense: true,
-                            icon: const Icon(
-                              AppIcons.keyboard_arrow_down_rounded,
-                              color: _primary,
-                              size: 20,
-                            ),
-                            style: GoogleFonts.inter(
-                              color: _textPrimary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            dropdownColor: _surface,
-                            borderRadius: BorderRadius.circular(16),
-                            elevation: 8,
-                            menuMaxHeight: 300,
-                            items: List.generate(
-                              _maxCycles,
-                              (i) => DropdownMenuItem<int>(
-                                value: i + 1,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 2,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _surface,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppColors.lightBorder,
+                                  width: 1,
+                                ),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<int>(
+                                  value: _selectedCycle,
+                                  isDense: true,
+                                  icon: const Icon(
+                                    AppIcons.keyboard_arrow_down_rounded,
+                                    color: _primary,
+                                    size: 20,
                                   ),
-                                  child: Text(
-                                    'Cycle ${i + 1}',
-                                    style: GoogleFonts.inter(
-                                      color:
-                                          (i + 1) == _selectedCycle
-                                              ? _primary
-                                              : _textPrimary,
-                                      fontWeight:
-                                          (i + 1) == _selectedCycle
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
+                                  style: GoogleFonts.inter(
+                                    color: _textPrimary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  dropdownColor: _surface,
+                                  borderRadius: BorderRadius.circular(16),
+                                  elevation: 8,
+                                  menuMaxHeight: 300,
+                                  items: List.generate(
+                                    _maxCycles,
+                                    (i) => DropdownMenuItem<int>(
+                                      value: i + 1,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        child: Text(
+                                          'Cycle ${i + 1}',
+                                          style: GoogleFonts.inter(
+                                            color:
+                                                (i + 1) == _selectedCycle
+                                                    ? _primary
+                                                    : _textPrimary,
+                                            fontWeight:
+                                                (i + 1) == _selectedCycle
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
+                                  onChanged: (val) {
+                                    if (val == null) return;
+                                    setState(() {
+                                      _selectedCycle = val;
+                                      _dbService.setSelectedCycle(
+                                        widget.committee.id,
+                                        val,
+                                      );
+                                      _generateDates();
+                                      _loadPayments();
+                                    });
+                                  },
                                 ),
                               ),
                             ),
-                            onChanged: (val) {
-                              if (val == null) return;
-                              setState(() {
-                                _selectedCycle = val;
-                                _dbService.setSelectedCycle(
-                                  widget.committee.id,
-                                  val,
-                                );
-                                _generateDates();
-                                _loadPayments();
-                              });
-                            },
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => PendingProofsScreen(
+                                        committeeId: widget.committee.id,
+                                      ),
+                                ),
+                              );
+
+                              if (!mounted) return;
+                              await _syncAndLoad(waitForSync: true);
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: _primary,
+                              side: BorderSide(
+                                color: AppColors.lightBorder,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                            ),
+                            icon: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                const Icon(AppIcons.verified_user_rounded),
+                                if (_pendingProofRequests > 0)
+                                  Positioned(
+                                    right: -7,
+                                    top: -7,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.error,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: _surface,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 16,
+                                        minHeight: 16,
+                                      ),
+                                      child: Text(
+                                        _pendingProofRequests > 99
+                                            ? '99+'
+                                            : '$_pendingProofRequests',
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            label: const Text('Proofs'),
+                          ),
+                        ],
                       ),
                     ),
 

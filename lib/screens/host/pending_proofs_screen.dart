@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:async';
 
 import '../../models/payment.dart';
 import '../../models/payment_proof.dart';
@@ -27,7 +26,6 @@ class _PendingProofsScreenState extends State<PendingProofsScreen>
   final _dbService = DatabaseService();
 
   late TabController _tabController;
-  Timer? _autoRefreshTimer;
   bool _loading = true;
   List<PaymentProof> _allProofs = [];
 
@@ -38,14 +36,10 @@ class _PendingProofsScreenState extends State<PendingProofsScreen>
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
     _loadProofs();
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      _loadProofs(silent: true);
-    });
   }
 
   @override
   void dispose() {
-    _autoRefreshTimer?.cancel();
     _tabController.dispose();
     super.dispose();
   }
@@ -177,16 +171,21 @@ class _PendingProofsScreenState extends State<PendingProofsScreen>
         final committeeName = committee?.name ?? 'Committee';
         final amountLabel =
             '${committee?.currency ?? 'PKR'} ${(committee?.contributionAmount ?? 0).toInt()}';
-        final monthLabel =
+        final periodLabel =
             payment != null
                 ? _monthLabel(payment.date)
                 : _monthLabel(proof.createdAt);
+        final dueDateLabel =
+            payment != null
+                ? _fullDateLabel(payment.date)
+                : _fullDateLabel(proof.createdAt);
 
         return PaymentProofCard(
           proof: proof,
           memberName: memberName,
           committeeName: committeeName,
-          monthLabel: monthLabel,
+          periodLabel: periodLabel,
+          dueDateLabel: dueDateLabel,
           amountLabel: amountLabel,
           onTap: () async {
             final result = await Navigator.push(
@@ -195,13 +194,8 @@ class _PendingProofsScreenState extends State<PendingProofsScreen>
                 builder: (_) => ProofReviewScreen(proofId: proof.id),
               ),
             );
-            await _loadProofs(silent: true);
             if (result == true && mounted) {
-              Future.delayed(const Duration(seconds: 6), () {
-                if (mounted) {
-                  _loadProofs(silent: true);
-                }
-              });
+              await _loadProofs(silent: true);
             }
           },
         );
@@ -225,6 +219,12 @@ class _PendingProofsScreenState extends State<PendingProofsScreen>
       'Dec',
     ];
     return '${monthNames[date.month - 1]} ${date.year}';
+  }
+
+  String _fullDateLabel(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
   }
 
   Payment? _findPaymentById(String committeeId, String paymentId) {

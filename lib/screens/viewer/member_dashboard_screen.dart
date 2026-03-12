@@ -268,8 +268,6 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
             const SizedBox(height: 14),
             _buildCycleSelector(),
             const SizedBox(height: 14),
-            _buildPaymentMatrix(),
-            const SizedBox(height: 12),
             _buildProofActionCard(),
             const SizedBox(height: 14),
             _buildPayoutCard(),
@@ -427,122 +425,6 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     );
   }
 
-  Widget _buildPaymentMatrix() {
-    if (_cycleDates.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: _cardDecoration(),
-        child: Text(
-          'No payment dates available for this cycle.',
-          style: GoogleFonts.inter(color: _textSecondary),
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Cycle $_selectedCycle Payment Grid',
-            style: GoogleFonts.inter(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: _textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 1,
-            ),
-            itemCount: _cycleDates.length,
-            itemBuilder: (context, index) {
-              final date = _cycleDates[index];
-              final payment = _dbService.getPayment(widget.member.id, date);
-              final isPaid = payment != null && payment.isPaid;
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: isPaid ? _success.withOpacity(0.14) : _primarySoft,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color:
-                        isPaid
-                            ? _success.withOpacity(0.45)
-                            : AppColors.cFFD7E3FF,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      isPaid ? AppIcons.paid : AppIcons.schedule_rounded,
-                      color: isPaid ? _success : _warning,
-                      size: 16,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      DateFormat('d').format(date),
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: _textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegendItem(_success.withOpacity(0.16), _success, 'Paid'),
-              const SizedBox(width: 14),
-              _buildLegendItem(_primarySoft, _warning, 'Pending'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLegendItem(Color bg, Color iconColor, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: iconColor.withOpacity(0.5)),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            color: _textSecondary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildPayoutCard() {
     final hasPayout = widget.member.hasReceivedPayout;
     final highlight = hasPayout ? _success : _warning;
@@ -577,13 +459,21 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     final status = _proofStatusForDate(date);
     final paymentId = '${widget.member.id}_${date.toIso8601String()}';
     final proof = _latestProofByPaymentId[paymentId];
+    final pendingDates =
+        _cycleDates.where((d) => _proofStatusForDate(d) == 'pending').toList();
+    final hasMultiPending = status == 'pending' && pendingDates.length > 1;
+    final pendingStart = hasMultiPending ? pendingDates.first : null;
+    final pendingEnd = hasMultiPending ? pendingDates.last : null;
+    final pendingTotalAmount = widget.committee.contributionAmount * pendingDates.length;
 
     final canUpload = status == 'none' || status == 'rejected';
     final btnLabel =
         status == 'rejected'
             ? 'Resubmit Proof'
             : status == 'pending'
-            ? 'Proof Submitted'
+            ? hasMultiPending
+                ? 'Proofs Submitted (${pendingDates.length})'
+                : 'Proof Submitted'
             : status == 'approved'
             ? 'Approved'
             : 'Upload Payment Proof';
@@ -611,13 +501,26 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '${DateFormat('MMM d, yyyy').format(date)} • ${widget.committee.currency} ${widget.committee.contributionAmount.toInt()}',
+            hasMultiPending
+                ? '${DateFormat('MMM d, yyyy').format(pendingStart!)} → ${DateFormat('MMM d, yyyy').format(pendingEnd!)} • ${widget.committee.currency} ${pendingTotalAmount.toInt()}'
+                : '${DateFormat('MMM d, yyyy').format(date)} • ${widget.committee.currency} ${widget.committee.contributionAmount.toInt()}',
             style: GoogleFonts.inter(
               fontSize: 12,
               color: _textSecondary,
               fontWeight: FontWeight.w500,
             ),
           ),
+          if (hasMultiPending) ...[
+            const SizedBox(height: 4),
+            Text(
+              '${pendingDates.length} periods pending approval',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: _textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
           if (status == 'rejected' &&
               (proof?.rejectionReason?.isNotEmpty ?? false)) ...[
             const SizedBox(height: 6),

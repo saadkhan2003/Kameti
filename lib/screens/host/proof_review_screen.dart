@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -31,9 +29,6 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
   bool _isProcessing = false;
   bool _showRejectReason = false;
 
-  Timer? _approveTimer;
-  bool _approveQueued = false;
-
   @override
   void initState() {
     super.initState();
@@ -42,7 +37,6 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
 
   @override
   void dispose() {
-    _approveTimer?.cancel();
     _reasonController.dispose();
     super.dispose();
   }
@@ -58,41 +52,9 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
     });
   }
 
-  Future<void> _queueApproveWithUndo() async {
+  Future<void> _approveNow() async {
     if (_proof == null || _isProcessing) return;
-
-    setState(() {
-      _approveQueued = true;
-      _isProcessing = true;
-    });
-
-    _approveTimer?.cancel();
-    _approveTimer = Timer(const Duration(seconds: 5), () async {
-      if (!_approveQueued) return;
-      await _applyApprove();
-    });
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Approval queued. Undo within 5 seconds.'),
-        duration: const Duration(seconds: 5),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () {
-            _approveTimer?.cancel();
-            if (!mounted) return;
-            setState(() {
-              _approveQueued = false;
-              _isProcessing = false;
-            });
-          },
-        ),
-      ),
-    );
-  }
-
-  Future<void> _applyApprove() async {
+    setState(() => _isProcessing = true);
     final proof = _proof;
     if (proof == null) return;
 
@@ -116,10 +78,7 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
       );
       Navigator.pop(context, true);
     } else {
-      setState(() {
-        _isProcessing = false;
-        _approveQueued = false;
-      });
+      setState(() => _isProcessing = false);
       ToastService.error(context, 'Failed to approve proof. Please try again.');
     }
   }
@@ -248,20 +207,8 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(
-        title: Text(
-          'Proof Review',
-          style: GoogleFonts.inter(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        backgroundColor: AppColors.bg,
-        foregroundColor: AppColors.textPrimary,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-        surfaceTintColor: Colors.transparent,
-        scrolledUnderElevation: 0,
-        elevation: 0,
+      appBar: AppBarStyles.standard(
+        title: 'Proof Review',
         actions: [
           IconButton(
             tooltip: 'Delete request',
@@ -299,6 +246,39 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
                   child: Image.network(
                     proof.cloudinaryUrl,
                     fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) {
+                        return child;
+                      }
+
+                      final expectedBytes = loadingProgress.expectedTotalBytes;
+                      final loadedBytes = loadingProgress.cumulativeBytesLoaded;
+                      final progress =
+                          expectedBytes != null && expectedBytes > 0
+                              ? loadedBytes / expectedBytes
+                              : null;
+
+                      return SizedBox(
+                        height: 260,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(value: progress),
+                              const SizedBox(height: 10),
+                              Text(
+                                'Loading proof...',
+                                style: GoogleFonts.inter(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                     errorBuilder:
                         (_, __, ___) => const SizedBox(
                           height: 260,
@@ -313,10 +293,8 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isProcessing ? null : _queueApproveWithUndo,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.success,
-                  ),
+                  onPressed: _isProcessing ? null : _approveNow,
+                  style: AppButtonStyles.elevatedSuccess(),
                   child: const Text('Approve'),
                 ),
               ),
@@ -332,13 +310,8 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
                               () => _showRejectReason = !_showRejectReason,
                             );
                           },
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.error),
-                  ),
-                  child: const Text(
-                    'Reject',
-                    style: TextStyle(color: AppColors.error),
-                  ),
+                  style: AppButtonStyles.outlinedError(),
+                  child: const Text('Reject'),
                 ),
               ),
             ] else if (proof.isApproved) ...[
@@ -346,10 +319,7 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: _isProcessing ? null : _moveToPending,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.primary),
-                    foregroundColor: AppColors.primary,
-                  ),
+                  style: AppButtonStyles.outlinedPrimary(),
                   child: const Text('Move to Pending'),
                 ),
               ),
@@ -377,10 +347,7 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: _isProcessing ? null : _reject,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.warning,
-                                foregroundColor: Colors.white,
-                              ),
+                              style: AppButtonStyles.elevatedWarning(),
                               child: const Text('Confirm Rejection'),
                             ),
                           ),

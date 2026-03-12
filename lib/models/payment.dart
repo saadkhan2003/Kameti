@@ -48,23 +48,30 @@ class Payment extends HiveObject {
   }
 
   factory Payment.fromJson(Map<String, dynamic> json) {
+    final rawDate = json['date'];
+    final parsedDate =
+        rawDate is String && rawDate.isNotEmpty
+            ? DateTime.tryParse(rawDate)
+            : null;
+
     return Payment(
-      id: json['id'],
-      memberId: json['member_id'] ?? json['memberId'],
-      committeeId: json['committee_id'] ?? json['committeeId'],
-      date: DateTime.parse(json['date']),
+      id: (json['id'] ?? '').toString(),
+      memberId: (json['member_id'] ?? json['memberId'] ?? '').toString(),
+      committeeId:
+          (json['committee_id'] ?? json['committeeId'] ?? '').toString(),
+      date: parsedDate ?? DateTime.fromMillisecondsSinceEpoch(0),
       isPaid: json['is_paid'] ?? json['isPaid'] ?? false,
-      markedBy: json['marked_by'] ?? json['markedBy'],
-      markedAt: (json['marked_at'] ?? json['markedAt']) != null
-          ? DateTime.tryParse(json['marked_at'] ?? json['markedAt'])
-          : null,
+      markedBy: (json['marked_by'] ?? json['markedBy'] ?? '').toString(),
+      markedAt:
+          (json['marked_at'] ?? json['markedAt']) != null
+              ? DateTime.tryParse(
+                (json['marked_at'] ?? json['markedAt']).toString(),
+              )
+              : null,
     );
   }
 
-  Payment copyWith({
-    bool? isPaid,
-    DateTime? markedAt,
-  }) {
+  Payment copyWith({bool? isPaid, DateTime? markedAt}) {
     return Payment(
       id: id,
       memberId: memberId,

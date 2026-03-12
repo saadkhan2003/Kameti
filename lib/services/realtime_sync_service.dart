@@ -171,21 +171,26 @@ class RealtimeSyncService {
     final record = payload.newRecord;
     final oldRecord = payload.oldRecord;
 
-    if (payload.eventType == PostgresChangeEvent.delete) {
-      final id = oldRecord['id'] as String;
-      if (_pendingPaymentUpdates.contains(id)) return;
+    try {
+      if (payload.eventType == PostgresChangeEvent.delete) {
+        final id = oldRecord['id'] as String;
+        if (_pendingPaymentUpdates.contains(id)) return;
 
-      await _dbService.deletePayment(id);
-    } else {
-      if (record.isEmpty) return;
+        await _dbService.deletePayment(id);
+      } else {
+        if (record.isEmpty) return;
 
-      final payment = Payment.fromJson(record);
-      if (_pendingPaymentUpdates.contains(payment.id)) return;
+        final payment = Payment.fromJson(record);
+        if (payment.id.isEmpty) return;
+        if (_pendingPaymentUpdates.contains(payment.id)) return;
 
-      await _dbService.savePayment(payment);
-      // debugPrint('💾 Payment synced: ${payment.id} isPaid: ${payment.isPaid}');
+        await _dbService.savePayment(payment);
+        // debugPrint('💾 Payment synced: ${payment.id} isPaid: ${payment.isPaid}');
+      }
+      onDataChanged?.call();
+    } catch (e) {
+      _log('❌ Failed to handle payment realtime change: $e');
     }
-    onDataChanged?.call();
   }
 
   /// Stop all listeners

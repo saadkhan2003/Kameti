@@ -47,20 +47,86 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
   bool _isUploading = false;
   String? _fileName;
   PaymentProof? _latestProof;
+  bool _loadingPeriods = true;
+  List<DateTime> _eligiblePeriods = [];
+  int _selectedPeriods = 1;
 
   String get _paymentId =>
       '${widget.member.id}_${widget.paymentDate.toIso8601String()}';
 
+  List<DateTime> get _selectedPeriodDates {
+    if (_eligiblePeriods.isEmpty) return [widget.paymentDate];
+    final max = _selectedPeriods.clamp(1, _eligiblePeriods.length);
+    return _eligiblePeriods.take(max).toList(growable: false);
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadLatestProof();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    await Future.wait([_loadLatestProof(), _prepareEligiblePeriods()]);
   }
 
   Future<void> _loadLatestProof() async {
     final proof = await _supabase.getLatestProofForPayment(_paymentId);
     if (!mounted) return;
     setState(() => _latestProof = proof);
+  }
+
+  Future<void> _prepareEligiblePeriods() async {
+    if (mounted) setState(() => _loadingPeriods = true);
+
+    final dates = _getCycleDatesForSelectedPayment();
+    final filtered = dates
+        .where((date) => !_isBeforeDay(date, widget.paymentDate))
+        .where((date) {
+          final payment = _dbService.getPayment(widget.member.id, date);
+          return payment?.isPaid != true;
+        })
+        .toList(growable: false);
+
+    if (!mounted) return;
+    setState(() {
+      _eligiblePeriods = filtered.isEmpty ? [widget.paymentDate] : filtered;
+      _selectedPeriods = 1;
+      _loadingPeriods = false;
+    });
+  }
+
+  List<DateTime> _getCycleDatesForSelectedPayment() {
+    final startDate = widget.committee.startDate;
+    final payoutIntervalDays = widget.committee.paymentIntervalDays;
+
+    final daysSinceStart = widget.paymentDate.difference(startDate).inDays;
+    final cycleIndex = (daysSinceStart ~/ payoutIntervalDays).clamp(0, 1000000);
+
+    final cycleStart = startDate.add(
+      Duration(days: cycleIndex * payoutIntervalDays),
+    );
+    final cycleEnd = cycleStart.add(Duration(days: payoutIntervalDays - 1));
+
+    int collectionInterval = 30;
+    if (widget.committee.frequency == 'daily') collectionInterval = 1;
+    if (widget.committee.frequency == 'weekly') collectionInterval = 7;
+    if (widget.committee.frequency == 'monthly') collectionInterval = 30;
+
+    final dates = <DateTime>[];
+    DateTime current = cycleStart;
+    while (!current.isAfter(cycleEnd) && dates.length < 60) {
+      dates.add(current);
+      current = current.add(Duration(days: collectionInterval));
+    }
+
+    return dates;
+  }
+
+  bool _isBeforeDay(DateTime a, DateTime b) {
+    final ax = DateTime(a.year, a.month, a.day);
+    final bx = DateTime(b.year, b.month, b.day);
+    return ax.isBefore(bx);
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -123,15 +189,25 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
       return;
     }
 
-    final hasPending = await _supabase.hasPendingProof(
-      _paymentId,
-      widget.member.id,
-    );
-    if (hasPending) {
+    final selectedDates = _selectedPeriodDates;
+    final blockedDates = <DateTime>[];
+
+    for (final date in selectedDates) {
+      final paymentId = '${widget.member.id}_${date.toIso8601String()}';
+      final hasPending = await _supabase.hasPendingProof(
+        paymentId,
+        widget.member.id,
+      );
+      if (hasPending) {
+        blockedDates.add(date);
+      }
+    }
+
+    if (blockedDates.isNotEmpty) {
       if (!mounted) return;
       ToastService.error(
         context,
-        'You already have a pending proof for this payment.',
+        'Some selected periods already have pending proofs. Please reduce periods and try again.',
       );
       return;
     }
@@ -144,58 +220,71 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
         fileName: _fileName ?? 'payment-proof.jpg',
       );
 
-      final localPayment = _dbService.getPayment(
-        widget.member.id,
-        widget.paymentDate,
-      );
-      final payment =
-          localPayment ??
-          Payment(
-            id: _paymentId,
-            memberId: widget.member.id,
+      int submittedCount = 0;
+
+      for (final date in selectedDates) {
+        final paymentId = '${widget.member.id}_${date.toIso8601String()}';
+
+        final localPayment = _dbService.getPayment(widget.member.id, date);
+        final payment =
+            localPayment ??
+            Payment(
+              id: paymentId,
+              memberId: widget.member.id,
+              committeeId: widget.committee.id,
+              date: date,
+              isPaid: false,
+              markedBy: widget.committee.hostId,
+              markedAt: null,
+            );
+
+        await _dbService.savePayment(payment);
+        await _supabase.upsertPayment(payment);
+
+        final inserted = await _supabase.submitPaymentProof(
+          PaymentProof(
+            id: '',
+            paymentId: paymentId,
             committeeId: widget.committee.id,
-            date: widget.paymentDate,
-            isPaid: false,
-            markedBy: widget.committee.hostId,
-            markedAt: null,
-          );
+            memberId: widget.member.id,
+            hostId: widget.committee.hostId,
+            cloudinaryUrl: upload.secureUrl,
+            cloudinaryPublicId: upload.publicId,
+            status: 'pending',
+            rejectionReason: null,
+            reviewedBy: null,
+            reviewedAt: null,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
 
-      await _dbService.savePayment(payment);
-      await _supabase.upsertPayment(payment);
+        if (inserted != null) {
+          submittedCount++;
+        }
+      }
 
-      final inserted = await _supabase.submitPaymentProof(
-        PaymentProof(
-          id: '',
-          paymentId: _paymentId,
-          committeeId: widget.committee.id,
-          memberId: widget.member.id,
-          hostId: widget.committee.hostId,
-          cloudinaryUrl: upload.secureUrl,
-          cloudinaryPublicId: upload.publicId,
-          status: 'pending',
-          rejectionReason: null,
-          reviewedBy: null,
-          reviewedAt: null,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      );
-
-      if (inserted == null) {
-        throw Exception('Could not save payment proof');
+      if (submittedCount == 0) {
+        throw Exception('Could not save payment proof requests');
       }
 
       await _notifications.notifyNewProof(
         hostId: widget.committee.hostId,
         memberName: widget.member.name,
-        monthLabel: _monthLabel(widget.paymentDate),
-        amountLabel: '${widget.committee.currency} ${widget.amount.toInt()}',
+        monthLabel:
+            submittedCount == 1
+                ? _monthLabel(selectedDates.first)
+                : '${_monthLabel(selectedDates.first)} +${submittedCount - 1} period(s)',
+        amountLabel:
+            '${widget.committee.currency} ${(widget.amount * submittedCount).toInt()}',
       );
 
       if (!mounted) return;
       ToastService.success(
         context,
-        'Payment proof submitted successfully! Waiting for host approval.',
+        submittedCount == 1
+            ? 'Payment proof submitted successfully! Waiting for host approval.'
+            : 'Proof submitted for $submittedCount periods successfully! Waiting for host approval.',
       );
       Navigator.pop(context, true);
     } catch (e) {
@@ -218,11 +307,7 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(
-        title: const Text('Upload Payment Proof'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: AppBarStyles.standard(title: 'Upload Payment Proof'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -232,7 +317,15 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Text('Status: '),
+                Text(
+                  'Status:',
+                  style: GoogleFonts.inter(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 ProofStatusBadge(status: _latestProof?.status ?? 'none'),
               ],
             ),
@@ -248,6 +341,8 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
               ),
             ],
             const SizedBox(height: 14),
+            _buildPeriodSelector(),
+            const SizedBox(height: 12),
             _buildImagePicker(),
             const SizedBox(height: 12),
             Row(
@@ -352,10 +447,126 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            '${_monthLabel(widget.paymentDate)} • ${widget.committee.currency} ${widget.amount.toInt()}',
+            '${_monthLabel(widget.paymentDate)} • ${widget.committee.currency} ${widget.amount.toInt()} / period',
             style: GoogleFonts.inter(
               fontSize: 12,
               color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Due date: ${_fullDateLabel(widget.paymentDate)}',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodSelector() {
+    if (_loadingPeriods) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.lightBorder),
+        ),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 10),
+            Text('Checking available periods...'),
+          ],
+        ),
+      );
+    }
+
+    final maxPeriods = _eligiblePeriods.length;
+    final selectedDates = _selectedPeriodDates;
+    final start = selectedDates.first;
+    final end = selectedDates.last;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.lightBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Periods in this proof',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              IconButton(
+                onPressed:
+                    _isUploading || _selectedPeriods <= 1
+                        ? null
+                        : () => setState(() => _selectedPeriods--),
+                style: IconButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  disabledForegroundColor: AppColors.cFFB0B8C9,
+                ),
+                icon: const Icon(AppIcons.remove_circle_outline, size: 24),
+              ),
+              Text(
+                '$_selectedPeriods',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              IconButton(
+                onPressed:
+                    _isUploading || _selectedPeriods >= maxPeriods
+                        ? null
+                        : () => setState(() => _selectedPeriods++),
+                style: IconButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  disabledForegroundColor: AppColors.cFFB0B8C9,
+                ),
+                icon: const Icon(
+                  AppIcons.add_circle_outline_rounded,
+                  size: 24,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'Max $maxPeriods',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            _selectedPeriods == 1
+                ? 'Selected due date: ${_fullDateLabel(start)}'
+                : 'Selected range: ${_fullDateLabel(start)} → ${_fullDateLabel(end)}',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -418,5 +629,11 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
       'Dec',
     ];
     return '${monthNames[date.month - 1]} ${date.year}';
+  }
+
+  String _fullDateLabel(DateTime date) {
+    final dd = date.day.toString().padLeft(2, '0');
+    final mm = date.month.toString().padLeft(2, '0');
+    return '$dd/$mm/${date.year}';
   }
 }
