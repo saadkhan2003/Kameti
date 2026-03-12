@@ -51,11 +51,18 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
   List<DateTime> _cycleDates = [];
   Map<String, PaymentProof> _latestProofByPaymentId = {};
   final Set<String> _seenProofNotificationKeys = {};
+  final Set<String> _clearedProofNotificationKeys = {};
 
   List<PaymentProof> get _memberProofNotifications {
     final items =
         _latestProofByPaymentId.values
             .where((proof) => proof.isApproved || proof.isRejected)
+            .where(
+              (proof) =>
+                  !_clearedProofNotificationKeys.contains(
+                    _proofNotifKey(proof),
+                  ),
+            )
             .toList();
     items.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     return items;
@@ -191,6 +198,29 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: _textPrimary,
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      if (!mounted) return;
+                      setState(() {
+                        for (final proof in items) {
+                          final key = _proofNotifKey(proof);
+                          _clearedProofNotificationKeys.add(key);
+                          _seenProofNotificationKeys.add(key);
+                        }
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      'Clear',
+                      style: GoogleFonts.inter(
+                        color: _danger,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),

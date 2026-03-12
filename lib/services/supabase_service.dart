@@ -321,6 +321,7 @@ class SupabaseService {
               .from(paymentProofsTable)
               .select(_paymentProofColumns)
               .eq('payment_id', paymentId)
+              .neq('status', 'deleted')
               .order('created_at', ascending: false)
               .limit(1)
               .maybeSingle();
@@ -343,6 +344,7 @@ class SupabaseService {
           .select(_paymentProofColumns)
           .eq('member_id', memberId)
           .eq('committee_id', committeeId)
+          .neq('status', 'deleted')
           .order('created_at', ascending: false);
 
       final rows = _toRows(response);
@@ -361,7 +363,8 @@ class SupabaseService {
       var query = client
           .from(paymentProofsTable)
           .select(_paymentProofColumns)
-          .eq('host_id', hostId);
+          .eq('host_id', hostId)
+          .neq('status', 'deleted');
 
       if (status != null && status.isNotEmpty && status != 'all') {
         query = query.eq('status', status);
@@ -480,17 +483,58 @@ class SupabaseService {
   Future<bool> deletePaymentProof(
     String proofId, {
     String? paymentId,
+    String? hostId,
     bool resetPaymentAsUnpaid = false,
   }) async {
     try {
-      await client.from(paymentProofsTable).delete().eq('id', proofId);
+      final deletedResponse = await client
+          .from(paymentProofsTable)
+          .delete()
+          .eq('id', proofId)
+          .select('id,payment_id');
+      final deletedRows = _toRows(deletedResponse);
 
-      if (paymentId != null && paymentId.isNotEmpty) {
+      String? resolvedPaymentId = paymentId;
+      if (deletedRows.isNotEmpty) {
+        resolvedPaymentId ??= deletedRows.first['payment_id']?.toString();
+      }
+
+      if (deletedRows.isEmpty) {
+        _log('⚠️ Hard delete skipped, trying soft delete for proof $proofId');
+
+        var updateQuery = client
+            .from(paymentProofsTable)
+            .update({
+              'status': 'deleted',
+              'reviewed_by': hostId,
+              'reviewed_at': DateTime.now().toIso8601String(),
+              'updated_at': DateTime.now().toIso8601String(),
+            })
+            .eq('id', proofId);
+
+        if (hostId != null && hostId.isNotEmpty) {
+          updateQuery = updateQuery.eq('host_id', hostId);
+        }
+
+        final softDeletedResponse = await updateQuery.select('id,payment_id');
+        final softDeletedRows = _toRows(softDeletedResponse);
+        if (softDeletedRows.isEmpty) {
+          _log(
+            '⚠️ Soft delete also skipped: no rows affected for proof $proofId',
+          );
+          return false;
+        }
+
+        resolvedPaymentId ??= softDeletedRows.first['payment_id']?.toString();
+      }
+
+      if (resolvedPaymentId != null && resolvedPaymentId.isNotEmpty) {
         final latestRemaining =
             await client
                 .from(paymentProofsTable)
                 .select('status')
-                .eq('payment_id', paymentId)
+                .eq('payment_id', resolvedPaymentId)
+                .neq('status', 'deleted')
                 .order('created_at', ascending: false)
                 .limit(1)
                 .maybeSingle();
@@ -502,7 +546,7 @@ class SupabaseService {
           await client
               .from(paymentsTable)
               .update({'proof_status': 'approved', 'is_paid': true})
-              .eq('id', paymentId);
+              .eq('id', resolvedPaymentId);
         } else if (latestStatus == 'pending') {
           await client
               .from(paymentsTable)
@@ -512,7 +556,7 @@ class SupabaseService {
                 'marked_by': null,
                 'marked_at': null,
               })
-              .eq('id', paymentId);
+              .eq('id', resolvedPaymentId);
         } else if (latestStatus == 'rejected') {
           await client
               .from(paymentsTable)
@@ -522,17 +566,17 @@ class SupabaseService {
                 'marked_by': null,
                 'marked_at': null,
               })
-              .eq('id', paymentId);
+              .eq('id', resolvedPaymentId);
         } else {
           await client
               .from(paymentsTable)
               .update({
                 'proof_status': 'none',
-                if (resetPaymentAsUnpaid) 'is_paid': false,
-                if (resetPaymentAsUnpaid) 'marked_by': null,
-                if (resetPaymentAsUnpaid) 'marked_at': null,
+                'is_paid': false,
+                'marked_by': null,
+                'marked_at': null,
               })
-              .eq('id', paymentId);
+              .eq('id', resolvedPaymentId);
         }
       }
 

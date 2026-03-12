@@ -180,6 +180,7 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
     final ok = await _supabase.deletePaymentProof(
       proof.id,
       paymentId: proof.paymentId,
+      hostId: _auth.currentUser?.id,
       resetPaymentAsUnpaid: proof.isApproved,
     );
 
@@ -337,9 +338,43 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
                             controller: _reasonController,
                             minLines: 2,
                             maxLines: 4,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Rejection reason',
-                              border: OutlineInputBorder(),
+                              hintText: 'Write clear reason for member',
+                              filled: true,
+                              fillColor: AppColors.surface,
+                              labelStyle: GoogleFonts.inter(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              floatingLabelStyle: GoogleFonts.inter(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              hintStyle: GoogleFonts.inter(
+                                color: AppColors.cFFB0B8C9,
+                                fontSize: 12,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: AppColors.lightBorder,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: AppColors.primary,
+                                  width: 1.6,
+                                ),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 10),
