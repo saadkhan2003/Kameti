@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:upgrader/upgrader.dart';
 import 'supabase_config.dart';
 import 'services/database_service.dart';
@@ -14,6 +15,7 @@ import 'screens/lock_screen.dart';
 import 'services/biometric_service.dart';
 import 'services/auth_service.dart';
 import 'services/sync_status_service.dart';
+import 'services/push_notification_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -52,8 +54,15 @@ void main() async {
     }
   }
 
-  // Firebase has been fully replaced by Supabase.
-  // Initialization removed to prevent "RESOURCE_EXHAUSTED" errors.
+  // Initialize Firebase for Push Notifications (FCM)
+  if (!kIsWeb) {
+    try {
+      await Firebase.initializeApp();
+      if (kDebugMode) debugPrint('✅ Firebase initialized (for FCM)');
+    } catch (e) {
+      if (kDebugMode) debugPrint('⚠️ Firebase initialization failed: $e');
+    }
+  }
 
   // Increment launch counter for in-app review eligibility tracking.
   if (!kIsWeb) {
@@ -77,6 +86,9 @@ class _CommitteeAppState extends State<CommitteeApp>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     SyncStatusService.navigatorKey = navigatorKey;
+    
+    // Initialize push notifications to get and save FCM token
+    PushNotificationService().initialize();
   }
 
   @override

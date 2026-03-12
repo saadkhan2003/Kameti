@@ -268,17 +268,6 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
         throw Exception('Could not save payment proof requests');
       }
 
-      await _notifications.notifyNewProof(
-        hostId: widget.committee.hostId,
-        memberName: widget.member.name,
-        monthLabel:
-            submittedCount == 1
-                ? _monthLabel(selectedDates.first)
-                : '${_monthLabel(selectedDates.first)} +${submittedCount - 1} period(s)',
-        amountLabel:
-            '${widget.committee.currency} ${(widget.amount * submittedCount).toInt()}',
-      );
-
       if (!mounted) return;
       ToastService.success(
         context,
@@ -298,6 +287,17 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
         setState(() => _isUploading = false);
       }
     }
+
+    // Fire-and-forget — notification failures must never block proof submission
+    _notifications
+        .notifyNewProof(
+          hostId: widget.committee.hostId,
+          memberName: widget.member.name,
+          monthLabel: _monthLabel(widget.paymentDate),
+          amountLabel:
+              '${widget.committee.currency} ${(widget.amount * _selectedPeriods).toInt()}',
+        )
+        .ignore();
   }
 
   @override

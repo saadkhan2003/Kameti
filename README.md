@@ -1,372 +1,177 @@
-# 🏦 Kameti - Committee App
+# Supabase CLI
 
-> **A modern, secure committee management application built with Flutter and Supabase**
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
+](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.24.5-blue.svg)](https://flutter.dev/)
-[![Supabase](https://img.shields.io/badge/Supabase-Backend-green.svg)](https://supabase.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Web-lightgrey.svg)](https://github.com/saadkhan2003/Kameti)
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-Kameti (کمیٹی) is a comprehensive committee management system that helps you organize rotating savings and credit associations (ROSCAs), also known as "committees" in South Asian communities. Manage members, track payments, handle payouts, and stay organized with real-time synchronization across all your devices.
+This repository contains all the functionality for Supabase CLI.
 
----
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
 
-## ✨ Features
+## Getting started
 
-### 🎯 Core Functionality
-- **Committee Management**: Create and manage multiple committees with custom rules
-- **Member Tracking**: Add, edit, and remove committee members with detailed profiles
-- **Payment Management**: Track monthly contributions and payment status
-- **Payout System**: Automated payout scheduling and member selection
-- **Real-time Sync**: Changes sync instantly across all devices using Supabase Realtime
-- **Offline Support**: Works offline with automatic sync when connection is restored
+### Install the CLI
 
-### 🔐 Security & Authentication
-- **Supabase Auth**: Secure email/password and Google Sign-In
-- **Row Level Security (RLS)**: Database-level security policies
-- **PIN Protection**: Admin panel secured with 4-digit PIN
-- **Encrypted Storage**: Sensitive data encrypted using Hive
-
-### 📱 User Experience
-- **Modern UI/UX**: Clean, intuitive interface with dark theme support
-- **Multi-language**: Support for English and Urdu
-- **Responsive Design**: Optimized for phones, tablets, and web
-- **Force Update System**: Ensure users are on the latest version
-- **Admin Panel**: Manage app configuration remotely without app updates
-
-### 📊 Advanced Features
-- **Payment History**: Complete audit trail of all transactions
-- **Due Date Tracking**: Never miss a payment with smart notifications
-- **Member Shuffling**: Randomize payout order for fairness
-- **Committee Reports**: Generate detailed reports and summaries
-- **Data Export**: Export committee data for backup or analysis
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Flutter SDK (3.24.5 or higher)
-- Dart SDK (3.5.4 or higher)
-- Android Studio / Xcode (for mobile development)
-- Node.js (for migration scripts)
-- Supabase account ([Sign up free](https://supabase.com))
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/saadkhan2003/Kameti.git
-   cd Kameti
-   ```
-
-2. **Install dependencies**
-   ```bash
-   flutter pub get
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your Supabase credentials
-   ```
-
-4. **Configure Supabase**
-   
-   See [Supabase Setup Guide](scripts/supabase_setup_guide.md) for detailed instructions.
-
-   Quick setup:
-   ```bash
-   # Run database migrations
-   # Copy contents of scripts/setup_remote_config.sql to Supabase SQL Editor
-   # Copy contents of scripts/setup_security_rls.sql to Supabase SQL Editor
-   ```
-
-5. **Run the app**
-   ```bash
-   # For development
-   flutter run
-
-   # For web
-   flutter run -d chrome --web-renderer html
-
-   # For Android release
-   flutter build appbundle --release
-   ```
-
----
-
-## 📱 Supabase Setup
-
-### 1. Create Supabase Project
-
-1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
-2. Click "New Project"
-3. Fill in project details and wait for initialization
-
-### 2. Get Your Credentials
-
-1. Navigate to **Settings** → **API**
-2. Copy:
-   - **Project URL** → `SUPABASE_URL`
-   - **anon/public key** → `SUPABASE_ANON_KEY`
-   - **service_role key** → `SUPABASE_SERVICE_ROLE_KEY` (⚠️ Keep secret!)
-
-3. Add to `.env` file:
-   ```env
-   SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_ANON_KEY=your-anon-key-here
-   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
-   ```
-
-### 3. Run Database Migrations
-
-Execute these SQL files in order (via Supabase SQL Editor):
-
-1. `scripts/setup_remote_config.sql` - Remote config & force update
-2. `scripts/setup_security_rls.sql` - Row Level Security policies
-
-### 4. Test Connection
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
 
 ```bash
-flutter run
-# App should connect and show login screen
+npm i supabase --save-dev
 ```
 
----
-
----
-
-## 🎨 Project Structure
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
 
 ```
-lib/
-├── main.dart                    # App entry point
-├── models/                      # Data models
-│   ├── committee.dart
-│   ├── member.dart
-│   └── payment.dart
-├── screens/                     # UI screens
-│   ├── auth/                    # Authentication screens
-│   ├── host/                    # Committee host screens
-│   ├── admin/                   # Admin panel
-│   └── splash_screen.dart
-├── services/                    # Business logic
-│   ├── auth_service.dart        # Authentication
-│   ├── supabase_service.dart    # Supabase operations
-│   ├── realtime_sync_service.dart  # Real-time sync
-│   ├── remote_config_service.dart  # Force update
-│   └── local_storage_service.dart  # Offline data
-├── utils/                       # Utilities
-│   ├── app_theme.dart
-│   └── constants.dart
-└── widgets/                     # Reusable components
-
-scripts/
-└── [SQL and Setup Scripts]      # Database configuration
-
-android/                         # Android-specific code
-ios/                            # iOS-specific code
-web/                            # Web-specific code
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
 ```
 
----
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
 
-## 🔒 Security Features
+<details>
+  <summary><b>macOS</b></summary>
 
-### Row Level Security (RLS)
+  Available via [Homebrew](https://brew.sh). To install:
 
-All Supabase tables are protected with RLS policies:
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-- ✅ Users can only access their own committees
-- ✅ Users can only see members of committees they host
-- ✅ Payment data is private to committee hosts
-- ✅ App configuration is read-only for clients
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
 
-See: [`scripts/RLS_SECURITY_GUIDE.md`](scripts/RLS_SECURITY_GUIDE.md)
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
 
-### Admin Panel
+<details>
+  <summary><b>Windows</b></summary>
 
-Access the admin panel to manage app configuration:
+  Available via [Scoop](https://scoop.sh). To install:
 
-1. Long-press **"Settings"** in the drawer (Host Dashboard)
-2. Enter admin PIN (default: `1234`)
-3. Configure:
-   - Force update settings
-   - Minimum app version
-   - Update messages
-   - Store URLs
-   - Change admin PIN
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
 
-See: [`scripts/ADMIN_PIN_GUIDE.md`](scripts/ADMIN_PIN_GUIDE.md)
+  To upgrade:
 
-### Force Update System
+  ```powershell
+  scoop update supabase
+  ```
+</details>
 
-Ensure users are on the latest version:
+<details>
+  <summary><b>Linux</b></summary>
 
-- Remote configuration via Supabase
-- Block outdated app versions
-- Customizable update messages
-- Direct link to app stores
+  Available via [Homebrew](https://brew.sh) and Linux packages.
 
-See: [`scripts/force_update_guide.md`](scripts/force_update_guide.md)
+  #### via Homebrew
 
----
+  To install:
 
-## 🛠️ Build & Deploy
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-### Development Build
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+
+  #### via Linux packages
+
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
+
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
+
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
+
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
+
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
+
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
+
+  Add a symlink to the binary in `$PATH` for easier access:
+
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
+
+  This works on other non-standard Linux distros.
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
 
 ```bash
-# Android
-flutter run
-
-# iOS
-flutter run -d ios
-
-# Web
-flutter run -d chrome --web-renderer html
+supabase bootstrap
 ```
 
-### Production Build
+Or using npx:
 
 ```bash
-# Android App Bundle (for Play Store)
-flutter build appbundle --release
-
-# iOS App (for App Store)
-flutter build ipa --release
-
-# Web
-flutter build web --release --web-renderer html
+npx supabase bootstrap
 ```
 
-### Release Configuration
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
 
-**Android:**
-- Update version in `pubspec.yaml`
-- Configure signing in `android/key.properties`
-- Build: `flutter build appbundle --release`
-- Output: `build/app/outputs/bundle/release/app-release.aab`
+## Docs
 
-**iOS:**
-- Update version in `pubspec.yaml`
-- Configure signing in Xcode
-- Build: `flutter build ipa --release`
-- Upload via Xcode or Transporter
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
 
----
+## Breaking changes
 
-## 📦 Dependencies
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
 
-### Core
-- **flutter**: ^3.24.5
-- **supabase_flutter**: ^2.8.1
-- **hive**: ^2.2.3 (Local storage)
-- **hive_flutter**: ^1.1.0
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
 
-### UI/UX
-- **google_fonts**: ^6.3.2
-- **flutter_svg**: ^2.0.16
-- **introduction_screen**: ^3.1.17
+## Developing
 
-### Authentication
-- **google_sign_in**: ^6.3.0
-- **local_auth**: ^2.3.0
+To run from source:
 
-### Utilities
-- **url_launcher**: ^6.3.1
-- **share_plus**: ^10.1.4
-- **connectivity_plus**: ^6.1.5
-- **intl**: ^0.19.0
-- **flutter_dotenv**: ^5.2.1
-
-### Development
-- **flutter_lints**: ^5.0.0
-- **build_runner**: ^2.4.13
-- **hive_generator**: ^2.1.0
-
-See [`pubspec.yaml`](pubspec.yaml) for complete list.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-### Getting Started
-
-1. Fork the repository
-2. Create a feature branch
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. Make your changes
-4. Run tests
-   ```bash
-   flutter test
-   ```
-5. Commit your changes
-   ```bash
-   git commit -m "feat: Add amazing feature"
-   ```
-6. Push to your fork
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-7. Open a Pull Request
-
-### Commit Convention
-
-We follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `style:` Code style changes (formatting, etc.)
-- `refactor:` Code refactoring
-- `test:` Adding tests
-- `chore:` Maintenance tasks
-
-### Code Style
-
-- Follow [Effective Dart](https://dart.dev/guides/language/effective-dart)
-- Run `flutter analyze` before committing
-- Format code: `dart format .`
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 👨‍💻 Authors
-
-- **Saad Khan** - [@saadkhan2003](https://github.com/saadkhan2003)
-
----
-
-## 🙏 Acknowledgments
-
-- [Flutter](https://flutter.dev/) - Amazing cross-platform framework
-- [Supabase](https://supabase.com/) - Open source Firebase alternative
-- [Hive](https://docs.hivedb.dev/) - Fast, lightweight local database
-- Community contributors and testers
-
----
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/saadkhan2003/Kameti/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/saadkhan2003/Kameti/discussions)
-- **Email**: msaad.official6@gmail.com
-
-
----
-
-**Built with ❤️ by the Kameti team**
-
-*Making committee management simple, secure, and accessible for everyone.*
+```sh
+# Go >= 1.22
+go run . help
+```

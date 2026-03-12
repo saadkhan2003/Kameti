@@ -487,6 +487,37 @@ class SupabaseService {
     bool resetPaymentAsUnpaid = false,
   }) async {
     try {
+      // ---------------------------------------------------------------
+      // Attempt RPC first — this calls a SECURITY DEFINER Postgres
+      // function that bypasses RLS, so it works even for unauthenticated
+      // members (who join via code, not Supabase auth).
+      // Run this SQL in Supabase → SQL Editor to enable hard deletes:
+      //
+      // CREATE OR REPLACE FUNCTION delete_payment_proof_by_member(
+      //   p_proof_id TEXT
+      // ) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+      // BEGIN
+      //   DELETE FROM payment_proofs WHERE id = p_proof_id;
+      // END;
+      // $$;
+      //
+      // GRANT EXECUTE ON FUNCTION delete_payment_proof_by_member TO anon, authenticated;
+      // ---------------------------------------------------------------
+      try {
+        await client.rpc(
+          'delete_payment_proof_by_member',
+          params: {'p_proof_id': proofId},
+        );
+        _log('✅ Hard deleted proof $proofId via RPC');
+        // Update payment status after successful RPC delete
+        await _resetPaymentStatusAfterDelete(paymentId, proofId);
+        return true;
+      } catch (rpcErr) {
+        // RPC function not deployed yet — fall through to direct delete
+        _log('⚡ RPC delete unavailable ($rpcErr), trying direct delete...');
+      }
+
+      // Direct DELETE (works if Supabase grants DELETE privilege or RLS allows it)
       final deletedResponse = await client
           .from(paymentProofsTable)
           .delete()
@@ -528,62 +559,69 @@ class SupabaseService {
         resolvedPaymentId ??= softDeletedRows.first['payment_id']?.toString();
       }
 
-      if (resolvedPaymentId != null && resolvedPaymentId.isNotEmpty) {
-        final latestRemaining =
-            await client
-                .from(paymentProofsTable)
-                .select('status')
-                .eq('payment_id', resolvedPaymentId)
-                .neq('status', 'deleted')
-                .order('created_at', ascending: false)
-                .limit(1)
-                .maybeSingle();
-
-        final latestRow = _toRow(latestRemaining);
-        final latestStatus = (latestRow?['status'] ?? 'none').toString();
-
-        if (latestStatus == 'approved') {
-          await client
-              .from(paymentsTable)
-              .update({'proof_status': 'approved', 'is_paid': true})
-              .eq('id', resolvedPaymentId);
-        } else if (latestStatus == 'pending') {
-          await client
-              .from(paymentsTable)
-              .update({
-                'proof_status': 'pending',
-                'is_paid': false,
-                'marked_by': null,
-                'marked_at': null,
-              })
-              .eq('id', resolvedPaymentId);
-        } else if (latestStatus == 'rejected') {
-          await client
-              .from(paymentsTable)
-              .update({
-                'proof_status': 'rejected',
-                'is_paid': false,
-                'marked_by': null,
-                'marked_at': null,
-              })
-              .eq('id', resolvedPaymentId);
-        } else {
-          await client
-              .from(paymentsTable)
-              .update({
-                'proof_status': 'none',
-                'is_paid': false,
-                'marked_by': null,
-                'marked_at': null,
-              })
-              .eq('id', resolvedPaymentId);
-        }
-      }
-
+      await _resetPaymentStatusAfterDelete(resolvedPaymentId, proofId);
       return true;
     } catch (e) {
       _log('❌ Error deleting payment proof: $e');
       return false;
+    }
+  }
+
+  /// Recalculate and update payment proof_status after a proof is removed.
+  Future<void> _resetPaymentStatusAfterDelete(
+    String? resolvedPaymentId,
+    String proofId,
+  ) async {
+    if (resolvedPaymentId == null || resolvedPaymentId.isEmpty) return;
+
+    final latestRemaining =
+        await client
+            .from(paymentProofsTable)
+            .select('status')
+            .eq('payment_id', resolvedPaymentId)
+            .neq('status', 'deleted')
+            .order('created_at', ascending: false)
+            .limit(1)
+            .maybeSingle();
+
+    final latestRow = _toRow(latestRemaining);
+    final latestStatus = (latestRow?['status'] ?? 'none').toString();
+
+    if (latestStatus == 'approved') {
+      await client
+          .from(paymentsTable)
+          .update({'proof_status': 'approved', 'is_paid': true})
+          .eq('id', resolvedPaymentId);
+    } else if (latestStatus == 'pending') {
+      await client
+          .from(paymentsTable)
+          .update({
+            'proof_status': 'pending',
+            'is_paid': false,
+            'marked_by': null,
+            'marked_at': null,
+          })
+          .eq('id', resolvedPaymentId);
+    } else if (latestStatus == 'rejected') {
+      await client
+          .from(paymentsTable)
+          .update({
+            'proof_status': 'rejected',
+            'is_paid': false,
+            'marked_by': null,
+            'marked_at': null,
+          })
+          .eq('id', resolvedPaymentId);
+    } else {
+      await client
+          .from(paymentsTable)
+          .update({
+            'proof_status': 'none',
+            'is_paid': false,
+            'marked_by': null,
+            'marked_at': null,
+          })
+          .eq('id', resolvedPaymentId);
     }
   }
 
@@ -688,4 +726,34 @@ class SupabaseService {
       return false;
     }
   }
+
+  // ===========================================================================
+  // FCM PUSH NOTIFICATIONS
+  // ===========================================================================
+
+  /// Saves the Firebase Cloud Messaging (FCM) device token to Supabase `fcm_tokens` table.
+  /// Needs to be linked to the current user (host via auth, or member via anonymous ID).
+  Future<void> saveDeviceToken(String fcmToken) async {
+    try {
+      final user = client.auth.currentUser;
+      final userId = user?.id;
+      
+      if (userId == null) {
+        _log('⚠️ Cannot save FCM token: User not authenticated');
+        return;
+      }
+
+      await client.from('fcm_tokens').upsert({
+        'user_id': userId,
+        'token': fcmToken,
+        'device_type': kIsWeb ? 'web' : 'mobile',
+        'updated_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'user_id');
+      
+      _log('✅ Saved FCM token for user $userId');
+    } catch (e) {
+      _log('❌ Error saving FCM token: $e');
+    }
+  }
 }
+
