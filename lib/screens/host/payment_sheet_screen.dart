@@ -936,9 +936,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                             },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: _primary,
-                              side: BorderSide(
-                                color: AppColors.lightBorder,
-                              ),
+                              side: BorderSide(color: AppColors.lightBorder),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 10,

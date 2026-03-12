@@ -464,7 +464,8 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     final hasMultiPending = status == 'pending' && pendingDates.length > 1;
     final pendingStart = hasMultiPending ? pendingDates.first : null;
     final pendingEnd = hasMultiPending ? pendingDates.last : null;
-    final pendingTotalAmount = widget.committee.contributionAmount * pendingDates.length;
+    final pendingTotalAmount =
+        widget.committee.contributionAmount * pendingDates.length;
 
     final canUpload = status == 'none' || status == 'rejected';
     final btnLabel =

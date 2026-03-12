@@ -544,10 +544,7 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
                   foregroundColor: AppColors.primary,
                   disabledForegroundColor: AppColors.cFFB0B8C9,
                 ),
-                icon: const Icon(
-                  AppIcons.add_circle_outline_rounded,
-                  size: 24,
-                ),
+                icon: const Icon(AppIcons.add_circle_outline_rounded, size: 24),
               ),
               const Spacer(),
               Text(
