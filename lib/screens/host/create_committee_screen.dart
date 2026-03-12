@@ -11,6 +11,7 @@ import '../../models/committee.dart';
 import '../../utils/code_generator.dart';
 import 'package:committee_app/ui/theme/theme.dart';
 import '../../ui/widgets/micro_animations.dart';
+import 'package:lottie/lottie.dart';
 
 class CreateCommitteeScreen extends StatefulWidget {
   const CreateCommitteeScreen({super.key});
@@ -151,7 +152,100 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
 
       if (mounted) {
         HapticService.success();
-        await SuccessAnimation.show(context, message: 'Kameti Created!');
+        
+        // Show celebratory success dialog
+        await showGeneralDialog(
+          context: context,
+          barrierDismissible: false,
+          barrierColor: Colors.black.withOpacity(0.4),
+          transitionDuration: const Duration(milliseconds: 400),
+          pageBuilder: (context, anim1, anim2) {
+            return const SizedBox();
+          },
+          transitionBuilder: (context, anim1, anim2, child) {
+            final curvedValue = Curves.elasticOut.transform(anim1.value);
+            return Transform.scale(
+              scale: curvedValue,
+              child: AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                backgroundColor: _surface,
+                contentPadding: const EdgeInsets.all(32),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.elasticOut,
+                      tween: Tween<double>(begin: 0.0, end: 1.0),
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: value,
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withOpacity(0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              AppIcons.check_circle,
+                              color: AppColors.success,
+                              size: 72,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Kameti Created!',
+                      style: GoogleFonts.inter(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: _textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your kameti "${committee.name}" is ready. Share the code with others to join.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: _textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'Awesome!',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+        
         if (mounted) {
           Navigator.pop(context, true); // Return to dashboard
         }

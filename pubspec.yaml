@@ -78,6 +78,7 @@ dependencies:
   fl_chart: ^1.1.1
   firebase_core: ^4.5.0
   firebase_messaging: ^16.1.2
+  lottie: ^3.3.2
 
 dev_dependencies:
   flutter_test:
@@ -105,6 +106,7 @@ flutter:
   assets:
     - assets/images/
     - assets/env
+    - assets/animations/
     - assets/fonts/NotoSans-Regular.ttf
     - assets/fonts/NotoSans-Bold.ttf
     - assets/fonts/NotoSans-Italic.ttf

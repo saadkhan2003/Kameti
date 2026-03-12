@@ -788,7 +788,16 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
                 ],
                 lineTouchData: LineTouchData(
                   touchTooltipData: LineTouchTooltipData(
-                    tooltipPadding: const EdgeInsets.all(8),
+                    getTooltipColor: (touchedSpot) => _surface,
+                    tooltipBorderRadius: BorderRadius.circular(8),
+                    tooltipBorder: const BorderSide(
+                      color: AppColors.cFFD0D9EE,
+                      width: 1.5,
+                    ),
+                    tooltipPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((spot) {
                         final isMain = spot.barIndex == 0;
@@ -797,9 +806,9 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
                               ? '${spot.y.toInt()} paid'
                               : '${spot.y.toInt()} total',
                           GoogleFonts.inter(
-                            color: isMain ? _success : _textSecondary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 11,
+                            color: isMain ? _success : _textPrimary,
+                            fontWeight: isMain ? FontWeight.w800 : FontWeight.w600,
+                            fontSize: 12,
                           ),
                         );
                       }).toList();

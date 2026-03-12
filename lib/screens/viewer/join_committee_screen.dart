@@ -217,6 +217,7 @@ class _JoinCommitteeScreenState extends State<JoinCommitteeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: const IconThemeData(color: _textPrimary),
         title: Text(
           'View Payments',
           style: GoogleFonts.inter(

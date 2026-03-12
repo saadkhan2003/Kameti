@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'supabase_service.dart';
 
 class PushNotificationService {
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final SupabaseService _supabase = SupabaseService();
 
   /// Initialize Push Notifications, request permissions, and save the token
@@ -11,8 +10,10 @@ class PushNotificationService {
     if (kIsWeb) return; // Wait for mobile devices
 
     try {
+      final FirebaseMessaging fcm = FirebaseMessaging.instance;
+      
       // 1. Request permissions (shows prompt on iOS, no-op on Android 12-)
-      NotificationSettings settings = await _fcm.requestPermission(
+      NotificationSettings settings = await fcm.requestPermission(
         alert: true,
         badge: true,
         sound: true,
@@ -22,7 +23,7 @@ class PushNotificationService {
           settings.authorizationStatus == AuthorizationStatus.provisional) {
         
         // 2. Get the FCM device token
-        String? token = await _fcm.getToken();
+        String? token = await fcm.getToken();
         
         if (token != null) {
           if (kDebugMode) debugPrint('FCM Token: $token');
@@ -31,7 +32,7 @@ class PushNotificationService {
         }
 
         // 4. Listen for token refreshes
-        _fcm.onTokenRefresh.listen((newToken) async {
+        fcm.onTokenRefresh.listen((newToken) async {
           if (kDebugMode) debugPrint('FCM Token Refreshed: $newToken');
           await _supabase.saveDeviceToken(newToken);
         });

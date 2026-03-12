@@ -1012,7 +1012,7 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
         child: Ink(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: _surface,
             borderRadius: BorderRadius.circular(18),
@@ -1022,38 +1022,38 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
                       color: color.withOpacity(0.14),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: color.withOpacity(0.2)),
                     ),
-                    child: Icon(icon, color: color, size: 24),
+                    child: Icon(icon, color: color, size: 22),
                   ),
-                  const Spacer(),
                   Container(
-                    width: 30,
-                    height: 30,
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
                       color: AppColors.cFFF8FAFF,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: AppColors.lightBorder),
                     ),
                     child: Icon(
                       AppIcons.arrow_outward_rounded,
-                      size: 16,
+                      size: 14,
                       color: color,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               Container(
-                width: 34,
-                height: 4,
+                width: 30,
+                height: 3,
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(99),
@@ -1063,9 +1063,10 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
               Text(
                 title,
                 style: GoogleFonts.inter(
-                  fontSize: 31 / 2,
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: _textPrimary,
+                  height: 1.1,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -1074,20 +1075,22 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
               Text(
                 subtitle,
                 style: GoogleFonts.inter(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: _textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 7,
+                  horizontal: 8,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: color.withOpacity(0.2)),
                 ),
                 child: Row(
@@ -1096,15 +1099,15 @@ class _CommitteeDetailScreenState extends State<CommitteeDetailScreen> {
                     Text(
                       'Open',
                       style: GoogleFonts.inter(
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: color,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Icon(
                       AppIcons.chevron_right_rounded,
-                      size: 16,
+                      size: 14,
                       color: color,
                     ),
                   ],

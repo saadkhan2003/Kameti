@@ -257,11 +257,6 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Tap "Purge" to free Supabase storage on free tier',
-                style: GoogleFonts.inter(fontSize: 12, color: _textSecondary),
-              ),
               const SizedBox(height: 12),
               if (_archivedCommittees.isEmpty)
                 Padding(
@@ -423,7 +418,10 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
               borderRadius: BorderRadius.circular(18),
             ),
             backgroundColor: _surface,
-            title: const Text('Archive Kameti?'),
+            title: const Text(
+              'Archive Kameti?',
+              style: TextStyle(color: _textPrimary, fontWeight: FontWeight.bold),
+            ),
             content: Text(
               'This will move "${committee.name}" to the archived section. You can restore it later.',
               style: const TextStyle(color: _textSecondary),
@@ -513,7 +511,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
       await _autoSyncService.deleteCommittee(committee.id, hostId);
       _loadCommittees();
       if (mounted) {
-        ToastService.error(context, '${committee.name} deleted');
+        ToastService.success(context, '${committee.name} deleted');
       }
     }
   }
