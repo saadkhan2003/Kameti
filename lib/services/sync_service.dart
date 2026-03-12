@@ -351,14 +351,17 @@ class SyncService {
     if (!await isOnline()) return false;
 
     try {
-      await _supabase.deleteCommittee(committeeId);
-      // Supabase CASCADE delete handles members and paying
-      // But let's verify if manual deletion is safer if CASCADE not set
-      // (The setup guide SQL had ON DELETE CASCADE, so we trust that)
-      _log('✅ Deleted committee from cloud: $committeeId');
-      return true;
+      // Explicitly purge in order (proofs → payments → members → committee)
+      // to guarantee cleanup regardless of whether CASCADE is configured.
+      final success = await _supabase.purgeAllCommitteeData(committeeId);
+      if (success) {
+        _log('✅ Purged committee from cloud: $committeeId');
+      } else {
+        _log('❌ Purge returned false for committee $committeeId');
+      }
+      return success;
     } catch (e) {
-      _log('❌ Error deleting committee from cloud: $e');
+      _log('❌ Error purging committee from cloud: $e');
       return false;
     }
   }

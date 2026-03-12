@@ -52,7 +52,9 @@ class AppColors {
   // ═══════════════════════════════════════════════════════════════════════════
   // TEXT COLORS
   // ═══════════════════════════════════════════════════════════════════════════
-  static const Color textDark = Color(0xFF0F172A);
+  // primary text colour used throughout the app. switched to pure black
+  // per design request so that approved/rejected labels stand out more.
+  static const Color textDark = Color(0xFF000000);
   static const Color textMedium = Color(0xFF64748B);
   static const Color textLight = Color(0xFF94A3B8);
   static const Color textOnPrimary = Colors.white;

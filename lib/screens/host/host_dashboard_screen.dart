@@ -152,10 +152,39 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     if (!mounted) return;
     final userId = _authService.currentUser?.id ?? '';
     final all = _dbService.getHostedCommittees(userId);
+    final active = all.where((c) => !c.isArchived).toList();
+    final archived = all.where((c) => c.isArchived).toList();
     setState(() {
-      _activeCommittees = all.where((c) => !c.isArchived).toList();
-      _archivedCommittees = all.where((c) => c.isArchived).toList();
+      _activeCommittees = active;
+      _archivedCommittees = archived;
     });
+    // Silently auto-archive any committee whose last cycle has ended
+    _autoArchiveExpiredCommittees(active);
+  }
+
+  /// Checks each active committee and auto-archives it if its last scheduled
+  /// cycle end date has passed. Runs silently with no user prompt.
+  Future<void> _autoArchiveExpiredCommittees(List<Committee> active) async {
+    final now = DateTime.now();
+    bool anyArchived = false;
+    for (final committee in active) {
+      if (committee.totalCycles <= 0) continue;
+      final endDate = committee.startDate.add(
+        Duration(days: committee.paymentIntervalDays * committee.totalCycles),
+      );
+      if (now.isAfter(endDate)) {
+        await _autoSyncService.archiveCommittee(committee);
+        anyArchived = true;
+      }
+    }
+    if (anyArchived && mounted) {
+      final userId = _authService.currentUser?.id ?? '';
+      final all = _dbService.getHostedCommittees(userId);
+      setState(() {
+        _activeCommittees = all.where((c) => !c.isArchived).toList();
+        _archivedCommittees = all.where((c) => c.isArchived).toList();
+      });
+    }
   }
 
   // Sync with feedback (for manual sync tap)
@@ -195,110 +224,195 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
   void _showArchivedSheet() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: _surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: AppColors.cFFE9EEFC,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        AppIcons.archive_rounded,
-                        color: _primary,
-                        size: 18,
-                      ),
+      builder: (sheetCtx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.92,
+        builder: (_, scrollCtrl) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: AppColors.cFFE9EEFC,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Archived Kametis',
-                      style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (_archivedCommittees.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Center(
-                      child: Text(
-                        'No archived kametis',
-                        style: const TextStyle(color: _textSecondary),
-                      ),
-                    ),
-                  )
-                else
-                  ...(_archivedCommittees
-                      .map(
-                        (committee) => ListTile(
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.mutedSurface,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              AppIcons.group,
-                              color: _textSecondary,
-                            ),
-                          ),
-                          title: Text(
-                            committee.name,
-                            style: const TextStyle(color: _textPrimary),
-                          ),
-                          subtitle: Text(
-                            'Archived on ${committee.archivedAt != null ? "${committee.archivedAt!.day}/${committee.archivedAt!.month}/${committee.archivedAt!.year}" : "Unknown"}',
-                            style: const TextStyle(
-                              color: _textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                          trailing: TextButton(
-                            onPressed: () async {
-                              await _autoSyncService.unarchiveCommittee(
-                                committee,
-                              );
-                              _loadCommittees();
-                              if (mounted) Navigator.pop(context);
-                            },
-                            child: const Text('Restore'),
-                          ),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => CommitteeDetailScreen(
-                                      committee: committee,
-                                    ),
+                    child: const Icon(AppIcons.archive_rounded, color: _primary, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Archived Kametis',
+                    style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: _textPrimary),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Tap "Purge" to free Supabase storage on free tier',
+                style: GoogleFonts.inter(fontSize: 12, color: _textSecondary),
+              ),
+              const SizedBox(height: 12),
+              if (_archivedCommittees.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: Text('No archived kametis', style: const TextStyle(color: _textSecondary)),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    controller: scrollCtrl,
+                    itemCount: _archivedCommittees.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (_, i) {
+                      final committee = _archivedCommittees[i];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.mutedSurface,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(AppIcons.group, color: _textSecondary),
                               ),
-                            );
-                          },
+                              title: Text(
+                                committee.name,
+                                style: const TextStyle(color: _textPrimary, fontWeight: FontWeight.w600),
+                              ),
+                              subtitle: Text(
+                                committee.archivedAt != null
+                                    ? 'Archived ${committee.archivedAt!.day}/${committee.archivedAt!.month}/${committee.archivedAt!.year}'
+                                    : 'Archived',
+                                style: const TextStyle(color: _textSecondary, fontSize: 12),
+                              ),
+                              onTap: () {
+                                Navigator.pop(sheetCtx);
+                                Navigator.push(context, MaterialPageRoute(
+                                  builder: (_) => CommitteeDetailScreen(committee: committee),
+                                ));
+                              },
+                            ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () async {
+                                      await _autoSyncService.unarchiveCommittee(committee);
+                                      _loadCommittees();
+                                      if (mounted) Navigator.pop(sheetCtx);
+                                    },
+                                    icon: const Icon(Icons.restore_rounded, size: 16),
+                                    label: Text('Restore', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      Navigator.pop(sheetCtx);
+                                      _purgeArchivedCommittee(committee);
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: _danger,
+                                      side: BorderSide(color: _danger.withOpacity(0.5)),
+                                    ),
+                                    icon: const Icon(Icons.delete_sweep_rounded, size: 16),
+                                    label: Text('Purge Cloud', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                          ],
                         ),
-                      )
-                      .toList()),
-              ],
-            ),
+                      );
+                    },
+                  ),
+                ),
+            ],
           ),
+        ),
+      ),
     );
   }
+
+  /// Shows confirmation then purges all cloud child data (members/payments/proofs)
+  /// for an archived committee to free Supabase free-tier storage space.
+  Future<void> _purgeArchivedCommittee(Committee committee) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(
+          'Purge Cloud Data?',
+          style: GoogleFonts.inter(color: _textPrimary, fontWeight: FontWeight.w800, fontSize: 17),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This will permanently delete all members, payments, and proofs for:',
+              style: GoogleFonts.inter(color: _textSecondary, fontSize: 14),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '"${committee.name}"',
+              style: GoogleFonts.inter(color: _textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'The committee summary stays archived locally. Detailed data cannot be recovered after this.',
+              style: GoogleFonts.inter(color: _textSecondary, fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: GoogleFonts.inter(color: _textSecondary, fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: _danger, foregroundColor: Colors.white),
+            child: Text('Purge', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    final success = await _autoSyncService.purgeArchivedCommittee(committee);
+    _loadCommittees();
+    if (!mounted) return;
+    if (success) {
+      ToastService.success(context, 'Cloud data purged for "${committee.name}"');
+    } else {
+      ToastService.error(context, 'Offline — cloud purge skipped. Try again when online.');
+    }
+  }
+
+
 
   Future<void> _archiveCommittee(Committee committee) async {
     final confirm = await showDialog<bool>(

@@ -605,4 +605,87 @@ class SupabaseService {
       return 0;
     }
   }
+
+  // ============================================
+  // PURGE / CLEANUP
+  // ============================================
+
+  /// Explicitly delete all cloud data for a committee in safe order:
+  /// payment_proofs → payments → members → committee.
+  /// Use this instead of relying solely on CASCADE to guarantee cleanup.
+  Future<bool> purgeAllCommitteeData(String committeeId) async {
+    try {
+      _log('🗑️ Purging all cloud data for committee $committeeId...');
+
+      // 1. Delete payment proofs
+      await client
+          .from(paymentProofsTable)
+          .delete()
+          .eq('committee_id', committeeId);
+      _log('  ✅ Proofs deleted');
+
+      // 2. Delete payments
+      await client
+          .from(paymentsTable)
+          .delete()
+          .eq('committee_id', committeeId);
+      _log('  ✅ Payments deleted');
+
+      // 3. Delete members
+      await client
+          .from(membersTable)
+          .delete()
+          .eq('committee_id', committeeId);
+      _log('  ✅ Members deleted');
+
+      // 4. Delete the committee itself
+      await client
+          .from(committeesTable)
+          .delete()
+          .eq('id', committeeId);
+      _log('  ✅ Committee deleted');
+
+      _log('✅ Full purge complete for committee $committeeId');
+      return true;
+    } catch (e) {
+      _log('❌ Error purging committee data: $e');
+      return false;
+    }
+  }
+
+  /// Wipe all child data (proofs, payments, members) from cloud for an
+  /// archived committee but KEEP the committee row itself as an archive marker.
+  /// This frees up Supabase storage while preserving the committee record locally.
+  Future<bool> purgeCommitteeCloudDataOnly(String committeeId) async {
+    try {
+      _log('🗑️ Purging child cloud data for committee $committeeId (keeping committee row)...');
+
+      // 1. Delete payment proofs
+      await client
+          .from(paymentProofsTable)
+          .delete()
+          .eq('committee_id', committeeId);
+      _log('  ✅ Proofs deleted');
+
+      // 2. Delete payments
+      await client
+          .from(paymentsTable)
+          .delete()
+          .eq('committee_id', committeeId);
+      _log('  ✅ Payments deleted');
+
+      // 3. Delete members
+      await client
+          .from(membersTable)
+          .delete()
+          .eq('committee_id', committeeId);
+      _log('  ✅ Members deleted');
+
+      _log('✅ Child data purge complete for committee $committeeId');
+      return true;
+    } catch (e) {
+      _log('❌ Error purging committee child data: $e');
+      return false;
+    }
+  }
 }

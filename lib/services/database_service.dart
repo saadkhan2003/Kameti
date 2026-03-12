@@ -100,6 +100,24 @@ class DatabaseService {
     await _memberBox.delete(id);
   }
 
+  /// Delete all local members (and their payments) for a committee.
+  /// Used when purging an archived committee to free local storage.
+  Future<void> deleteMembersByCommittee(String committeeId) async {
+    final members = getMembersByCommittee(committeeId);
+    for (final member in members) {
+      await deleteMember(member.id);
+    }
+  }
+
+  /// Delete all local payments for a committee without going through each member.
+  /// Faster than deleteMembersByCommittee when you only want to clear payments.
+  Future<void> deletePaymentsByCommittee(String committeeId) async {
+    final payments = getPaymentsByCommittee(committeeId);
+    for (final payment in payments) {
+      await deletePayment(payment.id);
+    }
+  }
+
   Future<void> updateMemberPayoutOrder(String memberId, int order) async {
     final member = getMemberById(memberId);
     if (member != null) {

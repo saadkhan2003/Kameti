@@ -7,6 +7,7 @@ import '../../models/member.dart';
 import '../../models/payment_proof.dart';
 import '../../services/database_service.dart';
 import '../../services/supabase_service.dart';
+import '../../services/toast_service.dart';
 import '../../widgets/proof_status_badge.dart';
 import '../member/upload_proof_screen.dart';
 import 'package:committee_app/ui/theme/theme.dart';
@@ -203,16 +204,27 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      if (!mounted) return;
-                      setState(() {
-                        for (final proof in items) {
-                          final key = _proofNotifKey(proof);
-                          _clearedProofNotificationKeys.add(key);
-                          _seenProofNotificationKeys.add(key);
-                        }
-                      });
-                      Navigator.pop(context);
+                    onPressed: () async {
+                      // Permanently delete from Supabase — approved/rejected proofs
+                      // have already done their job (payment.is_paid is set separately).
+                      for (final proof in items) {
+                        await _supabase.deletePaymentProof(
+                          proof.id,
+                          paymentId: proof.paymentId,
+                        );
+                        final key = _proofNotifKey(proof);
+                        _clearedProofNotificationKeys.add(key);
+                        _seenProofNotificationKeys.add(key);
+                      }
+                      if (mounted) {
+                        setState(() {
+                          // Refresh local proof map so cleared notifications vanish
+                          for (final proof in items) {
+                            _latestProofByPaymentId.remove(proof.paymentId);
+                          }
+                        });
+                      }
+                      if (mounted) Navigator.pop(context);
                     },
                     child: Text(
                       'Clear',
@@ -305,6 +317,67 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     if (result == true) {
       await _loadProofs();
       _calculateStats();
+    }
+  }
+
+  Future<void> _deleteProof(PaymentProof proof) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Delete Proof Request?',
+          style: GoogleFonts.inter(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: _textPrimary,
+          ),
+        ),
+        content: Text(
+          'This will cancel your pending payment proof submission. You can upload a new one afterwards.',
+          style: GoogleFonts.inter(fontSize: 14, color: _textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Keep',
+              style: GoogleFonts.inter(
+                color: _textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Delete',
+              style: GoogleFonts.inter(
+                color: _danger,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final success = await _supabase.deletePaymentProof(
+      proof.id,
+      paymentId: proof.paymentId,
+    );
+
+    if (!mounted) return;
+    if (success) {
+      ToastService.success(context, 'Proof request deleted');
+      await _loadProofs();
+      _calculateStats();
+    } else {
+      ToastService.error(context, 'Failed to delete proof. Please try again.');
     }
   }
 
@@ -774,6 +847,31 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
               child: Text(btnLabel),
             ),
           ),
+          // Allow member to withdraw a pending proof request
+          if (status == 'pending' && proof != null) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _deleteProof(proof),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _danger,
+                  side: BorderSide(color: _danger.withOpacity(0.55)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                label: Text(
+                  'Delete Request',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

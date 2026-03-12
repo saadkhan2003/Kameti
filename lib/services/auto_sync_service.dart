@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'sync_service.dart';
 import 'sync_status_service.dart';
+import 'supabase_service.dart';
 import 'database_service.dart';
 import 'realtime_sync_service.dart';
 import '../models/committee.dart';
@@ -102,6 +103,28 @@ class AutoSyncService {
     _scheduleDebouncedSync('committee:${committee.hostId}', () async {
       await _syncService.syncCommittees(committee.hostId);
     });
+  }
+
+  /// Archive a committee locally AND wipe all its child data from Supabase
+  /// (proofs, payments, members) to free up storage — keeping committee row as marker.
+  /// Returns true if cloud purge succeeded, false if offline (data stays local-only).
+  Future<bool> purgeArchivedCommittee(Committee committee) async {
+    // 1. Archive locally first (instant feedback)
+    final archived = committee.copyWith(
+      isArchived: true,
+      archivedAt: committee.archivedAt ?? DateTime.now(),
+    );
+    await _dbService.saveCommittee(archived);
+
+    // 2. Wipe members + their payments locally
+    //    (deleteMembersByCommittee cascades to payments automatically)
+    await _dbService.deleteMembersByCommittee(committee.id);
+
+    // 3. Purge child cloud data (non-blocking, returns success flag)
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity == ConnectivityResult.none) return false;
+
+    return await SupabaseService().purgeCommitteeCloudDataOnly(committee.id);
   }
 
   // ============ MEMBER OPERATIONS WITH AUTO-SYNC ============
