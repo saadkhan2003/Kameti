@@ -100,6 +100,7 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
       proof.id,
       'approved',
       reviewedBy: _auth.currentUser?.id,
+      paymentId: proof.paymentId,
     );
 
     if (!mounted) return;
@@ -140,6 +141,7 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
       'rejected',
       rejectionReason: reason,
       reviewedBy: _auth.currentUser?.id,
+      paymentId: proof.paymentId,
     );
 
     if (!mounted) return;
@@ -157,6 +159,79 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
     } else {
       setState(() => _isProcessing = false);
       ToastService.error(context, 'Failed to reject proof. Please try again.');
+    }
+  }
+
+  Future<void> _moveToPending() async {
+    final proof = _proof;
+    if (proof == null || _isProcessing) return;
+
+    setState(() => _isProcessing = true);
+
+    final ok = await _supabase.updatePaymentProofStatus(
+      proof.id,
+      'pending',
+      rejectionReason: null,
+      reviewedBy: _auth.currentUser?.id,
+      paymentId: proof.paymentId,
+    );
+
+    if (!mounted) return;
+
+    if (ok) {
+      ToastService.success(context, 'Proof moved back to pending.');
+      Navigator.pop(context, true);
+    } else {
+      setState(() => _isProcessing = false);
+      ToastService.error(context, 'Failed to move proof to pending.');
+    }
+  }
+
+  Future<void> _deleteRequest() async {
+    final proof = _proof;
+    if (proof == null || _isProcessing) return;
+
+    final shouldDelete =
+        await showDialog<bool>(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Delete proof request?'),
+                content: const Text(
+                  'This will remove the request from the list. Continue?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Delete'),
+                  ),
+                ],
+              ),
+        ) ??
+        false;
+
+    if (!shouldDelete) return;
+
+    setState(() => _isProcessing = true);
+
+    final ok = await _supabase.deletePaymentProof(
+      proof.id,
+      paymentId: proof.paymentId,
+      resetPaymentAsUnpaid: proof.isApproved,
+    );
+
+    if (!mounted) return;
+
+    if (ok) {
+      ToastService.success(context, 'Proof request deleted.');
+      Navigator.pop(context, true);
+    } else {
+      setState(() => _isProcessing = false);
+      ToastService.error(context, 'Failed to delete proof request.');
     }
   }
 
@@ -187,6 +262,13 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
         elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: 'Delete request',
+            onPressed: _isProcessing ? null : _deleteRequest,
+            icon: const Icon(AppIcons.delete_outline),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -257,6 +339,18 @@ class _ProofReviewScreenState extends State<ProofReviewScreen> {
                     'Reject',
                     style: TextStyle(color: AppColors.error),
                   ),
+                ),
+              ),
+            ] else if (proof.isApproved) ...[
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: _isProcessing ? null : _moveToPending,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.primary),
+                    foregroundColor: AppColors.primary,
+                  ),
+                  child: const Text('Move to Pending'),
                 ),
               ),
             ],

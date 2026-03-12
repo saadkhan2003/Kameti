@@ -10,6 +10,7 @@ import '../../services/export_service.dart';
 import '../../services/auto_sync_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/analytics_service.dart';
+import '../../services/supabase_service.dart';
 import '../../services/toast_service.dart';
 import '../../services/currency_service.dart';
 import '../../models/committee.dart';
@@ -48,6 +49,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
 
   final _dbService = DatabaseService();
   final _authService = AuthService();
+  final _supabaseService = SupabaseService();
   final _exportService = ExportService();
   final _autoSyncService = AutoSyncService();
   final SyncService _syncService = SyncService();
@@ -59,6 +61,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   bool _isOverviewExpanded = false;
   int _selectedCycle = 1;
   int _maxCycles = 1;
+  int _pendingProofRequests = 0;
 
   // Number of extra future periods to show (for advance payments)
   final int _extraPeriods = 1;
@@ -72,15 +75,32 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   Future<void> _syncAndLoad({bool waitForSync = false}) async {
     // Load from local FIRST (fast, non-blocking)
     await _loadDataFromLocal();
+    await _loadPendingProofCount();
 
     if (waitForSync) {
       await _syncCommitteeData();
       await _loadDataFromLocal();
+      await _loadPendingProofCount();
       return;
     }
 
     // Then sync in background (don't await - may hang on web)
     _syncInBackground();
+  }
+
+  Future<void> _loadPendingProofCount() async {
+    if (widget.viewAsMember != null) return;
+
+    final hostId = _authService.currentUser?.id ?? '';
+    if (hostId.isEmpty) return;
+
+    final count = await _supabaseService.getPendingProofCountForHostCommittee(
+      hostId,
+      widget.committee.id,
+    );
+
+    if (!mounted) return;
+    setState(() => _pendingProofRequests = count);
   }
 
   Future<void> _syncCommitteeData() async {
@@ -537,16 +557,54 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(
-              AppIcons.verified_user_rounded,
-              color: _textSecondary,
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(
+                  AppIcons.verified_user_rounded,
+                  color: _textSecondary,
+                ),
+                if (_pendingProofRequests > 0)
+                  Positioned(
+                    right: -7,
+                    top: -7,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: _bg, width: 1),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        _pendingProofRequests > 99
+                            ? '99+'
+                            : '$_pendingProofRequests',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             tooltip: 'Payment Proofs',
             onPressed: () async {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const PendingProofsScreen(),
+                  builder:
+                      (context) =>
+                          PendingProofsScreen(committeeId: widget.committee.id),
                 ),
               );
 

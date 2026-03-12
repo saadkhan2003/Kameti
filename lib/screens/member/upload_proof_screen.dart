@@ -288,8 +288,7 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed:
-                    (_imageBytes == null ||
-                            _latestProof?.isApproved == true)
+                    (_imageBytes == null || _latestProof?.isApproved == true)
                         ? null
                         : (_isUploading ? null : _submit),
                 style: ElevatedButton.styleFrom(

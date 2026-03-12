@@ -350,7 +350,11 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(AppIcons.star_rounded, color: _info, size: 18),
+                        const Icon(
+                          AppIcons.star_rounded,
+                          color: _info,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
@@ -474,9 +478,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                           if (isPaymentDate && isCurrentMonth) ...[
                             const SizedBox(height: 2),
                             Icon(
-                              isPaid
-                                  ? AppIcons.paid
-                                  : AppIcons.circle_outlined,
+                              isPaid ? AppIcons.paid : AppIcons.circle_outlined,
                               size: 13,
                               color: isPaid ? _success : _warning,
                             ),
@@ -562,8 +564,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             icon: Icon(
               AppIcons.chevron_left,
-              color:
-                  _selectedCycle > 1 ? _textPrimary : AppColors.cFFB0B8C9,
+              color: _selectedCycle > 1 ? _textPrimary : AppColors.cFFB0B8C9,
               size: 20,
             ),
             onPressed: _selectedCycle > 1 ? () => _changeCycle(-1) : null,
@@ -629,7 +630,11 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
           IconButton(
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            icon: const Icon(AppIcons.chevron_left, color: _textPrimary, size: 20),
+            icon: const Icon(
+              AppIcons.chevron_left,
+              color: _textPrimary,
+              size: 20,
+            ),
             onPressed: () {
               setState(() {
                 _selectedMonth = DateTime(
@@ -650,7 +655,11 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
           IconButton(
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            icon: const Icon(AppIcons.chevron_right, color: _textPrimary, size: 20),
+            icon: const Icon(
+              AppIcons.chevron_right,
+              color: _textPrimary,
+              size: 20,
+            ),
             onPressed: () {
               setState(() {
                 _selectedMonth = DateTime(
@@ -739,7 +748,11 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
           width: 16,
           height: 16,
           alignment: Alignment.center,
-          child: const Icon(AppIcons.circle_outlined, size: 14, color: _warning),
+          child: const Icon(
+            AppIcons.circle_outlined,
+            size: 14,
+            color: _warning,
+          ),
         ),
         const SizedBox(width: 8),
         Text(

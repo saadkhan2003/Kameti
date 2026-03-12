@@ -432,6 +432,7 @@ class SupabaseService {
     String status, {
     String? rejectionReason,
     String? reviewedBy,
+    String? paymentId,
   }) async {
     try {
       await client
@@ -445,10 +446,80 @@ class SupabaseService {
           })
           .eq('id', proofId);
 
+      if (paymentId != null && paymentId.isNotEmpty) {
+        if (status == 'approved') {
+          await client
+              .from(paymentsTable)
+              .update({
+                'is_paid': true,
+                'proof_status': 'approved',
+                'marked_by': reviewedBy,
+                'marked_at': DateTime.now().toIso8601String(),
+              })
+              .eq('id', paymentId);
+        } else if (status == 'pending') {
+          await client
+              .from(paymentsTable)
+              .update({
+                'is_paid': false,
+                'proof_status': 'pending',
+                'marked_by': null,
+                'marked_at': null,
+              })
+              .eq('id', paymentId);
+        }
+      }
+
       return true;
     } catch (e) {
       _log('❌ Error updating payment proof status: $e');
       return false;
+    }
+  }
+
+  Future<bool> deletePaymentProof(
+    String proofId, {
+    String? paymentId,
+    bool resetPaymentAsUnpaid = false,
+  }) async {
+    try {
+      await client.from(paymentProofsTable).delete().eq('id', proofId);
+
+      if (paymentId != null && paymentId.isNotEmpty) {
+        await client
+            .from(paymentsTable)
+            .update({
+              'proof_status': 'none',
+              if (resetPaymentAsUnpaid) 'is_paid': false,
+              if (resetPaymentAsUnpaid) 'marked_by': null,
+              if (resetPaymentAsUnpaid) 'marked_at': null,
+            })
+            .eq('id', paymentId);
+      }
+
+      return true;
+    } catch (e) {
+      _log('❌ Error deleting payment proof: $e');
+      return false;
+    }
+  }
+
+  Future<int> getPendingProofCountForHostCommittee(
+    String hostId,
+    String committeeId,
+  ) async {
+    try {
+      final response = await client
+          .from(paymentProofsTable)
+          .select('id')
+          .eq('host_id', hostId)
+          .eq('committee_id', committeeId)
+          .eq('status', 'pending');
+
+      return _toRows(response).length;
+    } catch (e) {
+      _log('❌ Error getting pending proof count: $e');
+      return 0;
     }
   }
 }

@@ -12,7 +12,9 @@ import 'proof_review_screen.dart';
 import 'package:committee_app/ui/theme/theme.dart';
 
 class PendingProofsScreen extends StatefulWidget {
-  const PendingProofsScreen({super.key});
+  final String? committeeId;
+
+  const PendingProofsScreen({super.key, this.committeeId});
 
   @override
   State<PendingProofsScreen> createState() => _PendingProofsScreenState();
@@ -57,9 +59,13 @@ class _PendingProofsScreenState extends State<PendingProofsScreen>
     }
 
     final proofs = await _supabase.getProofsForHost(hostId);
+    final filteredProofs =
+        widget.committeeId == null
+            ? proofs
+            : proofs.where((p) => p.committeeId == widget.committeeId).toList();
     if (!mounted) return;
     setState(() {
-      _allProofs = proofs;
+      _allProofs = filteredProofs;
       _loading = false;
     });
   }
