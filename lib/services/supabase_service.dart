@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/committee.dart';
 import '../models/member.dart';
 import '../models/payment.dart';
+import '../models/payment_proof.dart';
 
 /// Supabase service for database operations
 /// Replaces Firebase Firestore with Supabase PostgreSQL
@@ -21,6 +22,7 @@ class SupabaseService {
   static const String committeesTable = 'committees';
   static const String membersTable = 'members';
   static const String paymentsTable = 'payments';
+  static const String paymentProofsTable = 'payment_proofs';
 
   static const int _batchSize = 500;
 
@@ -33,6 +35,10 @@ class SupabaseService {
 
   static const String _paymentColumns =
       'id,member_id,committee_id,date,is_paid,marked_by,marked_at';
+
+  static const String _paymentProofColumns =
+      'id,payment_id,committee_id,member_id,host_id,cloudinary_url,cloudinary_public_id,status,'
+      'rejection_reason,reviewed_by,reviewed_at,created_at,updated_at';
 
   List<Map<String, dynamic>> _toRows(dynamic response) {
     return (response as List)
@@ -302,5 +308,147 @@ class SupabaseService {
         .stream(primaryKey: ['id'])
         .eq('committee_id', committeeId)
         .map((data) => data.map((json) => Payment.fromJson(json)).toList());
+  }
+
+  // ============================================
+  // PAYMENT PROOFS
+  // ============================================
+
+  Future<PaymentProof?> getLatestProofForPayment(String paymentId) async {
+    try {
+      final response =
+          await client
+              .from(paymentProofsTable)
+              .select(_paymentProofColumns)
+              .eq('payment_id', paymentId)
+              .order('created_at', ascending: false)
+              .limit(1)
+              .maybeSingle();
+
+      final row = _toRow(response);
+      return row != null ? PaymentProof.fromJson(row) : null;
+    } catch (e) {
+      _log('❌ Error getting latest payment proof: $e');
+      return null;
+    }
+  }
+
+  Future<List<PaymentProof>> getProofsForMember(
+    String memberId,
+    String committeeId,
+  ) async {
+    try {
+      final response = await client
+          .from(paymentProofsTable)
+          .select(_paymentProofColumns)
+          .eq('member_id', memberId)
+          .eq('committee_id', committeeId)
+          .order('created_at', ascending: false);
+
+      final rows = _toRows(response);
+      return rows.map(PaymentProof.fromJson).toList(growable: false);
+    } catch (e) {
+      _log('❌ Error getting member payment proofs: $e');
+      return [];
+    }
+  }
+
+  Future<List<PaymentProof>> getProofsForHost(
+    String hostId, {
+    String? status,
+  }) async {
+    try {
+      var query = client
+          .from(paymentProofsTable)
+          .select(_paymentProofColumns)
+          .eq('host_id', hostId);
+
+      if (status != null && status.isNotEmpty && status != 'all') {
+        query = query.eq('status', status);
+      }
+
+      final response = await query.order('created_at', ascending: false);
+      final rows = _toRows(response);
+      return rows.map(PaymentProof.fromJson).toList(growable: false);
+    } catch (e) {
+      _log('❌ Error getting host payment proofs: $e');
+      return [];
+    }
+  }
+
+  Future<bool> hasPendingProof(String paymentId, String memberId) async {
+    try {
+      final response = await client
+          .from(paymentProofsTable)
+          .select('id')
+          .eq('payment_id', paymentId)
+          .eq('member_id', memberId)
+          .eq('status', 'pending')
+          .limit(1);
+
+      return _toRows(response).isNotEmpty;
+    } catch (e) {
+      _log('❌ Error checking pending proof: $e');
+      return false;
+    }
+  }
+
+  Future<PaymentProof?> submitPaymentProof(PaymentProof proof) async {
+    try {
+      final response =
+          await client
+              .from(paymentProofsTable)
+              .insert(proof.toInsertJson())
+              .select(_paymentProofColumns)
+              .maybeSingle();
+
+      final row = _toRow(response);
+      return row != null ? PaymentProof.fromJson(row) : null;
+    } catch (e) {
+      _log('❌ Error submitting payment proof: $e');
+      return null;
+    }
+  }
+
+  Future<PaymentProof?> getPaymentProofById(String proofId) async {
+    try {
+      final response =
+          await client
+              .from(paymentProofsTable)
+              .select(_paymentProofColumns)
+              .eq('id', proofId)
+              .maybeSingle();
+
+      final row = _toRow(response);
+      return row != null ? PaymentProof.fromJson(row) : null;
+    } catch (e) {
+      _log('❌ Error getting payment proof by id: $e');
+      return null;
+    }
+  }
+
+  Future<bool> updatePaymentProofStatus(
+    String proofId,
+    String status, {
+    String? rejectionReason,
+    String? reviewedBy,
+  }) async {
+    try {
+      await client
+          .from(paymentProofsTable)
+          .update({
+            'status': status,
+            'rejection_reason': rejectionReason,
+            'reviewed_by': reviewedBy,
+            'reviewed_at': DateTime.now().toIso8601String(),
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', proofId);
+
+      return true;
+    } catch (e) {
+      _log('❌ Error updating payment proof status: $e');
+      return false;
+    }
   }
 }

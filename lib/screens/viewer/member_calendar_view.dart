@@ -279,8 +279,8 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
       body: Column(
         children: [
           Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: _surface,
               borderRadius: BorderRadius.circular(16),
@@ -296,15 +296,6 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Cycle Snapshot',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: _textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -318,7 +309,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                     ),
                     Container(
                       width: 1,
-                      height: 40,
+                      height: 34,
                       color: AppColors.borderMuted,
                     ),
                     Flexible(
@@ -331,7 +322,7 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                     ),
                     Container(
                       width: 1,
-                      height: 40,
+                      height: 34,
                       color: AppColors.borderMuted,
                     ),
                     Flexible(
@@ -556,8 +547,8 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
 
   Widget _buildCycleSelector() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(12),
@@ -567,10 +558,13 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             icon: Icon(
               AppIcons.chevron_left,
               color:
                   _selectedCycle > 1 ? _textPrimary : AppColors.cFFB0B8C9,
+              size: 20,
             ),
             onPressed: _selectedCycle > 1 ? () => _changeCycle(-1) : null,
           ),
@@ -581,18 +575,18 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
                   'Cycle $_selectedCycle of $_maxCycles',
                   style: GoogleFonts.inter(
                     color: _textPrimary,
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 if (_cycleDates.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     '${DateFormat('dd/MM/yyyy').format(_cycleDates.first)} - ${DateFormat('dd/MM/yyyy').format(_cycleDates.last)}',
                     style: GoogleFonts.inter(
                       color: _textSecondary,
-                      fontSize: 11,
+                      fontSize: 10,
                     ),
                     textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
@@ -602,12 +596,15 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
             ),
           ),
           IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             icon: Icon(
               AppIcons.chevron_right,
               color:
                   _selectedCycle < _maxCycles
                       ? _textPrimary
                       : AppColors.cFFB0B8C9,
+              size: 20,
             ),
             onPressed:
                 _selectedCycle < _maxCycles ? () => _changeCycle(1) : null,
@@ -619,8 +616,8 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
 
   Widget _buildMonthSelector() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(12),
@@ -630,7 +627,9 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(AppIcons.chevron_left, color: _textPrimary),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            icon: const Icon(AppIcons.chevron_left, color: _textPrimary, size: 20),
             onPressed: () {
               setState(() {
                 _selectedMonth = DateTime(
@@ -644,12 +643,14 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
             '${_getMonthName(_selectedMonth.month)} ${_selectedMonth.year}',
             style: GoogleFonts.inter(
               color: _textPrimary,
-              fontSize: 17,
+              fontSize: 15,
               fontWeight: FontWeight.w700,
             ),
           ),
           IconButton(
-            icon: const Icon(AppIcons.chevron_right, color: _textPrimary),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            icon: const Icon(AppIcons.chevron_right, color: _textPrimary, size: 20),
             onPressed: () {
               setState(() {
                 _selectedMonth = DateTime(
@@ -667,20 +668,20 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
   Widget _buildStatItem(String label, String value, IconData icon, Color tone) {
     return Column(
       children: [
-        Icon(icon, color: tone, size: 18),
-        const SizedBox(height: 4),
+        Icon(icon, color: tone, size: 17),
+        const SizedBox(height: 2),
         Text(
           value,
           style: GoogleFonts.inter(
             color: _textPrimary,
             fontWeight: FontWeight.w700,
-            fontSize: 14,
+            fontSize: 13,
           ),
           textAlign: TextAlign.center,
         ),
         Text(
           label,
-          style: GoogleFonts.inter(color: _textSecondary, fontSize: 11),
+          style: GoogleFonts.inter(color: _textSecondary, fontSize: 10),
           textAlign: TextAlign.center,
         ),
       ],

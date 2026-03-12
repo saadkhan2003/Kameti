@@ -4,7 +4,11 @@ import 'package:intl/intl.dart';
 
 import '../../models/committee.dart';
 import '../../models/member.dart';
+import '../../models/payment_proof.dart';
 import '../../services/database_service.dart';
+import '../../services/supabase_service.dart';
+import '../../widgets/proof_status_badge.dart';
+import '../member/upload_proof_screen.dart';
 import 'package:committee_app/ui/theme/theme.dart';
 
 class MemberDashboardScreen extends StatefulWidget {
@@ -33,6 +37,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
   static const Color _textSecondary = AppColors.textSecondary;
 
   final _dbService = DatabaseService();
+  final _supabase = SupabaseService();
 
   int _totalPayments = 0;
   int _paidPayments = 0;
@@ -44,6 +49,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
   int _selectedCycle = 1;
   int _maxCycles = 1;
   List<DateTime> _cycleDates = [];
+  Map<String, PaymentProof> _latestProofByPaymentId = {};
 
   @override
   void initState() {
@@ -51,6 +57,65 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     _maxCycles = _resolveTotalCycles();
     _selectedCycle = _findOngoingCycle();
     _calculateStats();
+    _loadProofs();
+  }
+
+  Future<void> _loadProofs() async {
+    final proofs = await _supabase.getProofsForMember(
+      widget.member.id,
+      widget.committee.id,
+    );
+
+    final map = <String, PaymentProof>{};
+    for (final proof in proofs) {
+      final existing = map[proof.paymentId];
+      if (existing == null || proof.createdAt.isAfter(existing.createdAt)) {
+        map[proof.paymentId] = proof;
+      }
+    }
+
+    if (!mounted) return;
+    setState(() => _latestProofByPaymentId = map);
+  }
+
+  DateTime? _firstUnpaidDate() {
+    for (final date in _cycleDates) {
+      final payment = _dbService.getPayment(widget.member.id, date);
+      if (payment == null || !payment.isPaid) {
+        return date;
+      }
+    }
+    return null;
+  }
+
+  String _proofStatusForDate(DateTime date) {
+    final payment = _dbService.getPayment(widget.member.id, date);
+    if (payment != null && payment.isPaid) return 'approved';
+
+    final paymentId = '${widget.member.id}_${date.toIso8601String()}';
+    final proof = _latestProofByPaymentId[paymentId];
+    if (proof == null) return 'none';
+    return proof.status;
+  }
+
+  Future<void> _openUploadForDate(DateTime date) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => UploadProofScreen(
+              committee: widget.committee,
+              member: widget.member,
+              paymentDate: date,
+              amount: widget.committee.contributionAmount,
+            ),
+      ),
+    );
+
+    if (result == true) {
+      await _loadProofs();
+      _calculateStats();
+    }
   }
 
   int _resolveTotalCycles() {
@@ -204,6 +269,8 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
             _buildCycleSelector(),
             const SizedBox(height: 14),
             _buildPaymentMatrix(),
+            const SizedBox(height: 12),
+            _buildProofActionCard(),
             const SizedBox(height: 14),
             _buildPayoutCard(),
             const SizedBox(height: 14),
@@ -319,8 +386,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
             onPressed: _selectedCycle > 1 ? () => _changeCycle(-1) : null,
             icon: Icon(
               AppIcons.chevron_left_rounded,
-              color:
-                  _selectedCycle > 1 ? _textPrimary : AppColors.cFFB2BCD0,
+              color: _selectedCycle > 1 ? _textPrimary : AppColors.cFFB2BCD0,
             ),
           ),
           Expanded(
@@ -419,9 +485,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      isPaid
-                          ? AppIcons.paid
-                          : AppIcons.schedule_rounded,
+                      isPaid ? AppIcons.paid : AppIcons.schedule_rounded,
                       color: isPaid ? _success : _warning,
                       size: 16,
                     ),
@@ -501,6 +565,81 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
               ? 'Payout day!'
               : 'Waiting for assignment',
       color: highlight,
+    );
+  }
+
+  Widget _buildProofActionCard() {
+    final date = _firstUnpaidDate();
+    if (date == null) {
+      return const SizedBox.shrink();
+    }
+
+    final status = _proofStatusForDate(date);
+    final paymentId = '${widget.member.id}_${date.toIso8601String()}';
+    final proof = _latestProofByPaymentId[paymentId];
+
+    final canUpload = status == 'none' || status == 'rejected';
+    final btnLabel =
+        status == 'rejected'
+            ? 'Resubmit Proof'
+            : status == 'pending'
+            ? 'Proof Submitted'
+            : status == 'approved'
+            ? 'Approved'
+            : 'Upload Payment Proof';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Payment Proof',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: _textPrimary,
+                ),
+              ),
+              const Spacer(),
+              ProofStatusBadge(status: status),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${DateFormat('MMM d, yyyy').format(date)} • ${widget.committee.currency} ${widget.committee.contributionAmount.toInt()}',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: _textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          if (status == 'rejected' &&
+              (proof?.rejectionReason?.isNotEmpty ?? false)) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Reason: ${proof!.rejectionReason}',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: _danger,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: canUpload ? () => _openUploadForDate(date) : null,
+              child: Text(btnLabel),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -707,8 +846,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
               return Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color:
-                      isCurrentMember ? _primarySoft : AppColors.cFFF8FAFF,
+                  color: isCurrentMember ? _primarySoft : AppColors.cFFF8FAFF,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color:

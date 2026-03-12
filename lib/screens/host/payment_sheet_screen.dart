@@ -16,6 +16,7 @@ import '../../models/committee.dart';
 import '../../models/member.dart';
 import 'package:committee_app/ui/theme/theme.dart';
 import 'member_management_screen.dart';
+import 'pending_proofs_screen.dart';
 import '../viewer/member_calendar_view.dart';
 
 part 'payment_sheet_export.part.dart';
@@ -535,6 +536,24 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(
+              AppIcons.verified_user_rounded,
+              color: _textSecondary,
+            ),
+            tooltip: 'Payment Proofs',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PendingProofsScreen(),
+                ),
+              );
+
+              if (!mounted) return;
+              await _syncAndLoad(waitForSync: true);
+            },
+          ),
           IconButton(
             icon: const Icon(AppIcons.reminder, color: _textSecondary),
             tooltip: 'Send Reminders',
