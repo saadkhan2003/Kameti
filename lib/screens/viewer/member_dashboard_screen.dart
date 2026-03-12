@@ -50,6 +50,22 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
   int _maxCycles = 1;
   List<DateTime> _cycleDates = [];
   Map<String, PaymentProof> _latestProofByPaymentId = {};
+  final Set<String> _seenProofNotificationKeys = {};
+
+  List<PaymentProof> get _memberProofNotifications {
+    final items =
+        _latestProofByPaymentId.values
+            .where((proof) => proof.isApproved || proof.isRejected)
+            .toList();
+    items.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    return items;
+  }
+
+  int get _unreadNotificationCount {
+    return _memberProofNotifications
+        .where((proof) => !_seenProofNotificationKeys.contains(_proofNotifKey(proof)))
+        .length;
+  }
 
   @override
   void initState() {
@@ -96,6 +112,149 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
     final proof = _latestProofByPaymentId[paymentId];
     if (proof == null) return 'none';
     return proof.status;
+  }
+
+  String _proofNotifKey(PaymentProof proof) {
+    return '${proof.id}_${proof.status}_${proof.updatedAt.toIso8601String()}';
+  }
+
+  DateTime? _paymentDateFromId(String paymentId) {
+    final prefix = '${widget.member.id}_';
+    if (!paymentId.startsWith(prefix)) return null;
+    final raw = paymentId.substring(prefix.length);
+    return DateTime.tryParse(raw);
+  }
+
+  String _notifTitle(PaymentProof proof) {
+    final date = _paymentDateFromId(proof.paymentId);
+    final dateLabel =
+        date != null
+            ? DateFormat('MMM d, yyyy').format(date)
+            : DateFormat('MMM d, yyyy').format(proof.createdAt);
+    return proof.isApproved
+        ? 'Approved • $dateLabel'
+        : 'Rejected • $dateLabel';
+  }
+
+  String _notifSubtitle(PaymentProof proof) {
+    if (proof.isRejected && (proof.rejectionReason?.isNotEmpty ?? false)) {
+      return 'Reason: ${proof.rejectionReason}';
+    }
+    return proof.isApproved
+        ? 'Your payment proof was approved.'
+        : 'Your payment proof was rejected.';
+  }
+
+  Future<void> _openNotificationSheet() async {
+    final items = _memberProofNotifications;
+    if (mounted) {
+      setState(() {
+        for (final proof in items) {
+          _seenProofNotificationKeys.add(_proofNotifKey(proof));
+        }
+      });
+    }
+
+    if (!mounted) return;
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surface,
+      builder: (context) {
+        if (items.isEmpty) {
+          return SizedBox(
+            height: 220,
+            child: Center(
+              child: Text(
+                'No member notifications yet',
+                style: GoogleFonts.inter(
+                  color: _textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Notifications',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: _textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final proof = items[index];
+                      final tone = proof.isApproved ? _success : _danger;
+                      return Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: tone.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: tone.withOpacity(0.2)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              proof.isApproved
+                                  ? AppIcons.check_circle_outline_rounded
+                                  : AppIcons.error_outline_rounded,
+                              size: 18,
+                              color: tone,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _notifTitle(proof),
+                                    style: GoogleFonts.inter(
+                                      color: _textPrimary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _notifSubtitle(proof),
+                                    style: GoogleFonts.inter(
+                                      color: _textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _openUploadForDate(DateTime date) async {
@@ -252,6 +411,48 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
             fontWeight: FontWeight.w800,
           ),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Notifications',
+            onPressed: _openNotificationSheet,
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(AppIcons.notifications, color: _textPrimary),
+                if (_unreadNotificationCount > 0)
+                  Positioned(
+                    right: -6,
+                    top: -6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        _unreadNotificationCount > 99
+                            ? '99+'
+                            : '$_unreadNotificationCount',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
         centerTitle: true,
       ),
       body: SingleChildScrollView(

@@ -12,6 +12,7 @@ class AppIcons {
   static const share = Icons.share_rounded;
   static const download = Icons.file_download_outlined;
   static const reminder = Icons.campaign_rounded;
+  static const notifications = Icons.notifications_rounded;
   static const sync = Icons.sync_rounded;
   static const synced = Icons.cloud_done_rounded;
   static const pending = Icons.cloud_upload_rounded;

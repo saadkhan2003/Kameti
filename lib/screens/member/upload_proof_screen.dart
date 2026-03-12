@@ -331,12 +331,40 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
             ),
             if (rejectedReason != null && rejectedReason.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(
-                'Reason: $rejectedReason',
-                style: GoogleFonts.inter(
-                  color: AppColors.error,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.error.withOpacity(0.25)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 1),
+                      child: Icon(
+                        AppIcons.error_outline_rounded,
+                        size: 15,
+                        color: AppColors.error,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Rejection reason: $rejectedReason',
+                        style: GoogleFonts.inter(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

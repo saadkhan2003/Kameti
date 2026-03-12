@@ -486,15 +486,54 @@ class SupabaseService {
       await client.from(paymentProofsTable).delete().eq('id', proofId);
 
       if (paymentId != null && paymentId.isNotEmpty) {
-        await client
-            .from(paymentsTable)
-            .update({
-              'proof_status': 'none',
-              if (resetPaymentAsUnpaid) 'is_paid': false,
-              if (resetPaymentAsUnpaid) 'marked_by': null,
-              if (resetPaymentAsUnpaid) 'marked_at': null,
-            })
-            .eq('id', paymentId);
+        final latestRemaining =
+            await client
+                .from(paymentProofsTable)
+                .select('status')
+                .eq('payment_id', paymentId)
+                .order('created_at', ascending: false)
+                .limit(1)
+                .maybeSingle();
+
+        final latestRow = _toRow(latestRemaining);
+        final latestStatus = (latestRow?['status'] ?? 'none').toString();
+
+        if (latestStatus == 'approved') {
+          await client
+              .from(paymentsTable)
+              .update({'proof_status': 'approved', 'is_paid': true})
+              .eq('id', paymentId);
+        } else if (latestStatus == 'pending') {
+          await client
+              .from(paymentsTable)
+              .update({
+                'proof_status': 'pending',
+                'is_paid': false,
+                'marked_by': null,
+                'marked_at': null,
+              })
+              .eq('id', paymentId);
+        } else if (latestStatus == 'rejected') {
+          await client
+              .from(paymentsTable)
+              .update({
+                'proof_status': 'rejected',
+                'is_paid': false,
+                'marked_by': null,
+                'marked_at': null,
+              })
+              .eq('id', paymentId);
+        } else {
+          await client
+              .from(paymentsTable)
+              .update({
+                'proof_status': 'none',
+                if (resetPaymentAsUnpaid) 'is_paid': false,
+                if (resetPaymentAsUnpaid) 'marked_by': null,
+                if (resetPaymentAsUnpaid) 'marked_at': null,
+              })
+              .eq('id', paymentId);
+        }
       }
 
       return true;
