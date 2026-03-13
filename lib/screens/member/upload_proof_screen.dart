@@ -269,35 +269,38 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
       }
 
       if (!mounted) return;
+
+      // Fire notification BEFORE popping the screen so the
+      // Supabase client is still alive when the request is sent
+      _notifications
+          .notifyNewProof(
+            hostId: widget.committee.hostId,
+            memberName: widget.member.name,
+            monthLabel: _monthLabel(widget.paymentDate),
+            amountLabel:
+                '${widget.committee.currency} ${(widget.amount * _selectedPeriods).toInt()}',
+          )
+          .ignore();
+
       ToastService.success(
         context,
         submittedCount == 1
             ? 'Payment proof submitted successfully! Waiting for host approval.'
             : 'Proof submitted for $submittedCount periods successfully! Waiting for host approval.',
       );
+
       Navigator.pop(context, true);
     } catch (e) {
-    if (!mounted) return;
-    ToastService.error(
-      context,
-      e.toString(),
-    );
+      if (!mounted) return;
+      ToastService.error(
+        context,
+        e.toString(),
+      );
     } finally {
       if (mounted) {
         setState(() => _isUploading = false);
       }
     }
-
-    // Fire-and-forget — notification failures must never block proof submission
-    _notifications
-        .notifyNewProof(
-          hostId: widget.committee.hostId,
-          memberName: widget.member.name,
-          monthLabel: _monthLabel(widget.paymentDate),
-          amountLabel:
-              '${widget.committee.currency} ${(widget.amount * _selectedPeriods).toInt()}',
-        )
-        .ignore();
   }
 
   @override

@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
 class PushNotificationService {
   final SupabaseService _supabase = SupabaseService();
+  StreamSubscription<AuthState>? _authSub;
+  String? _pendingToken;
 
   /// Initialize Push Notifications, request permissions, and save the token
   Future<void> initialize() async {
@@ -27,14 +32,15 @@ class PushNotificationService {
         
         if (token != null) {
           if (kDebugMode) debugPrint('FCM Token: $token');
-          // 3. Save token to Supabase
-          await _supabase.saveDeviceToken(token);
+          _pendingToken = token;
+          await _saveTokenWhenAuthAvailable();
         }
 
-        // 4. Listen for token refreshes
+        // 3. Listen for token refreshes
         fcm.onTokenRefresh.listen((newToken) async {
           if (kDebugMode) debugPrint('FCM Token Refreshed: $newToken');
-          await _supabase.saveDeviceToken(newToken);
+          _pendingToken = newToken;
+          await _saveTokenWhenAuthAvailable();
         });
 
       } else {
@@ -43,5 +49,30 @@ class PushNotificationService {
     } catch (e) {
       if (kDebugMode) debugPrint('Error initializing Push Notifications: $e');
     }
+  }
+
+  Future<void> _saveTokenWhenAuthAvailable() async {
+    final token = _pendingToken;
+    if (token == null) return;
+
+    final currentUser = Supabase.instance.client.auth.currentUser;
+    if (currentUser != null) {
+      await _supabase.saveDeviceToken(token);
+      _pendingToken = null;
+      await _authSub?.cancel();
+      _authSub = null;
+      return;
+    }
+
+    // If no user yet, subscribe to auth changes and try again when signed in.
+    _authSub ??= Supabase.instance.client.auth.onAuthStateChange.listen(
+      (event) async {
+        if (event.event == AuthChangeEvent.signedIn ||
+            event.event == AuthChangeEvent.tokenRefreshed) {
+          if (kDebugMode) debugPrint('Auth signed in; saving pending FCM token');
+          await _saveTokenWhenAuthAvailable();
+        }
+      },
+    );
   }
 }

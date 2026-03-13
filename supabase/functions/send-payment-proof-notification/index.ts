@@ -8,6 +8,7 @@ serve(async (req) => {
             headers: {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+                'Access-Control-Allow-Methods': 'POST,OPTIONS',
             }
         })
     }
@@ -29,7 +30,13 @@ serve(async (req) => {
 
         if (tokenError || !tokens || tokens.length === 0) {
             console.log(`No FCM token found for user ${recipient_user_id}`)
-            return new Response(JSON.stringify({ error: 'User does not have a registered device token' }), { headers: { 'Content-Type': 'application/json' }, status: 400 })
+            return new Response(JSON.stringify({ error: 'User does not have a registered device token' }), {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                },
+                status: 400,
+            })
         }
 
         // 2. Generate Google OAuth2 Token from Service Account
@@ -74,10 +81,21 @@ serve(async (req) => {
             })
         )
 
-        return new Response(JSON.stringify({ success: true, fcm_responses: responses }), { headers: { 'Content-Type': 'application/json' } })
+        return new Response(JSON.stringify({ success: true, fcm_responses: responses }), {
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+            }
+        })
 
     } catch (error: any) {
         console.error(error)
-        return new Response(JSON.stringify({ error: error.message }), { headers: { 'Content-Type': 'application/json' }, status: 400 })
+        return new Response(JSON.stringify({ error: error.message }), {
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+            },
+            status: 400,
+        })
     }
 })
