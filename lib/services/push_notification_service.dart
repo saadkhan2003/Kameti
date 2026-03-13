@@ -16,7 +16,7 @@ class PushNotificationService {
 
     try {
       final FirebaseMessaging fcm = FirebaseMessaging.instance;
-      
+
       // 1. Request permissions (shows prompt on iOS, no-op on Android 12-)
       NotificationSettings settings = await fcm.requestPermission(
         alert: true,
@@ -26,10 +26,9 @@ class PushNotificationService {
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional) {
-        
         // 2. Get the FCM device token
         String? token = await fcm.getToken();
-        
+
         if (token != null) {
           if (kDebugMode) debugPrint('FCM Token: $token');
           _pendingToken = token;
@@ -42,9 +41,11 @@ class PushNotificationService {
           _pendingToken = newToken;
           await _saveTokenWhenAuthAvailable();
         });
-
       } else {
-        if (kDebugMode) debugPrint('User declined or has not accepted notification permissions');
+        if (kDebugMode)
+          debugPrint(
+            'User declined or has not accepted notification permissions',
+          );
       }
     } catch (e) {
       if (kDebugMode) debugPrint('Error initializing Push Notifications: $e');
@@ -65,14 +66,14 @@ class PushNotificationService {
     }
 
     // If no user yet, subscribe to auth changes and try again when signed in.
-    _authSub ??= Supabase.instance.client.auth.onAuthStateChange.listen(
-      (event) async {
-        if (event.event == AuthChangeEvent.signedIn ||
-            event.event == AuthChangeEvent.tokenRefreshed) {
-          if (kDebugMode) debugPrint('Auth signed in; saving pending FCM token');
-          await _saveTokenWhenAuthAvailable();
-        }
-      },
-    );
+    _authSub ??= Supabase.instance.client.auth.onAuthStateChange.listen((
+      event,
+    ) async {
+      if (event.event == AuthChangeEvent.signedIn ||
+          event.event == AuthChangeEvent.tokenRefreshed) {
+        if (kDebugMode) debugPrint('Auth signed in; saving pending FCM token');
+        await _saveTokenWhenAuthAvailable();
+      }
+    });
   }
 }
