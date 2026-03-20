@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/sync_status_service.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 /// A minimal sync status icon button for the AppBar.
 /// Shows a cloud icon that changes color and icon based on sync state.

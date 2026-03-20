@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 class LegalInfoScreen extends StatefulWidget {
   const LegalInfoScreen({super.key});

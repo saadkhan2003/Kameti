@@ -9,7 +9,7 @@ import '../../services/toast_service.dart';
 import '../../utils/app_theme.dart';
 import '../splash_screen.dart';
 import 'email_verification_screen.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool startInSignupMode;

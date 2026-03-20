@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../services/toast_service.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import '../host/host_dashboard_screen.dart';
 
 class ResetPasswordScreen extends StatefulWidget {

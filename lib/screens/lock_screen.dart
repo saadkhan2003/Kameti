@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import '../services/biometric_service.dart';
 import 'home_screen.dart';
 import 'host/host_dashboard_screen.dart';

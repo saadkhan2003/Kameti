@@ -8,7 +8,7 @@ import '../../services/database_service.dart';
 import '../../services/supabase_service.dart';
 import '../../widgets/payment_proof_card.dart';
 import 'proof_review_screen.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 class PendingProofsScreen extends StatefulWidget {
   final String? committeeId;

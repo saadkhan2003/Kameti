@@ -15,7 +15,7 @@ import '../../services/toast_service.dart';
 import '../../services/currency_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import 'member_management_screen.dart';
 import 'pending_proofs_screen.dart';
 import '../viewer/member_calendar_view.dart';

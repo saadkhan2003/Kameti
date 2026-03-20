@@ -12,7 +12,7 @@ import 'member_management_screen.dart';
 import 'payment_sheet_screen.dart';
 import 'shuffle_members_screen.dart';
 import 'committee_analytics_screen.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import '../../ui/widgets/sync_status_widget.dart';
 
 class CommitteeDetailScreen extends StatefulWidget {

@@ -4,7 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import '../host/payment_sheet_screen.dart';
 
 class JoinCommitteeScreen extends StatefulWidget {

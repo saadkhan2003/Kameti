@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/database_service.dart';
 import '../../services/toast_service.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import '../viewer/join_committee_screen.dart';
 import 'payment_sheet_screen.dart';
 

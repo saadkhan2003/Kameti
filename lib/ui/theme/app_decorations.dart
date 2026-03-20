@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 /// App decorations (shadows, borders, radius) - CHANGE THESE TO UPDATE STYLING APP-WIDE
 class AppDecorations {

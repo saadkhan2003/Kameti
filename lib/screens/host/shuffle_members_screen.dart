@@ -7,7 +7,7 @@ import '../../services/auto_sync_service.dart';
 import '../../services/toast_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 class ShuffleMembersScreen extends StatefulWidget {
   final Committee committee;

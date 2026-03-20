@@ -15,7 +15,7 @@ import '../screens/lock_screen.dart';
 import '../screens/force_update_screen.dart';
 import '../services/remote_config_service.dart';
 import '../screens/auth/reset_password_screen.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

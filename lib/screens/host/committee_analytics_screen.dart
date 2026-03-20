@@ -7,7 +7,7 @@ import '../../models/member.dart';
 import '../../models/payment.dart';
 import '../../services/database_service.dart';
 import '../../services/currency_service.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 class CommitteeAnalyticsScreen extends StatefulWidget {
   final Committee committee;

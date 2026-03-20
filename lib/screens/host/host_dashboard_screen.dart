@@ -13,7 +13,7 @@ import '../../services/review_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../utils/page_transitions.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import '../../ui/widgets/ads/native_ad_widget.dart';
 import '../../ui/widgets/empty_state_widget.dart';
 import '../../ui/widgets/sync_status_widget.dart';

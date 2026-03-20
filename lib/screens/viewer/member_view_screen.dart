@@ -6,7 +6,7 @@ import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import '../../ui/widgets/ads/banner_ad_widget.dart';
 
 class MemberViewScreen extends StatefulWidget {

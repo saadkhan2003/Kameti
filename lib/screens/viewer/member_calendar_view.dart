@@ -6,7 +6,7 @@ import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../services/database_service.dart';
 import '../../services/supabase_service.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import 'member_dashboard_screen.dart';
 
 class MemberCalendarView extends StatefulWidget {

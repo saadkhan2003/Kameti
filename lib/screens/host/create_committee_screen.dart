@@ -9,7 +9,7 @@ import '../../services/currency_service.dart';
 import '../../services/haptic_service.dart';
 import '../../models/committee.dart';
 import '../../utils/code_generator.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import '../../ui/widgets/micro_animations.dart';
 import 'package:lottie/lottie.dart';
 

@@ -7,7 +7,7 @@ import '../../services/database_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/toast_service.dart';
 import '../../services/localization_service.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import '../home_screen.dart';
 import '../settings_screen.dart';
 

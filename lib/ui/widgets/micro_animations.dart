@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../utils/app_theme.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 /// Shows an animated success overlay with checkmark animation.
 /// Call: SuccessAnimation.show(context) — auto-dismisses after 1.5s.

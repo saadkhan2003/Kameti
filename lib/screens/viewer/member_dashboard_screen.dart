@@ -10,7 +10,7 @@ import '../../services/supabase_service.dart';
 import '../../services/toast_service.dart';
 import '../../widgets/proof_status_badge.dart';
 import '../member/upload_proof_screen.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 class MemberDashboardScreen extends StatefulWidget {
   final Committee committee;

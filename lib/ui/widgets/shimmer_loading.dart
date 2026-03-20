@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 /// A shimmer/skeleton loading effect widget.
 /// Wraps its child in a shimmering animation to indicate loading state.

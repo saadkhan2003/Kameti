@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../models/payment_proof.dart';
 import 'proof_status_badge.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 class PaymentProofCard extends StatelessWidget {
   final PaymentProof proof;

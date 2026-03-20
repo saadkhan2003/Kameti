@@ -1,4 +1,4 @@
-name: Kameti
+name: kameti
 description: "Kameti - A modern, secure, and feature-rich platform for managing rotating savings and credit associations (ROSCA)."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.

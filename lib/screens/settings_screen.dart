@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/biometric_service.dart';
 import '../services/localization_service.dart';
 import '../services/toast_service.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

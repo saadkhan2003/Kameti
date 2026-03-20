@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/remote_config_service.dart';
 import '../../services/toast_service.dart';
 import '../../utils/app_theme.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 class AdminConfigScreen extends StatefulWidget {
   const AdminConfigScreen({super.key});

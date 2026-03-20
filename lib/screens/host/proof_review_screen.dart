@@ -7,7 +7,7 @@ import '../../services/notification_service.dart';
 import '../../services/supabase_service.dart';
 import '../../services/toast_service.dart';
 import '../../widgets/proof_status_badge.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 class ProofReviewScreen extends StatefulWidget {
   final String proofId;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../services/haptic_service.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import '../utils/page_transitions.dart';
 import 'auth/login_screen.dart';
 import 'viewer/join_committee_screen.dart';

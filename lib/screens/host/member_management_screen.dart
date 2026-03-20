@@ -9,7 +9,7 @@ import '../../services/toast_service.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../utils/code_generator.dart';
-import 'package:committee_app/ui/theme/theme.dart';
+import 'package:kameti/ui/theme/theme.dart';
 import '../../ui/widgets/ads/banner_ad_widget.dart';
 
 class MemberManagementScreen extends StatefulWidget {
