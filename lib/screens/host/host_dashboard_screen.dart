@@ -1021,27 +1021,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     return '${frequency[0].toUpperCase()}${frequency.substring(1).toLowerCase()}';
   }
 
-  int _calculateDuePeriods(Committee committee, DateTime now) {
-    final start = committee.startDate;
-    if (now.isBefore(start)) return 0;
 
-    if (committee.frequency == 'daily') {
-      return now.difference(start).inDays + 1;
-    }
-
-    if (committee.frequency == 'weekly') {
-      return (now.difference(start).inDays ~/ 7) + 1;
-    }
-
-    if (committee.frequency == 'monthly') {
-      final monthsDiff =
-          (now.year - start.year) * 12 + (now.month - start.month);
-      final adjusted = now.day >= start.day ? monthsDiff + 1 : monthsDiff;
-      return adjusted < 0 ? 0 : adjusted;
-    }
-
-    return (now.difference(start).inDays ~/ 30) + 1;
-  }
 
   Map<String, dynamic> _calculateCommitteePaymentProgress(
     Committee committee,
@@ -1057,8 +1037,53 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     }
 
     final now = DateTime.now();
-    final duePeriods = _calculateDuePeriods(committee, now);
-    final expectedDueCount = duePeriods * members.length;
+    final start = committee.startDate;
+    final payoutInterval = committee.paymentIntervalDays;
+
+    int collectionInterval = 1;
+    if (committee.frequency == 'weekly') collectionInterval = 7;
+    if (committee.frequency == 'monthly') collectionInterval = 30;
+
+    int periodsPerPayout;
+    if (committee.frequency == 'monthly') {
+      periodsPerPayout = (payoutInterval / 30).ceil();
+    } else {
+      periodsPerPayout = (payoutInterval / collectionInterval).ceil();
+    }
+    if (periodsPerPayout < 1) periodsPerPayout = 1;
+
+    int totalPeriodsElapsed = 0;
+    if (committee.frequency == 'monthly') {
+      final monthsDiff =
+          (now.year - start.year) * 12 + (now.month - start.month);
+      totalPeriodsElapsed =
+          (now.day >= start.day) ? monthsDiff : monthsDiff - 1;
+      if (totalPeriodsElapsed < 0) totalPeriodsElapsed = 0;
+    } else {
+      final daysElapsed = now.difference(start).inDays;
+      totalPeriodsElapsed = daysElapsed ~/ collectionInterval;
+    }
+
+    final currentCycleIndex = totalPeriodsElapsed ~/ periodsPerPayout;
+    final totalDatesNeeded = (currentCycleIndex + 1) * periodsPerPayout;
+
+    // cycleEndDate is only used to filter payments (ensure we count advance up to cycle end)
+    DateTime cycleEndDate = start;
+    for (int i = 0; i < totalDatesNeeded - 1; i++) {
+      if (committee.frequency == 'monthly') {
+        int newMonth = cycleEndDate.month + 1;
+        int newYear = cycleEndDate.year;
+        if (newMonth > 12) {
+          newMonth = 1;
+          newYear++;
+        }
+        cycleEndDate = DateTime(newYear, newMonth, cycleEndDate.day);
+      } else {
+        cycleEndDate = cycleEndDate.add(Duration(days: collectionInterval));
+      }
+    }
+
+    final expectedDueCount = totalDatesNeeded * members.length;
 
     if (expectedDueCount <= 0) {
       return {
@@ -1072,7 +1097,7 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
     final paidCount =
         _dbService
             .getPaymentsByCommittee(committee.id)
-            .where((payment) => payment.isPaid && !payment.date.isAfter(now))
+            .where((payment) => payment.isPaid && !payment.date.isAfter(cycleEndDate))
             .length;
 
     final boundedPaid = paidCount.clamp(0, expectedDueCount);
@@ -1561,73 +1586,6 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
                             pendingAmount <= 0
                                 ? AppColors.cFF047857
                                 : AppColors.cFFB91C1C,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.cFFE9EEFC,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(999),
-                      onTap: () async {
-                        await Clipboard.setData(
-                          ClipboardData(text: committee.code),
-                        );
-                        if (mounted) {
-                          ToastService.success(
-                            context,
-                            'Committee code copied',
-                          );
-                        }
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Code: ${committee.code}',
-                            style: GoogleFonts.inter(
-                              fontSize: 10,
-                              color: _primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(
-                            AppIcons.copy_rounded,
-                            size: 12,
-                            color: _primary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.mutedSurface,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      '${committee.totalCycles} cycles',
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        color: _textSecondary,
-                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),

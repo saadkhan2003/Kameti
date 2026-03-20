@@ -413,10 +413,20 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                               label:
                                   '${freq[0].toUpperCase()}${freq.substring(1)}',
                               selected: isSelected,
-                              onTap:
-                                  () => setState(
-                                    () => _collectionFrequency = freq,
-                                  ),
+                              onTap: () {
+                                setState(() {
+                                  _collectionFrequency = freq;
+                                  // Lock invalid faster payout frequencies
+                                  if (_collectionFrequency == 'weekly' && _payoutFrequency == 'daily') {
+                                    _payoutFrequency = 'weekly';
+                                    _intervalController.text = '7';
+                                  } else if (_collectionFrequency == 'monthly' &&
+                                      (_payoutFrequency == 'daily' || _payoutFrequency == 'weekly')) {
+                                    _payoutFrequency = 'monthly';
+                                    _intervalController.text = '30';
+                                  }
+                                });
+                              },
                             );
                           }).toList(),
                     ),
@@ -430,32 +440,41 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children:
-                          _payoutFrequencies.map((freq) {
-                            final isSelected = _payoutFrequency == freq;
-                            return _buildOptionChip(
-                              label:
-                                  freq == 'custom'
-                                      ? 'Custom'
-                                      : '${freq[0].toUpperCase()}${freq.substring(1)}',
-                              selected: isSelected,
-                              onTap: () {
-                                setState(() {
-                                  _payoutFrequency = freq;
-                                  if (freq == 'daily')
-                                    _intervalController.text = '1';
-                                  if (freq == 'weekly')
-                                    _intervalController.text = '7';
-                                  if (freq == 'monthly')
-                                    _intervalController.text = '30';
-                                });
-                              },
-                            );
-                          }).toList(),
-                    ),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children:
+                              _payoutFrequencies.map((freq) {
+                                final isSelected = _payoutFrequency == freq;
+                                bool isDisabled = false;
+                                if (_collectionFrequency == 'weekly' && freq == 'daily') {
+                                  isDisabled = true;
+                                } else if (_collectionFrequency == 'monthly' &&
+                                    (freq == 'daily' || freq == 'weekly')) {
+                                  isDisabled = true;
+                                }
+
+                                return _buildOptionChip(
+                                  label:
+                                      freq == 'custom'
+                                          ? 'Custom'
+                                          : '${freq[0].toUpperCase()}${freq.substring(1)}',
+                                  selected: isSelected,
+                                  isDisabled: isDisabled,
+                                  onTap: () {
+                                    setState(() {
+                                      _payoutFrequency = freq;
+                                      if (freq == 'daily')
+                                        _intervalController.text = '1';
+                                      if (freq == 'weekly')
+                                        _intervalController.text = '7';
+                                      if (freq == 'monthly')
+                                        _intervalController.text = '30';
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                        ),
                     if (_payoutFrequency == 'custom') ...[
                       const SizedBox(height: 14),
                       TextFormField(
@@ -712,25 +731,35 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
     required String label,
     required bool selected,
     required VoidCallback onTap,
+    bool isDisabled = false,
   }) {
     return InkWell(
-      onTap: onTap,
+      onTap: isDisabled ? null : onTap,
       borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? _primary : AppColors.cFFF8FAFF,
+          color:
+              isDisabled
+                  ? AppColors.mutedSurface
+                  : (selected ? _primary : AppColors.cFFF8FAFF),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? _primary : AppColors.lightBorder,
+            color:
+                isDisabled
+                    ? AppColors.lightBorder
+                    : (selected ? _primary : AppColors.lightBorder),
           ),
         ),
         child: Text(
           label,
           style: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : _textPrimary,
+            color:
+                isDisabled
+                    ? Colors.grey[400]
+                    : (selected ? Colors.white : _textPrimary),
           ),
         ),
       ),

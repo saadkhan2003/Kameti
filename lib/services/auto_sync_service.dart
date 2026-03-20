@@ -135,6 +135,10 @@ class AutoSyncService {
 
     await _dbService.saveMember(member);
 
+    // Keep committee.totalMembers in sync with actual local member count
+    // so that viewer-mode calendar can always find the correct cycle count.
+    _updateCommitteeMemberCount(member.committeeId);
+
     _scheduleDebouncedSync('members:${member.committeeId}', () async {
       await _syncService.syncMembers(member.committeeId);
     });
@@ -146,6 +150,9 @@ class AutoSyncService {
 
     // Delete locally first for instant UI
     await _dbService.deleteMember(memberId);
+
+    // Keep committee.totalMembers in sync
+    _updateCommitteeMemberCount(committeeId);
 
     // Delete from cloud
     _syncInBackground(() async {
@@ -160,6 +167,25 @@ class AutoSyncService {
         print('Cloud member delete error: $e');
       }
     });
+  }
+
+  /// Re-counts all local members for the given committee and saves the updated
+  /// totalMembers value back onto the committee record in Hive.
+  void _updateCommitteeMemberCount(String committeeId) {
+    try {
+      final committee = _dbService.getCommitteeById(committeeId);
+      if (committee == null) return;
+      final memberCount =
+          _dbService.getMembersByCommittee(committeeId).length;
+      if (committee.totalMembers != memberCount) {
+        _dbService.saveCommittee(
+          committee.copyWith(totalMembers: memberCount),
+        );
+      }
+    } catch (e) {
+      // Non-critical: just a count update
+      print('_updateCommitteeMemberCount error: $e');
+    }
   }
 
   Future<void> updateMemberPayoutOrder(

@@ -55,13 +55,17 @@ class PushNotificationService {
 
         // 5. Log when the user taps a notification
         FirebaseMessaging.onMessageOpenedApp.listen((message) {
-          if (kDebugMode) debugPrint('📌 Notification tapped: ${message.messageId}');
+          if (kDebugMode) {
+            debugPrint('📌 Notification tapped: ${message.messageId}');
+          }
         });
 
         // 6. Log initial message if app was launched from a notification
         FirebaseMessaging.instance.getInitialMessage().then((message) {
           if (message != null && kDebugMode) {
-            debugPrint('📌 App launched from notification: ${message.messageId}');
+            debugPrint(
+              '📌 App launched from notification: ${message.messageId}',
+            );
           }
         });
       } else {
@@ -80,7 +84,19 @@ class PushNotificationService {
     final token = _pendingToken;
     if (token == null) return;
 
-    final currentUser = Supabase.instance.client.auth.currentUser;
+    var currentUser = Supabase.instance.client.auth.currentUser;
+    if (currentUser == null) {
+      // If there is no session yet, create an anonymous session so we can
+      // store the token and later target this device if needed.
+      try {
+        if (kDebugMode) debugPrint('No auth session; signing in anonymously');
+        await Supabase.instance.client.auth.signInAnonymously();
+        currentUser = Supabase.instance.client.auth.currentUser;
+      } catch (e) {
+        if (kDebugMode) debugPrint('Anonymous sign-in failed: $e');
+      }
+    }
+
     if (currentUser != null) {
       await _supabase.saveDeviceToken(token);
       _pendingToken = null;
@@ -89,7 +105,7 @@ class PushNotificationService {
       return;
     }
 
-    // If no user yet, subscribe to auth changes and try again when signed in.
+    // If still no user, subscribe to auth changes and try again when signed in.
     _authSub ??= Supabase.instance.client.auth.onAuthStateChange.listen(
       (event) async {
         if (event.event == AuthChangeEvent.signedIn ||
@@ -102,7 +118,9 @@ class PushNotificationService {
   }
 
   Future<void> _initializeLocalNotifications() async {
-    final androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // Use the default launcher icon name. If you have a custom notification icon,
+    // add it in android/app/src/main/res/drawable/ and use that name here.
+    final androidSettings = AndroidInitializationSettings('ic_launcher');
     final iosSettings = DarwinInitializationSettings();
 
     await _localNotifications.initialize(
@@ -122,7 +140,8 @@ class PushNotificationService {
 
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
   }
 
@@ -145,7 +164,7 @@ class PushNotificationService {
       channelDescription: channel.description,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: 'ic_launcher',
     );
 
     final platformDetails = NotificationDetails(android: androidDetails);

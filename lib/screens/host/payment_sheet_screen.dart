@@ -202,6 +202,60 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     return DateTime(newYear, newMonth, newDay);
   }
 
+  /// Generate ALL collection dates from start up through the END of the current
+  /// payout cycle. This ensures the stats card "Unpaid" count matches ALL the
+  /// columns visible in the payment matrix (which shows the full current cycle
+  /// including future dates), so the user sees consistent numbers.
+  List<DateTime> _generateAllDatesUpToEndOfCurrentCycle() {
+    final startDate = widget.committee.startDate;
+    final payoutInterval = widget.committee.paymentIntervalDays;
+    final now = DateTime.now();
+
+    int collectionInterval = 1;
+    if (widget.committee.frequency == 'weekly') collectionInterval = 7;
+    if (widget.committee.frequency == 'monthly') collectionInterval = 30;
+
+    int periodsPerPayout;
+    if (widget.committee.frequency == 'monthly') {
+      periodsPerPayout = (payoutInterval / 30).ceil();
+    } else {
+      periodsPerPayout = (payoutInterval / collectionInterval).ceil();
+    }
+    if (periodsPerPayout < 1) periodsPerPayout = 1;
+
+    // Find the current cycle index by counting total periods elapsed
+    int totalPeriodsElapsed = 0;
+    if (widget.committee.frequency == 'monthly') {
+      final monthsDiff =
+          (now.year - startDate.year) * 12 + (now.month - startDate.month);
+      totalPeriodsElapsed =
+          (now.day >= startDate.day) ? monthsDiff : monthsDiff - 1;
+      if (totalPeriodsElapsed < 0) totalPeriodsElapsed = 0;
+    } else {
+      final daysElapsed = now.difference(startDate).inDays;
+      totalPeriodsElapsed = daysElapsed ~/ collectionInterval;
+    }
+
+    final currentCycleIndex = totalPeriodsElapsed ~/ periodsPerPayout;
+    final totalDatesNeeded = (currentCycleIndex + 1) * periodsPerPayout;
+
+    final List<DateTime> allDates = [];
+    DateTime current = DateTime(
+      startDate.year,
+      startDate.month,
+      startDate.day,
+    );
+    for (int i = 0; i < totalDatesNeeded; i++) {
+      allDates.add(current);
+      if (widget.committee.frequency == 'monthly') {
+        current = _addMonths(current, 1);
+      } else {
+        current = current.add(Duration(days: collectionInterval));
+      }
+    }
+    return allDates;
+  }
+
   void _generateDates() {
     _dates = [];
     final committeeStartDate = widget.committee.startDate;
@@ -246,7 +300,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
           cycleIndex * periodsPerPayout,
         );
       } else {
-        final daysOffset = cycleIndex * payoutIntervalDays;
+        final totalPeriodsPrior = cycleIndex * periodsPerPayout;
+        final daysOffset = totalPeriodsPrior * collectionInterval;
         cycleStartDate = committeeStartDate.add(Duration(days: daysOffset));
       }
 
@@ -365,15 +420,12 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   // proper member debt calculator here.
 
   Map<String, dynamic> _calculateMemberDebt(String memberId) {
-    final now = DateTime.now();
     int paidCount = 0;
     int duePeriods = 0;
 
     for (var date in _dates) {
-      if (!date.isAfter(now)) {
-        duePeriods++;
-        if (_isPaymentMarked(memberId, date)) paidCount++;
-      }
+      duePeriods++;
+      if (_isPaymentMarked(memberId, date)) paidCount++;
     }
 
     final unpaidCount = duePeriods - paidCount;
@@ -384,7 +436,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       'duePeriods': duePeriods,
       'unpaidCount': unpaidCount,
       'debtAmount': debtAmount,
-      'isDefaulter': unpaidCount > 0,
+      'isDefaulter': unpaidCount > 0, // Mark as defaulter if any unpaid
       'severity':
           unpaidCount >= 3 ? 'high' : (unpaidCount >= 1 ? 'medium' : 'none'),
     };
@@ -414,23 +466,28 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     int totalPaid = 0;
     int totalDue = 0;
 
+    // Use ALL dates from start through end of CURRENT cycle so the global
+    // Paid/Unpaid counters match exactly what's visible in the payment matrix
+    // (the matrix already shows the full cycle including future dates).
+    final allDates = _generateAllDatesUpToEndOfCurrentCycle();
+
     for (var member in _members) {
-      for (var date in _dates) {
-        if (!date.isAfter(now)) {
-          totalDue++;
+      for (var date in allDates) {
+        // All dates returned by _generateAllDatesUpToToday are <= today
+        totalDue++;
+        if (_isPaymentMarked(member.id, date)) {
+          totalPaid++;
+        }
+
+        // Current-cycle breakdown (for 'Cycle Amt' stat)
+        final dateDaysElapsed = date.difference(startDate).inDays;
+        final datePayoutCycle =
+            payoutInterval > 0 ? (dateDaysElapsed ~/ payoutInterval) : 0;
+
+        if (datePayoutCycle == currentPayoutCycle) {
+          currentCycleDue++;
           if (_isPaymentMarked(member.id, date)) {
-            totalPaid++;
-          }
-
-          final dateDaysElapsed = date.difference(startDate).inDays;
-          final datePayoutCycle =
-              payoutInterval > 0 ? (dateDaysElapsed ~/ payoutInterval) : 0;
-
-          if (datePayoutCycle == currentPayoutCycle) {
-            currentCycleDue++;
-            if (_isPaymentMarked(member.id, date)) {
-              currentCyclePaid++;
-            }
+            currentCyclePaid++;
           }
         }
       }

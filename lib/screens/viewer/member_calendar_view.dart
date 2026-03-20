@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../services/database_service.dart';
+import '../../services/supabase_service.dart';
 import 'package:committee_app/ui/theme/theme.dart';
 import 'member_dashboard_screen.dart';
 
@@ -89,33 +90,88 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
         _selectedMonth = DateTime(cycleStart.year, cycleStart.month);
       }
     }
+
+    // Fire off async fetch to get true member count from cloud (for viewers who
+    // only have 1 member synced locally). Total members = Total cycles.
+    _fetchTrueCycleCountFromCloud();
+  }
+
+  Future<void> _fetchTrueCycleCountFromCloud() async {
+    try {
+      final supabaseService =
+          SupabaseService(); // Make sure SupabaseService is imported
+      final members = await supabaseService.getMembers(widget.committee.id);
+      if (members.isNotEmpty && members.length > _maxCycles) {
+        if (mounted) {
+          setState(() {
+            _maxCycles = members.length;
+            // Re-calculate dates if selected cycle was out of bounds
+            if (_selectedCycle > _maxCycles) {
+              _selectedCycle = _maxCycles;
+              _calculateCycleDates();
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // Ignore if offline
+      print('Failed to fetch true cycle count: $e');
+    }
   }
 
   int _resolveTotalCycles() {
     final memberPayments = _dbService.getPaymentsByMember(widget.member.id);
 
+    // Calculate the number of collection periods per payout cycle.
+    // For DAILY: 1 collection per day, so periodsPerPayout = 1 (not paymentIntervalDays).
+    // For WEEKLY: 1 collection per week.
+    // For MONTHLY: 1 collection per month.
     int periodsPerPayout;
-    if (widget.committee.frequency == 'monthly') {
-      periodsPerPayout = (widget.committee.paymentIntervalDays / 30).ceil();
+    if (widget.committee.frequency == 'daily') {
+      periodsPerPayout = 1;
     } else if (widget.committee.frequency == 'weekly') {
-      periodsPerPayout = (widget.committee.paymentIntervalDays / 7).ceil();
+      periodsPerPayout = 1;
     } else {
-      periodsPerPayout = widget.committee.paymentIntervalDays;
+      // monthly
+      periodsPerPayout = 1;
     }
-    if (periodsPerPayout < 1) periodsPerPayout = 1;
+    // Each payout cycle spans paymentIntervalDays / collectionInterval collections.
+    // However since we are counting PAYOUT CYCLES (not individual collections),
+    // cyclesFromPayments = total payments / collections-per-cycle.
+    final int collectionInterval =
+        widget.committee.frequency == 'daily'
+            ? 1
+            : widget.committee.frequency == 'weekly'
+            ? 7
+            : 30;
+    final int collectionsPerCycle =
+        widget.committee.paymentIntervalDays > 0
+            ? (widget.committee.paymentIntervalDays / collectionInterval).ceil()
+            : 1;
 
     final cyclesFromPayments =
         memberPayments.isEmpty
             ? 0
-            : (memberPayments.length / periodsPerPayout).ceil();
+            : (memberPayments.length / collectionsPerCycle).ceil();
 
+    // Calendar-based estimate: how many full payout cycles have elapsed since start?
+    final daysSinceStart =
+        DateTime.now().difference(widget.committee.startDate).inDays;
+    final cyclesElapsed =
+        widget.committee.paymentIntervalDays > 0
+            ? (daysSinceStart / widget.committee.paymentIntervalDays).ceil()
+            : 0;
+
+    // Total payout cycles in a kameti = total members (each member gets one payout).
+    // Collect all credible candidate values and take the maximum.
     final candidates =
         <int>[
-          widget.members.length,
-          widget.committee.totalMembers,
-          widget.committee.totalCycles,
-          cyclesFromPayments,
-          widget.member.payoutOrder,
+          widget.members.length,          // members synced locally
+          widget.committee.totalMembers,  // stored on the committee record
+          widget.committee.totalCycles,   // stored total cycles
+          cyclesFromPayments,             // inferred from payment history
+          cyclesElapsed,                  // inferred from calendar
+          widget.member.payoutOrder,      // member's own slot (lower bound)
         ].where((value) => value > 0).toList();
 
     if (candidates.isEmpty) return 1;

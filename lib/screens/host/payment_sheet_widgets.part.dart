@@ -62,7 +62,6 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
         ),
         const SizedBox(height: 10),
         ..._members.asMap().entries.map((entry) {
-          final memberIndex = entry.key;
           final member = entry.value;
           final memberDebt = _calculateMemberDebt(member.id);
           final isDefaulter = memberDebt['isDefaulter'] as bool;
@@ -70,6 +69,11 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
           final memberAdvance = _calculateMemberAdvance(member.id);
           final hasAdvance = memberAdvance['hasAdvance'] as bool;
           final advanceCount = memberAdvance['advanceCount'] as int;
+
+          // Zero-indexed payout slot based on the member's assigned payout order.
+          // Using payoutOrder (not the visual row index) ensures the star is on
+          // the correct member even after reordering/shuffling.
+          final memberPayoutSlot = member.payoutOrder - 1;
 
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
@@ -98,8 +102,10 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
                   final daysElapsed = date.difference(startDate).inDays;
                   final currentRound =
                       payoutInterval > 0 ? (daysElapsed ~/ payoutInterval) : 0;
+                  // Compare against the member's own payout slot (0-indexed),
+                  // not the visual row position, so shuffled orders work correctly.
                   final receiverIndex = currentRound % _members.length;
-                  final isPayoutReceiver = receiverIndex == memberIndex;
+                  final isPayoutReceiver = receiverIndex == memberPayoutSlot;
 
                   final isPayoutDay =
                       payoutInterval > 0 &&
