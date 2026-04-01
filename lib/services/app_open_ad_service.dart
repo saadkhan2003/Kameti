@@ -96,6 +96,7 @@ class AppOpenAdService {
   void _tryShow() {
     if (_suppressed) return;
     if (_isShowingAd) return;
+    if (!AdService.canShowFullScreenAd()) return;
     if (_ad == null) {
       // Ad not ready — start loading for next opportunity
       _loadAd();
@@ -103,11 +104,12 @@ class AppOpenAdService {
     }
 
     _isShowingAd = true;
-    _lastShowTime = DateTime.now();
 
     _ad!.fullScreenContentCallback = FullScreenContentCallback(
       onAdShowedFullScreenContent: (_) {
         debugPrint('AppOpenAd showed');
+        _lastShowTime = DateTime.now();
+        AdService.markFullScreenAdShown();
       },
       onAdDismissedFullScreenContent: (ad) {
         debugPrint('AppOpenAd dismissed');

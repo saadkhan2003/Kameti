@@ -6,6 +6,9 @@ import 'package:flutter/foundation.dart';
 class AdService {
   AdService._();
 
+  static const Duration fullScreenAdCooldown = Duration(minutes: 1);
+  static DateTime? _lastFullScreenAdShownAt;
+
   // ─── App IDs ────────────────────────────────────────────────────────────────
   static const String _productionAppId =
       'ca-app-pub-1709708368201318~9324084262';
@@ -63,4 +66,37 @@ class AdService {
   /// Whether ads should be shown in the current environment.
   /// You can add extra logic here (e.g. hide for premium users).
   static bool get adsEnabled => true;
+
+  /// Returns true if enough time has passed since the last full-screen ad show.
+  static bool canShowFullScreenAd({DateTime? now}) {
+    final currentTime = now ?? DateTime.now();
+
+    if (!adsEnabled) return false;
+    if (_lastFullScreenAdShownAt == null) return true;
+
+    final elapsed = currentTime.difference(_lastFullScreenAdShownAt!);
+    return elapsed >= fullScreenAdCooldown;
+  }
+
+  /// Marks that a full-screen ad was shown now.
+  /// Call this from `onAdShowedFullScreenContent` callbacks.
+  static void markFullScreenAdShown({DateTime? now}) {
+    _lastFullScreenAdShownAt = now ?? DateTime.now();
+  }
+
+  /// Remaining cooldown before another full-screen ad can be shown.
+  /// Returns [Duration.zero] when no cooldown is active.
+  static Duration fullScreenAdCooldownRemaining({DateTime? now}) {
+    final currentTime = now ?? DateTime.now();
+    if (_lastFullScreenAdShownAt == null) return Duration.zero;
+
+    final elapsed = currentTime.difference(_lastFullScreenAdShownAt!);
+    final remaining = fullScreenAdCooldown - elapsed;
+
+    if (remaining.isNegative || remaining == Duration.zero) {
+      return Duration.zero;
+    }
+
+    return remaining;
+  }
 }
