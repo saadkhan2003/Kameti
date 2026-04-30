@@ -150,3 +150,5 @@ build_log.txt
 
 # Local Flutter SDK clone (used by some CI/local scripts)
 /flutter/
+
+.zed

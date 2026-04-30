@@ -1,177 +1,188 @@
-# Supabase CLI
+# Kameti
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
-](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
+Kameti is a Flutter app for managing ROSCA-style committees (rotating savings groups), with host and member workflows, offline-first local storage, and Supabase cloud sync.
 
-[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
+## What It Does
 
-This repository contains all the functionality for Supabase CLI.
+- Host workflow:
+  - Create and manage committees
+  - Add/remove members and assign payout order
+  - Track payments by cycle
+  - Review member payment proofs
+  - View committee analytics
+- Member/viewer workflow:
+  - Join using committee code + member code
+  - View personal payment status and schedule
+  - Upload payment proof
+- Platform features:
+  - Offline-first local database (Hive)
+  - Cloud sync + realtime updates (Supabase)
+  - Email/password + Google OAuth auth
+  - Biometric app lock
+  - Push notifications (FCM)
+  - In-app update checks (remote config)
+  - Ads (AdMob)
 
-- [x] Running Supabase locally
-- [x] Managing database migrations
-- [x] Creating and deploying Supabase Functions
-- [x] Generating types directly from your database schema
-- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+## Tech Stack
 
-## Getting started
+- Flutter (Dart)
+- Hive (`committees`, `members`, `payments`, local settings)
+- Supabase (Auth, Postgres, Realtime, RLS)
+- Firebase Messaging (push notifications)
+- Google Mobile Ads
+- Netlify (web deployment)
 
-### Install the CLI
+## Project Structure
 
-Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+```text
+lib/
+  main.dart
+  models/                 # committee/member/payment/payment_proof models
+  services/               # auth, db, sync, supabase, notifications, ads
+  screens/                # auth, host, member, viewer, splash, onboarding
+  ui/                     # shared design system (theme, widgets)
+  utils/
+scripts/                  # SQL setup scripts and utility templates
+assets/
+  env                     # runtime env file read by flutter_dotenv
+```
+
+## Prerequisites
+
+- Flutter SDK compatible with project (`sdk: ^3.7.0` in `pubspec.yaml`)
+- Dart SDK (bundled with Flutter)
+- Supabase project
+- Android Studio / Xcode for mobile builds
+- (Optional) Firebase project for FCM
+
+## Environment Variables
+
+This app loads env vars from `assets/env` (not `.env`).
+
+Create `assets/env`:
 
 ```bash
-npm i supabase --save-dev
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 ```
 
-When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
+Notes:
+- `lib/supabase_config.dart` reads only these two keys.
+- Ensure `assets/env` is included in Flutter assets (already configured in `pubspec.yaml`).
 
-```
-NODE_OPTIONS=--no-experimental-fetch yarn add supabase
-```
+## Setup
 
-> **Note**
-For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
-
-<details>
-  <summary><b>macOS</b></summary>
-
-  Available via [Homebrew](https://brew.sh). To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To install the beta release channel:
-  
-  ```sh
-  brew install supabase/tap/supabase-beta
-  brew link --overwrite supabase-beta
-  ```
-  
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Windows</b></summary>
-
-  Available via [Scoop](https://scoop.sh). To install:
-
-  ```powershell
-  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-  scoop install supabase
-  ```
-
-  To upgrade:
-
-  ```powershell
-  scoop update supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Linux</b></summary>
-
-  Available via [Homebrew](https://brew.sh) and Linux packages.
-
-  #### via Homebrew
-
-  To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-
-  #### via Linux packages
-
-  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
-
-  ```sh
-  sudo apk add --allow-untrusted <...>.apk
-  ```
-
-  ```sh
-  sudo dpkg -i <...>.deb
-  ```
-
-  ```sh
-  sudo rpm -i <...>.rpm
-  ```
-
-  ```sh
-  sudo pacman -U <...>.pkg.tar.zst
-  ```
-</details>
-
-<details>
-  <summary><b>Other Platforms</b></summary>
-
-  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
-
-  ```sh
-  go install github.com/supabase/cli@latest
-  ```
-
-  Add a symlink to the binary in `$PATH` for easier access:
-
-  ```sh
-  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
-  ```
-
-  This works on other non-standard Linux distros.
-</details>
-
-<details>
-  <summary><b>Community Maintained Packages</b></summary>
-
-  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
-  To install in your working directory:
-
-  ```bash
-  pkgx install supabase
-  ```
-
-  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
-</details>
-
-### Run the CLI
+1. Install dependencies:
 
 ```bash
-supabase bootstrap
+flutter pub get
 ```
 
-Or using npx:
+2. Generate Hive adapters (if models changed):
 
 ```bash
-npx supabase bootstrap
+dart run build_runner build --delete-conflicting-outputs
 ```
 
-The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+3. Configure Supabase SQL (order matters):
 
-## Docs
+- Run `scripts/setup_remote_config.sql`
+- Run `scripts/setup_security_rls.sql`
+- Run `scripts/add_viewer_rls_policies.sql`
+- Run `scripts/setup_payment_proofs.sql`
 
-Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+4. (Optional) Configure Firebase for push notifications:
 
-## Breaking changes
+- Android: provide `android/app/google-services.json`
+- iOS: add `GoogleService-Info.plist`
 
-We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+## Running the App
 
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+Mobile:
 
-## Developing
-
-To run from source:
-
-```sh
-# Go >= 1.22
-go run . help
+```bash
+flutter run
 ```
+
+Web:
+
+```bash
+flutter run -d chrome
+```
+
+## Build
+
+Android APK:
+
+```bash
+flutter build apk --release
+```
+
+Web:
+
+```bash
+flutter build web --release --no-tree-shake-icons
+```
+
+## Data & Sync Model
+
+- Local-first writes go to Hive.
+- `SyncService` uploads/downloads committee/member/payment diffs to Supabase.
+- `RealtimeSyncService` listens to Supabase Postgres changes and updates local Hive.
+- Full sync runs on startup for authenticated host users.
+
+## Auth Model
+
+- Supabase Auth supports:
+  - Email/password
+  - Email OTP verification
+  - Google OAuth
+- Unverified users are blocked from normal signed-in host flow until verification.
+
+## Remote Config / Force Update
+
+App reads `app_config` table values via `RemoteConfigService`, including:
+
+- `force_update_enabled`
+- `min_android_version`
+- `min_ios_version`
+- update dialog text and store URLs
+
+## Deployment (Web on Netlify)
+
+`netlify.toml` is already configured to:
+
+- clone Flutter in CI if missing
+- inject `SUPABASE_URL` and `SUPABASE_ANON_KEY` into `assets/env`
+- build and publish `build/web`
+
+Set Netlify environment variables:
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+
+## Common Commands
+
+```bash
+# Analyze
+flutter analyze
+
+# Test
+flutter test
+
+# Clean
+flutter clean
+
+# Regenerate model adapters
+dart run build_runner build --delete-conflicting-outputs
+```
+
+## Current App Identity
+
+- Android package: `com.kameti.app`
+- App version source: `pubspec.yaml` (`version: 1.2.1+24` at time of writing)
+
+## Notes
+
+- The app currently includes both Supabase and Firebase dependencies. Supabase is the primary backend for app data; Firebase is used for FCM.
+- If RLS policies already exist in your Supabase project, review SQL scripts before re-running to avoid policy conflicts.
