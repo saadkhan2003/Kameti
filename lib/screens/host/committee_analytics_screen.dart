@@ -105,6 +105,12 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
 
   int get _maxPeriods => _configuredCycles * _periodsPerPayout;
 
+  bool _isDateSkipped(DateTime date) {
+    final key =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return widget.committee.skippedDates.contains(key);
+  }
+
   List<DateTime> get _dueDatesUpToNow {
     final now = DateTime.now();
     final start = DateTime(
@@ -122,7 +128,9 @@ class _CommitteeAnalyticsScreenState extends State<CommitteeAnalyticsScreen>
     while (!current.isAfter(now) &&
         dates.length < _maxPeriods &&
         safety < 1200) {
-      dates.add(current);
+      if (!_isDateSkipped(current)) {
+        dates.add(current);
+      }
       if (widget.committee.frequency == 'monthly') {
         current = _addMonths(current, 1);
       } else {

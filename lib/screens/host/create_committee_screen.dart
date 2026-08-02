@@ -10,8 +10,7 @@ import '../../services/haptic_service.dart';
 import '../../models/committee.dart';
 import '../../utils/code_generator.dart';
 import 'package:kameti/ui/theme/theme.dart';
-import '../../ui/widgets/micro_animations.dart';
-import 'package:lottie/lottie.dart';
+// import '../../ui/widgets/micro_animations.dart';
 
 class CreateCommitteeScreen extends StatefulWidget {
   const CreateCommitteeScreen({super.key});
@@ -281,7 +280,12 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          6,
+          16,
+          MediaQuery.of(context).viewPadding.bottom + 20,
+        ),
         child: Form(
           key: _formKey,
           child: Column(
@@ -775,7 +779,12 @@ class _CreateCommitteeScreenState extends State<CreateCommitteeScreen> {
       ),
       builder:
           (context) => Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.fromLTRB(
+              0,
+              16,
+              0,
+              MediaQuery.of(context).viewPadding.bottom + 16,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

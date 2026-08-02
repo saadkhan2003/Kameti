@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Project imports
 import '../../services/auth_service.dart';
@@ -19,6 +20,7 @@ import 'package:kameti/ui/theme/theme.dart';
 import 'member_management_screen.dart';
 import 'pending_proofs_screen.dart';
 import '../viewer/member_calendar_view.dart';
+import 'payment_sheet_help_screen.dart';
 
 part 'payment_sheet_export.part.dart';
 part 'payment_sheet_reminders.part.dart';
@@ -62,6 +64,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   int _selectedCycle = 1;
   int _maxCycles = 1;
   int _pendingProofRequests = 0;
+  Set<String> _skippedDateSet = {};
 
   // Number of extra future periods to show (for advance payments)
   final int _extraPeriods = 1;
@@ -70,6 +73,33 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   void initState() {
     super.initState();
     _syncAndLoad();
+    _checkFirstTimeHelp();
+  }
+
+  Future<void> _checkFirstTimeHelp() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('payment_sheet_help_seen') ?? false;
+    if (!seen && mounted) {
+      // Small delay so the page renders first
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const PaymentSheetHelpScreen(isFirstTime: true),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showHelp() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PaymentSheetHelpScreen(),
+      ),
+    );
   }
 
   Future<void> _syncAndLoad({bool waitForSync = false}) async {
@@ -151,6 +181,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     }
     _dbService.setSelectedCycle(widget.committee.id, _selectedCycle);
 
+    _skippedDateSet = widget.committee.skippedDates.toSet();
     _generateDates();
     _loadPaymentsFromLocal();
 
@@ -253,6 +284,22 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
         current = current.add(Duration(days: collectionInterval));
       }
     }
+
+    // Compensate for skipped dates across all cycles: for each skipped date,
+    // add an extra date at the end so the total active periods stay correct.
+    int skippedCount = 0;
+    for (final date in allDates) {
+      if (_isDateSkipped(date)) skippedCount++;
+    }
+    for (int i = 0; i < skippedCount; i++) {
+      allDates.add(current);
+      if (widget.committee.frequency == 'monthly') {
+        current = _addMonths(current, 1);
+      } else {
+        current = current.add(Duration(days: collectionInterval));
+      }
+    }
+
     return allDates;
   }
 
@@ -313,6 +360,27 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
           current = _addMonths(current, 1);
         } else {
           current = current.add(Duration(days: collectionInterval));
+        }
+      }
+
+      // Compensate for skipped dates: for each skipped date in this cycle,
+      // add an extra date at the end so the cycle still has the correct
+      // number of active collection periods. This ensures a monthly cycle
+      // that starts on the 15th always ends on the 15th of the next month,
+      // even if an intermediate date (e.g. 31st) is skipped.
+      int skippedCount = 0;
+      for (final date in _dates) {
+        if (_isDateSkipped(date)) skippedCount++;
+      }
+      if (skippedCount > 0) {
+        // current already points to the first date of the NEXT cycle
+        for (int i = 0; i < skippedCount; i++) {
+          _dates.add(current);
+          if (widget.committee.frequency == 'monthly') {
+            current = _addMonths(current, 1);
+          } else {
+            current = current.add(Duration(days: collectionInterval));
+          }
         }
       }
     } else {
@@ -424,6 +492,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     int duePeriods = 0;
 
     for (var date in _dates) {
+      if (_isDateSkipped(date)) continue;
       duePeriods++;
       if (_isPaymentMarked(memberId, date)) paidCount++;
     }
@@ -473,6 +542,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
 
     for (var member in _members) {
       for (var date in allDates) {
+        if (_isDateSkipped(date)) continue;
         // All dates returned by _generateAllDatesUpToToday are <= today
         totalDue++;
         if (_isPaymentMarked(member.id, date)) {
@@ -525,6 +595,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     final now = DateTime.now();
     int advancePaymentCount = 0;
     for (var date in _dates) {
+      if (_isDateSkipped(date)) continue;
       if (date.isAfter(now) && _isPaymentMarked(memberId, date)) {
         advancePaymentCount++;
       }
@@ -587,6 +658,455 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     }
   }
 
+  bool _isDateSkipped(DateTime date) {
+    final key = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return _skippedDateSet.contains(key);
+  }
+
+  Future<void> _toggleSkippedDay(DateTime date) async {
+    final currentUser = _authService.currentUser;
+    if (currentUser?.id != widget.committee.hostId) {
+      if (!mounted) return;
+      ToastService.warning(context, 'Only the host can skip days');
+      return;
+    }
+
+    // Optimistic update
+    final key = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    setState(() {
+      if (_skippedDateSet.contains(key)) {
+        _skippedDateSet.remove(key);
+      } else {
+        _skippedDateSet.add(key);
+      }
+      // Regenerate dates to add/remove extra补偿 dates for skips
+      _generateDates();
+    });
+
+    try {
+      await _dbService.toggleSkippedDay(widget.committee.id, date);
+      // Reload committee to get updated skippedDates
+      final updated = _dbService.getCommitteeById(widget.committee.id);
+      if (updated != null && mounted) {
+        setState(() {
+          _skippedDateSet = updated.skippedDates.toSet();
+          _generateDates();
+          _loadPaymentsFromLocal();
+        });
+      }
+    } catch (e) {
+      // Revert on error
+      if (mounted) {
+        final updated = _dbService.getCommitteeById(widget.committee.id);
+        if (updated != null) {
+          setState(() {
+            _skippedDateSet = updated.skippedDates.toSet();
+            _generateDates();
+          });
+        }
+        ToastService.error(context, 'Failed to toggle skip: $e');
+      }
+    }
+  }
+
+  Future<void> _markAllPaidForCurrentCycle() async {
+    final currentUser = _authService.currentUser;
+    if (currentUser?.id != widget.committee.hostId) {
+      if (!mounted) return;
+      ToastService.warning(context, 'Only the host can mark payments');
+      return;
+    }
+
+    // Find all unpaid, non-skipped cells in the current cycle
+    final List<MapEntry<String, DateTime>> unpaidCells = [];
+    for (var member in _members) {
+      for (var date in _dates) {
+        if (_isDateSkipped(date)) continue;
+        if (!_isPaymentMarked(member.id, date)) {
+          unpaidCells.add(MapEntry(member.id, date));
+        }
+      }
+    }
+
+    if (unpaidCells.isEmpty) {
+      if (!mounted) return;
+      ToastService.info(context, 'All payments already marked for this cycle');
+      return;
+    }
+
+    // Confirm before bulk action
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Mark All Paid?',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'This will mark ${unpaidCells.length} unpaid payment${unpaidCells.length > 1 ? 's' : ''} as paid for the current cycle.',
+          style: GoogleFonts.inter(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: GoogleFonts.inter(color: _textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Mark All',
+              style: GoogleFonts.inter(color: _success, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    // Optimistic update
+    for (var cell in unpaidCells) {
+      final dateKey = _getDateKey(cell.value);
+      setState(() {
+        _paymentGrid[cell.key] ??= {};
+        _paymentGrid[cell.key]![dateKey] = true;
+      });
+    }
+
+    // Persist each payment
+    final hostId = currentUser?.id ?? '';
+    try {
+      for (var cell in unpaidCells) {
+        await _autoSyncService.togglePayment(
+          cell.key,
+          widget.committee.id,
+          cell.value,
+          hostId,
+        );
+      }
+
+      AnalyticsService.logPaymentMarked(
+        amount: widget.committee.contributionAmount * unpaidCells.length,
+        isPaid: true,
+      );
+
+      if (mounted) {
+        _loadPaymentsFromLocal();
+        setState(() {});
+        ToastService.success(
+          context,
+          '${unpaidCells.length} payment${unpaidCells.length > 1 ? 's' : ''} marked as paid',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _loadPaymentsFromLocal();
+        setState(() {});
+        ToastService.error(context, 'Failed: $e');
+      }
+    }
+  }
+
+  Future<void> _markAllPaidForMember(Member member) async {
+    final currentUser = _authService.currentUser;
+    if (currentUser?.id != widget.committee.hostId) {
+      if (!mounted) return;
+      ToastService.warning(context, 'Only the host can mark payments');
+      return;
+    }
+
+    final List<DateTime> unpaidDates = [];
+    for (var date in _dates) {
+      if (_isDateSkipped(date)) continue;
+      if (!_isPaymentMarked(member.id, date)) {
+        unpaidDates.add(date);
+      }
+    }
+
+    if (unpaidDates.isEmpty) {
+      if (!mounted) return;
+      ToastService.info(context, '${member.name} has no unpaid periods in this cycle');
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Mark All Paid?',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Mark ${unpaidDates.length} unpaid period${unpaidDates.length > 1 ? 's' : ''} as paid for ${member.name}?',
+          style: GoogleFonts.inter(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: GoogleFonts.inter(color: _textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Mark All',
+              style: GoogleFonts.inter(color: _success, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    // Optimistic update
+    for (var date in unpaidDates) {
+      final dateKey = _getDateKey(date);
+      setState(() {
+        _paymentGrid[member.id] ??= {};
+        _paymentGrid[member.id]![dateKey] = true;
+      });
+    }
+
+    final hostId = currentUser?.id ?? '';
+    try {
+      for (var date in unpaidDates) {
+        await _autoSyncService.togglePayment(
+          member.id,
+          widget.committee.id,
+          date,
+          hostId,
+        );
+      }
+
+      AnalyticsService.logPaymentMarked(
+        amount: widget.committee.contributionAmount * unpaidDates.length,
+        isPaid: true,
+      );
+
+      if (mounted) {
+        _loadPaymentsFromLocal();
+        setState(() {});
+        ToastService.success(
+          context,
+          '${unpaidDates.length} payment${unpaidDates.length > 1 ? 's' : ''} marked for ${member.name}',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _loadPaymentsFromLocal();
+        setState(() {});
+        ToastService.error(context, 'Failed: $e');
+      }
+    }
+  }
+
+  Future<void> _unmarkAllPaidForCurrentCycle() async {
+    final currentUser = _authService.currentUser;
+    if (currentUser?.id != widget.committee.hostId) {
+      if (!mounted) return;
+      ToastService.warning(context, 'Only the host can mark payments');
+      return;
+    }
+
+    final List<MapEntry<String, DateTime>> paidCells = [];
+    for (var member in _members) {
+      for (var date in _dates) {
+        if (_isDateSkipped(date)) continue;
+        if (_isPaymentMarked(member.id, date)) {
+          paidCells.add(MapEntry(member.id, date));
+        }
+      }
+    }
+
+    if (paidCells.isEmpty) {
+      if (!mounted) return;
+      ToastService.info(context, 'No payments to unmark in this cycle');
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Unmark All Paid?',
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'This will unmark ${paidCells.length} payment${paidCells.length > 1 ? 's' : ''} in the current cycle.',
+          style: GoogleFonts.inter(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: GoogleFonts.inter(color: _textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Unmark All',
+              style: GoogleFonts.inter(color: _warning, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    for (var cell in paidCells) {
+      final dateKey = _getDateKey(cell.value);
+      setState(() {
+        _paymentGrid[cell.key] ??= {};
+        _paymentGrid[cell.key]![dateKey] = false;
+      });
+    }
+
+    final hostId = currentUser?.id ?? '';
+    try {
+      for (var cell in paidCells) {
+        await _autoSyncService.togglePayment(
+          cell.key,
+          widget.committee.id,
+          cell.value,
+          hostId,
+        );
+      }
+
+      if (mounted) {
+        _loadPaymentsFromLocal();
+        setState(() {});
+        ToastService.success(
+          context,
+          '${paidCells.length} payment${paidCells.length > 1 ? 's' : ''} unmarked',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _loadPaymentsFromLocal();
+        setState(() {});
+        ToastService.error(context, 'Failed: $e');
+      }
+    }
+  }
+
+  void _showBulkPaymentActions() {
+    int paidCount = 0;
+    int unpaidCount = 0;
+    for (var member in _members) {
+      for (var date in _dates) {
+        if (_isDateSkipped(date)) continue;
+        if (_isPaymentMarked(member.id, date)) {
+          paidCount++;
+        } else {
+          unpaidCount++;
+        }
+      }
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(ctx).viewPadding.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.cFFD7E0F2,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Bulk Actions',
+              style: GoogleFonts.inter(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: _textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$paidCount paid, $unpaidCount unpaid in this cycle',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: _textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (unpaidCount > 0)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _markAllPaidForCurrentCycle();
+                  },
+                  icon: const Icon(AppIcons.check_circle, size: 18),
+                  label: Text('Mark All Paid ($unpaidCount)'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _success,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            if (unpaidCount > 0 && paidCount > 0) const SizedBox(height: 10),
+            if (paidCount > 0)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _unmarkAllPaidForCurrentCycle();
+                  },
+                  icon: Icon(AppIcons.cancel, size: 18, color: _warning),
+                  label: Text(
+                    'Unmark All Paid ($paidCount)',
+                    style: TextStyle(color: _warning),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _warning,
+                    side: BorderSide(color: _warning.withOpacity(0.35)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            if (paidCount == 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'All payments already unmarked ✓',
+                  style: GoogleFonts.inter(
+                    color: _textSecondary,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.viewAsMember != null) {
@@ -613,6 +1133,11 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(AppIcons.help_outline_rounded, color: _textSecondary),
+            tooltip: 'Help',
+            onPressed: _showHelp,
+          ),
           IconButton(
             icon: const Icon(AppIcons.reminder, color: _textSecondary),
             tooltip: 'Send Reminders',
@@ -1048,10 +1573,39 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
                       ),
                     ),
 
+                  // Mark All Paid button
+                  if (_members.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 2),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _showBulkPaymentActions,
+                          icon: const Icon(AppIcons.check_circle, size: 18),
+                          label: const Text('Bulk Payment Actions'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _success,
+                            side: BorderSide(
+                              color: _success.withOpacity(0.35),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
                   // Custom Payment Matrix
                   Expanded(
                     child: Container(
-                      margin: const EdgeInsets.fromLTRB(16, 2, 16, 12),
+                      margin: EdgeInsets.fromLTRB(
+                        16,
+                        2,
+                        16,
+                        12 + MediaQuery.of(context).viewPadding.bottom,
+                      ),
                       decoration: BoxDecoration(
                         color: _surface,
                         borderRadius: BorderRadius.circular(18),

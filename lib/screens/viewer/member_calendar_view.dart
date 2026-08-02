@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:kameti/ui/theme/theme.dart';
 
 import '../../models/committee.dart';
 import '../../models/member.dart';
 import '../../services/database_service.dart';
 import '../../services/supabase_service.dart';
-import 'package:kameti/ui/theme/theme.dart';
 import 'member_dashboard_screen.dart';
 
 class MemberCalendarView extends StatefulWidget {
@@ -58,240 +58,17 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
   int _maxCycles = 1;
   List<DateTime> _cycleDates = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _selectedMonth = DateTime.now();
-    _initializeCycleData();
-  }
-
-  @override
-  void didUpdateWidget(covariant MemberCalendarView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.members.length != widget.members.length ||
-        oldWidget.dates.length != widget.dates.length) {
-      _initializeCycleData();
+  String get _getPeriodPrefix {
+    switch (widget.committee.frequency) {
+      case 'daily':
+        return 'Day';
+      case 'weekly':
+        return 'Week';
+      case 'monthly':
+        return 'Month';
+      default:
+        return 'Period';
     }
-  }
-
-  void _initializeCycleData() {
-    _maxCycles = _resolveTotalCycles();
-    _selectedCycle = _findOngoingCycle();
-    _calculateCycleDates();
-
-    final now = DateTime.now();
-    if (_cycleDates.isNotEmpty) {
-      final cycleStart = _cycleDates.first;
-      final cycleEnd = _cycleDates.last;
-      if (!now.isBefore(cycleStart) &&
-          !now.isAfter(cycleEnd.add(const Duration(days: 1)))) {
-        _selectedMonth = DateTime(now.year, now.month);
-      } else {
-        _selectedMonth = DateTime(cycleStart.year, cycleStart.month);
-      }
-    }
-
-    // Fire off async fetch to get true member count from cloud (for viewers who
-    // only have 1 member synced locally). Total members = Total cycles.
-    _fetchTrueCycleCountFromCloud();
-  }
-
-  Future<void> _fetchTrueCycleCountFromCloud() async {
-    try {
-      final supabaseService =
-          SupabaseService(); // Make sure SupabaseService is imported
-      final members = await supabaseService.getMembers(widget.committee.id);
-      if (members.isNotEmpty && members.length > _maxCycles) {
-        if (mounted) {
-          setState(() {
-            _maxCycles = members.length;
-            // Re-calculate dates if selected cycle was out of bounds
-            if (_selectedCycle > _maxCycles) {
-              _selectedCycle = _maxCycles;
-              _calculateCycleDates();
-            }
-          });
-        }
-      }
-    } catch (e) {
-      // Ignore if offline
-      print('Failed to fetch true cycle count: $e');
-    }
-  }
-
-  int _resolveTotalCycles() {
-    final memberPayments = _dbService.getPaymentsByMember(widget.member.id);
-
-    // Calculate the number of collection periods per payout cycle.
-    // For DAILY: 1 collection per day, so periodsPerPayout = 1 (not paymentIntervalDays).
-    // For WEEKLY: 1 collection per week.
-    // For MONTHLY: 1 collection per month.
-    int periodsPerPayout;
-    if (widget.committee.frequency == 'daily') {
-      periodsPerPayout = 1;
-    } else if (widget.committee.frequency == 'weekly') {
-      periodsPerPayout = 1;
-    } else {
-      // monthly
-      periodsPerPayout = 1;
-    }
-    // Each payout cycle spans paymentIntervalDays / collectionInterval collections.
-    // However since we are counting PAYOUT CYCLES (not individual collections),
-    // cyclesFromPayments = total payments / collections-per-cycle.
-    final int collectionInterval =
-        widget.committee.frequency == 'daily'
-            ? 1
-            : widget.committee.frequency == 'weekly'
-            ? 7
-            : 30;
-    final int collectionsPerCycle =
-        widget.committee.paymentIntervalDays > 0
-            ? (widget.committee.paymentIntervalDays / collectionInterval).ceil()
-            : 1;
-
-    final cyclesFromPayments =
-        memberPayments.isEmpty
-            ? 0
-            : (memberPayments.length / collectionsPerCycle).ceil();
-
-    // Calendar-based estimate: how many full payout cycles have elapsed since start?
-    final daysSinceStart =
-        DateTime.now().difference(widget.committee.startDate).inDays;
-    final cyclesElapsed =
-        widget.committee.paymentIntervalDays > 0
-            ? (daysSinceStart / widget.committee.paymentIntervalDays).ceil()
-            : 0;
-
-    // Total payout cycles in a kameti = total members (each member gets one payout).
-    // Collect all credible candidate values and take the maximum.
-    final candidates =
-        <int>[
-          widget.members.length,          // members synced locally
-          widget.committee.totalMembers,  // stored on the committee record
-          widget.committee.totalCycles,   // stored total cycles
-          cyclesFromPayments,             // inferred from payment history
-          cyclesElapsed,                  // inferred from calendar
-          widget.member.payoutOrder,      // member's own slot (lower bound)
-        ].where((value) => value > 0).toList();
-
-    if (candidates.isEmpty) return 1;
-    candidates.sort();
-    return candidates.last;
-  }
-
-  int _findOngoingCycle() {
-    final startDate = widget.committee.startDate;
-    final now = DateTime.now();
-    final daysSinceStart = now.difference(startDate).inDays;
-    final intervalDays = widget.committee.paymentIntervalDays;
-    final cycle = (daysSinceStart / intervalDays).floor() + 1;
-    return cycle.clamp(1, _maxCycles);
-  }
-
-  void _calculateCycleDates() {
-    _cycleDates = [];
-    if (_selectedCycle < 1 || _selectedCycle > _maxCycles) return;
-
-    final startDate = widget.committee.startDate;
-    final intervalDays = widget.committee.paymentIntervalDays;
-    final frequency = widget.committee.frequency;
-
-    final cycleStartDate = startDate.add(
-      Duration(days: (intervalDays * (_selectedCycle - 1))),
-    );
-    final cycleEndDate = startDate.add(
-      Duration(days: (intervalDays * _selectedCycle) - 1),
-    );
-
-    int collectionInterval = 1;
-    if (frequency == 'weekly') collectionInterval = 7;
-    if (frequency == 'monthly') collectionInterval = 30;
-
-    DateTime current = cycleStartDate;
-    while (!current.isAfter(cycleEndDate)) {
-      _cycleDates.add(current);
-      current = current.add(Duration(days: collectionInterval));
-    }
-  }
-
-  void _changeCycle(int delta) {
-    setState(() {
-      final newCycle = _selectedCycle + delta;
-      if (newCycle >= 1 && newCycle <= _maxCycles) {
-        _selectedCycle = newCycle;
-        _calculateCycleDates();
-        final now = DateTime.now();
-        if (_cycleDates.isNotEmpty) {
-          final cycleStart = _cycleDates.first;
-          final cycleEnd = _cycleDates.last;
-          if (!now.isBefore(cycleStart) &&
-              !now.isAfter(cycleEnd.add(const Duration(days: 1)))) {
-            _selectedMonth = DateTime(now.year, now.month);
-          } else {
-            _selectedMonth = DateTime(cycleStart.year, cycleStart.month);
-          }
-        }
-      }
-    });
-  }
-
-  int _calculateCyclePaidCount() {
-    if (_cycleDates.isEmpty) return 0;
-    int paidCount = 0;
-    for (final date in _cycleDates) {
-      if (widget.isPaymentMarked(widget.member.id, date)) {
-        paidCount++;
-      }
-    }
-    return paidCount;
-  }
-
-  double _calculateCycleTotalContribution() {
-    return _calculateCyclePaidCount() * widget.committee.contributionAmount;
-  }
-
-  List<DateTime> _getDaysInMonth(DateTime month) {
-    final firstDay = DateTime(month.year, month.month, 1);
-    final lastDay = DateTime(month.year, month.month + 1, 0);
-
-    List<DateTime> days = [];
-    int startingWeekday = firstDay.weekday % 7;
-
-    for (int i = 0; i < startingWeekday; i++) {
-      days.add(DateTime(month.year, month.month, 1 - (startingWeekday - i)));
-    }
-
-    for (int i = 1; i <= lastDay.day; i++) {
-      days.add(DateTime(month.year, month.month, i));
-    }
-
-    int remainingDays = 42 - days.length;
-    for (int i = 1; i <= remainingDays; i++) {
-      days.add(DateTime(month.year, month.month + 1, i));
-    }
-
-    return days;
-  }
-
-  bool _isPaymentDateForMember(DateTime date) {
-    final frequency = widget.committee.frequency;
-    for (final paymentDate in _cycleDates) {
-      if (frequency == 'monthly') {
-        if (paymentDate.year == date.year &&
-            paymentDate.month == date.month &&
-            paymentDate.day == date.day) {
-          return true;
-        }
-      } else if (_isSameDay(paymentDate, date)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool _isInCurrentMonth(DateTime date) {
-    return date.month == _selectedMonth.month &&
-        date.year == _selectedMonth.year;
   }
 
   @override
@@ -603,6 +380,22 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
     );
   }
 
+  @override
+  void didUpdateWidget(covariant MemberCalendarView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.members.length != widget.members.length ||
+        oldWidget.dates.length != widget.dates.length) {
+      _initializeCycleData();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedMonth = DateTime.now();
+    _initializeCycleData();
+  }
+
   Widget _buildCycleSelector() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -668,6 +461,95 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(color: _textSecondary, fontSize: 13),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              color: _textPrimary,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendAdvance() {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: _info.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: _info),
+          ),
+          child: const Icon(AppIcons.check, size: 12, color: _info),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Advance',
+          style: GoogleFonts.inter(color: _textSecondary, fontSize: 11),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegendPaid() {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: _success.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: _success),
+          ),
+          child: const Icon(AppIcons.check, size: 12, color: _success),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Paid',
+          style: GoogleFonts.inter(color: _textSecondary, fontSize: 11),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegendPending() {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          alignment: Alignment.center,
+          child: const Icon(
+            AppIcons.circle_outlined,
+            size: 14,
+            color: _warning,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Pending',
+          style: GoogleFonts.inter(color: _textSecondary, fontSize: 11),
+        ),
+      ],
     );
   }
 
@@ -753,70 +635,142 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
     );
   }
 
-  Widget _buildLegendPaid() {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
-            color: _success.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: _success),
-          ),
-          child: const Icon(AppIcons.check, size: 12, color: _success),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          'Paid',
-          style: GoogleFonts.inter(color: _textSecondary, fontSize: 11),
-        ),
-      ],
+  void _calculateCycleDates() {
+    _cycleDates = [];
+    if (_selectedCycle < 1 || _selectedCycle > _maxCycles) return;
+
+    final startDate = widget.committee.startDate;
+    final intervalDays = widget.committee.paymentIntervalDays;
+    final frequency = widget.committee.frequency;
+
+    final cycleStartDate = startDate.add(
+      Duration(days: (intervalDays * (_selectedCycle - 1))),
     );
+    final cycleEndDate = startDate.add(
+      Duration(days: (intervalDays * _selectedCycle) - 1),
+    );
+
+    int collectionInterval = 1;
+    if (frequency == 'weekly') collectionInterval = 7;
+    if (frequency == 'monthly') collectionInterval = 30;
+
+    DateTime current = cycleStartDate;
+    while (!current.isAfter(cycleEndDate)) {
+      if (!_isDateSkipped(current)) {
+        _cycleDates.add(current);
+      }
+      current = current.add(Duration(days: collectionInterval));
+    }
   }
 
-  Widget _buildLegendAdvance() {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
-            color: _info.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: _info),
-          ),
-          child: const Icon(AppIcons.check, size: 12, color: _info),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          'Advance',
-          style: GoogleFonts.inter(color: _textSecondary, fontSize: 11),
-        ),
-      ],
-    );
+  bool _isDateSkipped(DateTime date) {
+    final key =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return widget.committee.skippedDates.contains(key);
   }
 
-  Widget _buildLegendPending() {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          alignment: Alignment.center,
-          child: const Icon(
-            AppIcons.circle_outlined,
-            size: 14,
-            color: _warning,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          'Pending',
-          style: GoogleFonts.inter(color: _textSecondary, fontSize: 11),
-        ),
-      ],
-    );
+  int _calculateCyclePaidCount() {
+    if (_cycleDates.isEmpty) return 0;
+    int paidCount = 0;
+    for (final date in _cycleDates) {
+      if (widget.isPaymentMarked(widget.member.id, date)) {
+        paidCount++;
+      }
+    }
+    return paidCount;
+  }
+
+  double _calculateCycleTotalContribution() {
+    return _calculateCyclePaidCount() * widget.committee.contributionAmount;
+  }
+
+  void _changeCycle(int delta) {
+    setState(() {
+      final newCycle = _selectedCycle + delta;
+      if (newCycle >= 1 && newCycle <= _maxCycles) {
+        _selectedCycle = newCycle;
+        _calculateCycleDates();
+        final now = DateTime.now();
+        if (_cycleDates.isNotEmpty) {
+          final cycleStart = _cycleDates.first;
+          final cycleEnd = _cycleDates.last;
+          if (!now.isBefore(cycleStart) &&
+              !now.isAfter(cycleEnd.add(const Duration(days: 1)))) {
+            _selectedMonth = DateTime(now.year, now.month);
+          } else {
+            _selectedMonth = DateTime(cycleStart.year, cycleStart.month);
+          }
+        }
+      }
+    });
+  }
+
+  Future<void> _fetchTrueCycleCountFromCloud() async {
+    try {
+      final supabaseService =
+          SupabaseService(); // Make sure SupabaseService is imported
+      final members = await supabaseService.getMembers(widget.committee.id);
+      if (members.isNotEmpty && members.length > _maxCycles) {
+        if (mounted) {
+          setState(() {
+            _maxCycles = members.length;
+            // Re-calculate dates if selected cycle was out of bounds
+            if (_selectedCycle > _maxCycles) {
+              _selectedCycle = _maxCycles;
+              _calculateCycleDates();
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // Ignore if offline
+      print('Failed to fetch true cycle count: $e');
+    }
+  }
+
+  int _findOngoingCycle() {
+    final startDate = widget.committee.startDate;
+    final now = DateTime.now();
+    final daysSinceStart = now.difference(startDate).inDays;
+    final intervalDays = widget.committee.paymentIntervalDays;
+    final cycle = (daysSinceStart / intervalDays).floor() + 1;
+    return cycle.clamp(1, _maxCycles);
+  }
+
+  List<DateTime> _getDaysInMonth(DateTime month) {
+    final firstDay = DateTime(month.year, month.month, 1);
+    final lastDay = DateTime(month.year, month.month + 1, 0);
+
+    List<DateTime> days = [];
+    int startingWeekday = firstDay.weekday % 7;
+
+    for (int i = 0; i < startingWeekday; i++) {
+      days.add(DateTime(month.year, month.month, 1 - (startingWeekday - i)));
+    }
+
+    for (int i = 1; i <= lastDay.day; i++) {
+      days.add(DateTime(month.year, month.month, i));
+    }
+
+    int remainingDays = 42 - days.length;
+    for (int i = 1; i <= remainingDays; i++) {
+      days.add(DateTime(month.year, month.month + 1, i));
+    }
+
+    return days;
+  }
+
+  String _getFrequencyLabel() {
+    switch (widget.committee.frequency) {
+      case 'daily':
+        return 'Per Day';
+      case 'weekly':
+        return 'Per Week';
+      case 'monthly':
+        return 'Per Month';
+      default:
+        return 'Per Period';
+    }
   }
 
   String _getMonthName(int month) {
@@ -837,21 +791,124 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
     return months[month - 1];
   }
 
-  String _getFrequencyLabel() {
+  String _getPeriodLabel() {
     switch (widget.committee.frequency) {
       case 'daily':
-        return 'Per Day';
+        return 'Day Number';
       case 'weekly':
-        return 'Per Week';
+        return 'Week Number';
       case 'monthly':
-        return 'Per Month';
+        return 'Month Number';
       default:
-        return 'Per Period';
+        return 'Period Number';
     }
+  }
+
+  void _initializeCycleData() {
+    _maxCycles = _resolveTotalCycles();
+    _selectedCycle = _findOngoingCycle();
+    _calculateCycleDates();
+
+    final now = DateTime.now();
+    if (_cycleDates.isNotEmpty) {
+      final cycleStart = _cycleDates.first;
+      final cycleEnd = _cycleDates.last;
+      if (!now.isBefore(cycleStart) &&
+          !now.isAfter(cycleEnd.add(const Duration(days: 1)))) {
+        _selectedMonth = DateTime(now.year, now.month);
+      } else {
+        _selectedMonth = DateTime(cycleStart.year, cycleStart.month);
+      }
+    }
+
+    // Fire off async fetch to get true member count from cloud (for viewers who
+    // only have 1 member synced locally). Total members = Total cycles.
+    _fetchTrueCycleCountFromCloud();
+  }
+
+  bool _isInCurrentMonth(DateTime date) {
+    return date.month == _selectedMonth.month &&
+        date.year == _selectedMonth.year;
+  }
+
+  bool _isPaymentDateForMember(DateTime date) {
+    final frequency = widget.committee.frequency;
+    for (final paymentDate in _cycleDates) {
+      if (frequency == 'monthly') {
+        if (paymentDate.year == date.year &&
+            paymentDate.month == date.month &&
+            paymentDate.day == date.day) {
+          return true;
+        }
+      } else if (_isSameDay(paymentDate, date)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  int _resolveTotalCycles() {
+    final memberPayments = _dbService.getPaymentsByMember(widget.member.id);
+
+    // Calculate the number of collection periods per payout cycle.
+    // For DAILY: 1 collection per day, so periodsPerPayout = 1 (not paymentIntervalDays).
+    // For WEEKLY: 1 collection per week.
+    // For MONTHLY: 1 collection per month.
+    int periodsPerPayout;
+    if (widget.committee.frequency == 'daily') {
+      periodsPerPayout = 1;
+    } else if (widget.committee.frequency == 'weekly') {
+      periodsPerPayout = 1;
+    } else {
+      // monthly
+      periodsPerPayout = 1;
+    }
+    // Each payout cycle spans paymentIntervalDays / collectionInterval collections.
+    // However since we are counting PAYOUT CYCLES (not individual collections),
+    // cyclesFromPayments = total payments / collections-per-cycle.
+    final int collectionInterval =
+        widget.committee.frequency == 'daily'
+            ? 1
+            : widget.committee.frequency == 'weekly'
+            ? 7
+            : 30;
+    final int collectionsPerCycle =
+        widget.committee.paymentIntervalDays > 0
+            ? (widget.committee.paymentIntervalDays / collectionInterval).ceil()
+            : 1;
+
+    final cyclesFromPayments =
+        memberPayments.isEmpty
+            ? 0
+            : (memberPayments.length / collectionsPerCycle).ceil();
+
+    // Calendar-based estimate: how many full payout cycles have elapsed since start?
+    final daysSinceStart =
+        DateTime.now().difference(widget.committee.startDate).inDays;
+    final cyclesElapsed =
+        widget.committee.paymentIntervalDays > 0
+            ? (daysSinceStart / widget.committee.paymentIntervalDays).ceil()
+            : 0;
+
+    // Total payout cycles in a kameti = total members (each member gets one payout).
+    // Collect all credible candidate values and take the maximum.
+    final candidates =
+        <int>[
+          widget.members.length,          // members synced locally
+          widget.committee.totalMembers,  // stored on the committee record
+          widget.committee.totalCycles,   // stored total cycles
+          cyclesFromPayments,             // inferred from payment history
+          cyclesElapsed,                  // inferred from calendar
+          widget.member.payoutOrder,      // member's own slot (lower bound)
+        ].where((value) => value > 0).toList();
+
+    if (candidates.isEmpty) return 1;
+    candidates.sort();
+    return candidates.last;
   }
 
   void _showPaymentDetails(DateTime date, bool isPaid, bool isAdvancePaid) {
@@ -871,7 +928,12 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
       ),
       builder:
           (context) => Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.fromLTRB(
+              24,
+              24,
+              24,
+              MediaQuery.of(context).viewPadding.bottom + 24,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -959,55 +1021,6 @@ class _MemberCalendarViewState extends State<MemberCalendarView> {
               ],
             ),
           ),
-    );
-  }
-
-  String get _getPeriodPrefix {
-    switch (widget.committee.frequency) {
-      case 'daily':
-        return 'Day';
-      case 'weekly':
-        return 'Week';
-      case 'monthly':
-        return 'Month';
-      default:
-        return 'Period';
-    }
-  }
-
-  String _getPeriodLabel() {
-    switch (widget.committee.frequency) {
-      case 'daily':
-        return 'Day Number';
-      case 'weekly':
-        return 'Week Number';
-      case 'monthly':
-        return 'Month Number';
-      default:
-        return 'Period Number';
-    }
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.inter(color: _textSecondary, fontSize: 13),
-          ),
-          Text(
-            value,
-            style: GoogleFonts.inter(
-              color: _textPrimary,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

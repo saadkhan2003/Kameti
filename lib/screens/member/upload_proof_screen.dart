@@ -312,7 +312,12 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
       backgroundColor: AppColors.bg,
       appBar: AppBarStyles.standard(title: 'Upload Payment Proof'),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MediaQuery.of(context).viewPadding.bottom + 16,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

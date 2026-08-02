@@ -1,6 +1,93 @@
 part of 'payment_sheet_screen.dart';
 
 extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
+  void _showMemberActions(Member member) {
+    final unpaidCount = _dates.where((date) {
+      if (_isDateSkipped(date)) return false;
+      return !_isPaymentMarked(member.id, date);
+    }).length;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _PaymentSheetScreenState._surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(ctx).viewPadding.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.cFFD7E0F2,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              member.name,
+              style: GoogleFonts.inter(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: _PaymentSheetScreenState._textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$unpaidCount unpaid period${unpaidCount != 1 ? 's' : ''} in this cycle',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: _PaymentSheetScreenState._textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (unpaidCount > 0)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _markAllPaidForMember(member);
+                  },
+                  icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+                  label: const Text('Mark All Paid for This Cycle'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _PaymentSheetScreenState._success,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            if (unpaidCount == 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'All paid for this cycle ✓',
+                  style: GoogleFonts.inter(
+                    color: _PaymentSheetScreenState._success,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildGrid(double amountPerCell) {
     final totals = List<double>.generate(_dates.length, (index) {
       double total = 0;
@@ -15,7 +102,6 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
 
     final targetAmount = amountPerCell * _members.length;
     final payoutInterval = widget.committee.paymentIntervalDays;
-    final startDate = widget.committee.startDate;
     const double memberColWidth = 190;
     const double dateColWidth = 56;
     const double duesColWidth = 120;
@@ -38,21 +124,30 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
                 final index = entry.key;
                 final date = entry.value;
                 final isFutureDate = date.isAfter(now);
+                final isSkipped = _isDateSkipped(date);
                 final format =
                     widget.committee.frequency == 'monthly'
                         ? DateFormat('MMM')
                         : DateFormat('dd/MM');
-                final daysElapsed = date.difference(startDate).inDays + 1;
+
+                // Count non-skipped dates up to this point to determine payout day
+                int activeDatesBefore = 0;
+                for (int i = 0; i <= index; i++) {
+                  if (!_isDateSkipped(_dates[i])) activeDatesBefore++;
+                }
                 final isPayoutDay =
                     payoutInterval > 0 &&
-                    daysElapsed > 0 &&
-                    (daysElapsed % payoutInterval == 0);
+                    !isSkipped &&
+                    activeDatesBefore > 0 &&
+                    (activeDatesBefore % payoutInterval == 0);
 
                 return _buildDateHeaderCell(
                   width: dateColWidth,
                   label: format.format(date),
                   isFutureDate: isFutureDate,
                   isPayoutDay: isPayoutDay,
+                  isSkipped: isSkipped,
+                  onToggleSkip: () => _toggleSkippedDay(date),
                   progress: totals[index] / targetAmount,
                 );
               }),
@@ -75,58 +170,70 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
           // the correct member even after reordering/shuffling.
           final memberPayoutSlot = member.payoutOrder - 1;
 
-          return Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: _PaymentSheetScreenState._surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color:
-                    isDefaulter
-                        ? _PaymentSheetScreenState._warning.withOpacity(0.35)
-                        : AppColors.cFFE5ECF9,
+          return GestureDetector(
+            onLongPress: () => _showMemberActions(member),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: _PaymentSheetScreenState._surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color:
+                      isDefaulter
+                          ? _PaymentSheetScreenState._warning.withOpacity(0.35)
+                          : AppColors.cFFE5ECF9,
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                _buildMemberInfoCell(
-                  member: member,
-                  width: memberColWidth,
-                  isDefaulter: isDefaulter,
-                  hasAdvance: hasAdvance,
-                  advanceCount: advanceCount,
-                ),
-                ..._dates.map((date) {
-                  final isPaid = _isPaymentMarked(member.id, date);
+              child: Row(
+                children: [
+                  _buildMemberInfoCell(
+                    member: member,
+                    width: memberColWidth,
+                    isDefaulter: isDefaulter,
+                    hasAdvance: hasAdvance,
+                    advanceCount: advanceCount,
+                  ),
+                  ..._dates.map((date) {
+                    final isPaid = _isPaymentMarked(member.id, date);
+                    final isSkipped = _isDateSkipped(date);
 
-                  final daysElapsed = date.difference(startDate).inDays;
-                  final currentRound =
-                      payoutInterval > 0 ? (daysElapsed ~/ payoutInterval) : 0;
-                  // Compare against the member's own payout slot (0-indexed),
-                  // not the visual row position, so shuffled orders work correctly.
-                  final receiverIndex = currentRound % _members.length;
-                  final isPayoutReceiver = receiverIndex == memberPayoutSlot;
+                    // Count non-skipped dates up to this one to determine payout round
+                    int activeDatesBefore = 0;
+                    for (int i = 0; i < _dates.length; i++) {
+                      if (_dates[i] == date) break;
+                      if (!_isDateSkipped(_dates[i])) activeDatesBefore++;
+                    }
+                    final currentRound =
+                        payoutInterval > 0 ? (activeDatesBefore ~/ payoutInterval) : 0;
+                    // Compare against the member's own payout slot (0-indexed),
+                    // not the visual row position, so shuffled orders work correctly.
+                    final receiverIndex = currentRound % _members.length;
+                    final isPayoutReceiver = receiverIndex == memberPayoutSlot;
 
-                  final isPayoutDay =
-                      payoutInterval > 0 &&
-                      ((daysElapsed + 1) % payoutInterval == 0);
-                  final isPayoutCell = isPayoutReceiver && isPayoutDay;
+                    final isActiveDate = !isSkipped;
+                    final isPayoutDay =
+                        payoutInterval > 0 &&
+                        isActiveDate &&
+                        ((activeDatesBefore + 1) % payoutInterval == 0);
+                    final isPayoutCell = isPayoutReceiver && isPayoutDay;
 
-                  return _buildPaymentCell(
-                    width: dateColWidth,
-                    isPaid: isPaid,
-                    isPayoutCell: isPayoutCell,
-                    onTap: () => _togglePayment(member.id, date),
-                  );
-                }),
-                _buildDuesCell(
-                  width: duesColWidth,
-                  isDefaulter: isDefaulter,
-                  unpaidCount: unpaidCount,
-                  hasAdvance: hasAdvance,
-                  advanceCount: advanceCount,
-                ),
-              ],
+                    return _buildPaymentCell(
+                      width: dateColWidth,
+                      isPaid: isPaid,
+                      isPayoutCell: isPayoutCell,
+                      isSkipped: isSkipped,
+                      onTap: isSkipped ? null : () => _togglePayment(member.id, date),
+                    );
+                  }),
+                  _buildDuesCell(
+                    width: duesColWidth,
+                    isDefaulter: isDefaulter,
+                    unpaidCount: unpaidCount,
+                    hasAdvance: hasAdvance,
+                    advanceCount: advanceCount,
+                  ),
+                ],
+              ),
             ),
           );
         }),
@@ -274,43 +381,84 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
     required String label,
     required bool isFutureDate,
     required bool isPayoutDay,
+    required bool isSkipped,
+    required VoidCallback onToggleSkip,
     required double progress,
   }) {
-    return Container(
-      width: width,
-      height: 56,
-      decoration: const BoxDecoration(
-        border: Border(right: BorderSide(color: AppColors.cFFE5ECF9, width: 1)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color:
-                  isFutureDate
-                      ? _PaymentSheetScreenState._primary
-                      : (isPayoutDay
+    return GestureDetector(
+      onLongPress: onToggleSkip,
+      child: Container(
+        width: width,
+        height: 56,
+        decoration: BoxDecoration(
+          border: const Border(
+            right: BorderSide(color: AppColors.cFFE5ECF9, width: 1),
+          ),
+          color:
+              isSkipped
+                  ? _PaymentSheetScreenState._warning.withOpacity(0.12)
+                  : null,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: onToggleSkip,
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color:
+                      isSkipped
                           ? _PaymentSheetScreenState._warning
-                          : _PaymentSheetScreenState._textSecondary),
+                          : AppColors.cFFD7E0F2,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Icon(
+                  Icons.block_rounded,
+                  size: 12,
+                  color: Colors.white,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            width: 20,
-            height: 3,
-            decoration: BoxDecoration(
-              color:
-                  progress >= 1
-                      ? _PaymentSheetScreenState._success
-                      : AppColors.cFFD7E0F2,
-              borderRadius: BorderRadius.circular(999),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                decoration:
+                    isSkipped ? TextDecoration.lineThrough : null,
+                decorationColor: _PaymentSheetScreenState._warning,
+                color:
+                    isSkipped
+                        ? _PaymentSheetScreenState._warning
+                        : isFutureDate
+                            ? _PaymentSheetScreenState._primary
+                            : (isPayoutDay
+                                ? _PaymentSheetScreenState._warning
+                                : _PaymentSheetScreenState
+                                    ._textSecondary),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Container(
+              width: 20,
+              height: 3,
+              decoration: BoxDecoration(
+                color:
+                    isSkipped
+                        ? _PaymentSheetScreenState._warning
+                        : progress >= 1
+                            ? _PaymentSheetScreenState._success
+                            : AppColors.cFFD7E0F2,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -396,7 +544,8 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
     required double width,
     required bool isPaid,
     required bool isPayoutCell,
-    required VoidCallback onTap,
+    bool isSkipped = false,
+    VoidCallback? onTap,
   }) {
     return SizedBox(
       width: width,
@@ -408,51 +557,65 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
             height: 32,
             decoration: BoxDecoration(
               color:
-                  isPaid
-                      ? _PaymentSheetScreenState._success
-                      : AppColors.cFFEEF2FA,
+                  isSkipped
+                      ? AppColors.cFFD7E0F2.withOpacity(0.3)
+                      : isPaid
+                          ? _PaymentSheetScreenState._success
+                          : AppColors.cFFEEF2FA,
               borderRadius: BorderRadius.circular(8),
               border:
-                  isPayoutCell
+                  isSkipped
                       ? Border.all(
-                        color: _PaymentSheetScreenState._warning,
-                        width: 2,
-                      )
-                      : Border.all(
-                        color:
-                            isPaid
-                                ? _PaymentSheetScreenState._success
-                                : AppColors.cFFD3DDEF,
-                        width: 1,
-                      ),
+                          color: AppColors.cFFD7E0F2,
+                          width: 1,
+                        )
+                      : isPayoutCell
+                          ? Border.all(
+                              color: _PaymentSheetScreenState._warning,
+                              width: 2,
+                            )
+                          : Border.all(
+                              color:
+                                  isPaid
+                                      ? _PaymentSheetScreenState._success
+                                      : AppColors.cFFD3DDEF,
+                              width: 1,
+                            ),
               boxShadow:
-                  isPayoutCell
+                  isPayoutCell && !isSkipped
                       ? [
-                        BoxShadow(
-                          color: _PaymentSheetScreenState._warning.withOpacity(
-                            0.2,
+                          BoxShadow(
+                            color:
+                                _PaymentSheetScreenState._warning.withOpacity(
+                                  0.2,
+                                ),
+                            blurRadius: 5,
                           ),
-                          blurRadius: 5,
-                        ),
-                      ]
+                        ]
                       : null,
             ),
             child: Stack(
               alignment: Alignment.center,
               children: [
-                if (isPaid)
+                if (isSkipped)
+                  Icon(
+                    Icons.block_rounded,
+                    color: AppColors.cFFD7E0F2,
+                    size: 14,
+                  )
+                else if (isPaid)
                   const Icon(
                     AppIcons.check_rounded,
                     color: Colors.white,
                     size: 17,
                   ),
-                if (isPayoutCell && !isPaid)
+                if (isPayoutCell && !isPaid && !isSkipped)
                   const Icon(
                     AppIcons.star_outline_rounded,
                     color: _PaymentSheetScreenState._warning,
                     size: 16,
                   ),
-                if (isPayoutCell && isPaid)
+                if (isPayoutCell && isPaid && !isSkipped)
                   const Positioned(
                     right: 1,
                     top: 1,
@@ -676,16 +839,21 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
 
     int paidCount = 0;
     int advanceCount = 0;
+    int skippedCount = 0;
     final now = DateTime.now();
 
     for (var date in _dates) {
+      if (_isDateSkipped(date)) {
+        skippedCount++;
+        continue;
+      }
       if (_isPaymentMarked(member.id, date)) {
         paidCount++;
         if (date.isAfter(now)) advanceCount++;
       }
     }
 
-    final totalDue = _dates.length;
+    final totalDue = _dates.length - skippedCount;
     final totalContribution = paidCount * widget.committee.contributionAmount;
     final advanceAmount = advanceCount * widget.committee.contributionAmount;
 

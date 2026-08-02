@@ -235,7 +235,12 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
         minChildSize: 0.3,
         maxChildSize: 0.92,
         builder: (_, scrollCtrl) => Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            20,
+            20,
+            MediaQuery.of(context).viewPadding.bottom,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -585,7 +590,9 @@ class _HostDashboardScreenState extends State<HostDashboardScreen>
             color: _primary,
             backgroundColor: _surface,
             child: ListView(
-              padding: const EdgeInsets.only(bottom: 96),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewPadding.bottom + 96,
+              ),
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 // Email Verification Banner

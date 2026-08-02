@@ -52,6 +52,9 @@ class Committee extends HiveObject {
   @HiveField(15)
   String currency; // Currency code (PKR, INR, USD, AED, etc.)
 
+  @HiveField(16)
+  List<String> skippedDates; // ISO date strings for skipped collection days
+
   Committee({
     required this.id,
     required this.code,
@@ -69,6 +72,7 @@ class Committee extends HiveObject {
     this.totalCycles = 0, // Default to 0
     this.isSynced = true, // Default to true for backward compatibility with existing data
     this.currency = 'PKR', // Default to PKR for backward compatibility
+    this.skippedDates = const [],
   });
 
   Map<String, dynamic> toJson() {
@@ -89,6 +93,7 @@ class Committee extends HiveObject {
       'total_cycles': totalCycles,
       'is_synced': isSynced,
       'currency': currency,
+      'skipped_dates': skippedDates,
     };
   }
 
@@ -113,6 +118,10 @@ class Committee extends HiveObject {
       totalCycles: json['total_cycles'] ?? json['totalCycles'] ?? 0,
       isSynced: json['is_synced'] ?? true, // Assume synced if coming from JSON (DB/Cloud)
       currency: json['currency'] ?? 'PKR',
+      skippedDates:
+          (json['skipped_dates'] ?? json['skippedDates'] ?? [])
+              .cast<String>()
+              .toList(),
     );
   }
 
@@ -130,6 +139,7 @@ class Committee extends HiveObject {
     int? totalCycles,
     bool? isSynced,
     String? currency,
+    List<String>? skippedDates,
   }) {
     return Committee(
       id: id,
@@ -148,6 +158,7 @@ class Committee extends HiveObject {
       totalCycles: totalCycles ?? this.totalCycles,
       isSynced: isSynced ?? this.isSynced,
       currency: currency ?? this.currency,
+      skippedDates: skippedDates ?? this.skippedDates,
     );
   }
 }

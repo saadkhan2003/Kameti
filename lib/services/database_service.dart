@@ -189,6 +189,37 @@ class DatabaseService {
     }
   }
 
+  // ============ SKIPPED DAYS ============
+
+  String _dateToKey(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+  Future<void> toggleSkippedDay(String committeeId, DateTime date) async {
+    final committee = getCommitteeById(committeeId);
+    if (committee == null) return;
+    final dateStr = _dateToKey(date);
+    final isCurrentlySkipped = committee.skippedDates.contains(dateStr);
+    final updated = committee.copyWith(
+      skippedDates: isCurrentlySkipped
+          ? committee.skippedDates.where((d) => d != dateStr).toList()
+          : [...committee.skippedDates, dateStr],
+    );
+    await saveCommittee(updated);
+  }
+
+  bool isDaySkipped(String committeeId, DateTime date) {
+    final committee = getCommitteeById(committeeId);
+    if (committee == null) return false;
+    final dateStr = _dateToKey(date);
+    return committee.skippedDates.contains(dateStr);
+  }
+
+  List<String> getSkippedDates(String committeeId) {
+    final committee = getCommitteeById(committeeId);
+    if (committee == null) return [];
+    return List.from(committee.skippedDates);
+  }
+
   // ============ JOINED COMMITTEES ============
 
   Box<Map> get _joinedBox => Hive.box<Map>(joinedCommitteesBox);

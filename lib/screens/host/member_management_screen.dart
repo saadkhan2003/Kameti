@@ -113,7 +113,9 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
             24,
             24,
             24,
-            MediaQuery.of(context).viewInsets.bottom + 24,
+            MediaQuery.of(context).viewInsets.bottom +
+                MediaQuery.of(context).viewPadding.bottom +
+                24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

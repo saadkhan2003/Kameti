@@ -10,7 +10,12 @@ extension _PaymentSheetExportPart on _PaymentSheetScreenState {
       ),
       builder:
           (context) => Container(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.fromLTRB(
+              20,
+              20,
+              20,
+              MediaQuery.of(context).viewPadding.bottom + 20,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,7 +174,12 @@ extension _PaymentSheetExportPart on _PaymentSheetScreenState {
       ),
       builder:
           (context) => Container(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.fromLTRB(
+              20,
+              20,
+              20,
+              MediaQuery.of(context).viewPadding.bottom + 20,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,

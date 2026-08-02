@@ -52,6 +52,13 @@ header h1 {
     color: #64748b;
 }
 
+.developer-name {
+    font-size: 0.95rem;
+    color: #a78bfa;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
 /* Main Content */
 main {
     display: flex;
