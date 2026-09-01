@@ -136,21 +136,35 @@ class SyncService {
         // Exists on BOTH -> Update logic
         final remote = remoteMap[local.id]!;
 
-        // If local is newer or has changes (not implemented yet, but good for future)
-        // For now, we trust CLOUD as source of truth if timestamps differ significantly
-        // But if local was just edited (e.g. settings), we might want to push?
-        // Let's stick to: if cloud is newer, download. If local is newer, upload.
+        // Merge skippedDates: take the superset of both local and cloud
+        final localSkipped = Set<String>.from(local.skippedDates);
+        final remoteSkipped = Set<String>.from(remote.skippedDates);
+        final mergedSkipped = localSkipped.union(remoteSkipped).toList()..sort();
 
         if (remote.createdAt.isAfter(local.createdAt)) {
-          // Using CreatedAt as proxy for update is flawed but existing logic
-          await _dbService.saveCommittee(remote.copyWith(isSynced: true));
+          // Cloud is newer — download it, but preserve merged skippedDates
+          await _dbService.saveCommittee(
+            remote.copyWith(isSynced: true, skippedDates: mergedSkipped),
+          );
           downloaded++;
         } else {
           // Upload local changes if any (or just ensure consistency)
-          // Mark as synced since it exists on cloud
           if (!local.isSynced) {
             await _dbService.saveCommittee(local.copyWith(isSynced: true));
           }
+        }
+
+        // Always ensure cloud has the merged skippedDates
+        final currentRemoteSkipped = List<String>.from(
+          remote.skippedDates,
+        )..sort();
+        if (!_listEquals(mergedSkipped, currentRemoteSkipped)) {
+          _log(
+            '⬆️ Sync: Merged skippedDates for ${local.name}. Uploading.',
+          );
+          await _supabase.upsertCommittee(
+            local.copyWith(skippedDates: mergedSkipped),
+          );
         }
       } else {
         // Exists LOCALLY but NOT on Cloud
@@ -241,6 +255,10 @@ class SyncService {
         // Also check for name/phone changes
         if (cloudMember.name != localMember.name ||
             cloudMember.phone != localMember.phone) {
+          shouldDownload = true;
+        }
+        // Check for paymentFrequency changes
+        if (cloudMember.paymentFrequency != localMember.paymentFrequency) {
           shouldDownload = true;
         }
       }
@@ -619,6 +637,15 @@ class SyncService {
     } catch (e) {
       _log('⚠️ Migration error: $e');
     }
+  }
+
+  /// Compare two sorted lists for equality.
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 }
 

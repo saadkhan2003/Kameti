@@ -99,6 +99,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
       text: existingMember?.phone ?? '',
     );
     final isEditing = existingMember != null;
+    String selectedFrequency = existingMember?.paymentFrequency ?? 'daily';
 
     showModalBottomSheet(
       context: context,
@@ -205,6 +206,47 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                 ),
                 keyboardType: TextInputType.phone,
               ),
+              const SizedBox(height: 16),
+              Text(
+                'Payment Frequency',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: _textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              StatefulBuilder(
+                builder: (context, setSheetState) {
+                  return Row(
+                    children: [
+                      _frequencyChip(
+                        label: 'Daily',
+                        icon: Icons.today,
+                        value: 'daily',
+                        selected: selectedFrequency,
+                        onTap: () => setSheetState(() => selectedFrequency = 'daily'),
+                      ),
+                      const SizedBox(width: 8),
+                      _frequencyChip(
+                        label: 'Weekly',
+                        icon: Icons.view_week_outlined,
+                        value: 'weekly',
+                        selected: selectedFrequency,
+                        onTap: () => setSheetState(() => selectedFrequency = 'weekly'),
+                      ),
+                      const SizedBox(width: 8),
+                      _frequencyChip(
+                        label: 'Monthly',
+                        icon: Icons.calendar_month_outlined,
+                        value: 'monthly',
+                        selected: selectedFrequency,
+                        onTap: () => setSheetState(() => selectedFrequency = 'monthly'),
+                      ),
+                    ],
+                  );
+                },
+              ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
@@ -219,6 +261,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                     final updatedMember = existingMember.copyWith(
                       name: name,
                       phone: phone,
+                      paymentFrequency: selectedFrequency,
                     );
                     await _autoSyncService.saveMember(updatedMember);
                   } else {
@@ -242,6 +285,7 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
                       phone: phone,
                       payoutOrder: nextOrder,
                       createdAt: DateTime.now(),
+                      paymentFrequency: selectedFrequency,
                     );
                     await _autoSyncService.saveMember(member);
                   }
@@ -264,6 +308,88 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildFrequencyBadge(String frequency) {
+    String label;
+    Color bgColor;
+    Color textColor;
+    switch (frequency) {
+      case 'weekly':
+        label = 'W';
+        bgColor = const Color(0xFFEEF2FF);
+        textColor = const Color(0xFF6366F1);
+        break;
+      case 'monthly':
+        label = 'M';
+        bgColor = const Color(0xFFFDF2F8);
+        textColor = const Color(0xFFEC4899);
+        break;
+      default:
+        label = 'D';
+        bgColor = const Color(0xFFECFDF5);
+        textColor = _success;
+        break;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: textColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _frequencyChip({
+    required String label,
+    required IconData icon,
+    required String value,
+    required String selected,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = selected == value;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? _primary : AppColors.cFFF8FAFF,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? _primary : AppColors.cFFD0D9EE,
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : _textSecondary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : _textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -609,13 +735,22 @@ class _MemberManagementScreenState extends State<MemberManagementScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    member.name,
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: _textPrimary,
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          member.name,
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: _textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      _buildFrequencyBadge(member.paymentFrequency),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   if (member.phone.isNotEmpty)

@@ -94,17 +94,17 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
       final date = _dates[index];
       for (var member in _members) {
         if (_isPaymentMarked(member.id, date)) {
-          total += amountPerCell;
+          total += amountPerCell * member.frequencyMultiplier;
         }
       }
       return total;
     });
 
-    final targetAmount = amountPerCell * _members.length;
     final payoutInterval = widget.committee.paymentIntervalDays;
     const double memberColWidth = 190;
     const double dateColWidth = 56;
     const double duesColWidth = 120;
+    final targetAmount = amountPerCell * _members.length;
 
     final now = DateTime.now();
 
@@ -196,6 +196,8 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
                   ..._dates.map((date) {
                     final isPaid = _isPaymentMarked(member.id, date);
                     final isSkipped = _isDateSkipped(date);
+                    final isFreqPayDay = _isFrequencyPayDay(member, date);
+                    final isFreqSkip = !isSkipped && !isFreqPayDay;
 
                     // Count non-skipped dates up to this one to determine payout round
                     int activeDatesBefore = 0;
@@ -205,8 +207,6 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
                     }
                     final currentRound =
                         payoutInterval > 0 ? (activeDatesBefore ~/ payoutInterval) : 0;
-                    // Compare against the member's own payout slot (0-indexed),
-                    // not the visual row position, so shuffled orders work correctly.
                     final receiverIndex = currentRound % _members.length;
                     final isPayoutReceiver = receiverIndex == memberPayoutSlot;
 
@@ -222,13 +222,15 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
                       isPaid: isPaid,
                       isPayoutCell: isPayoutCell,
                       isSkipped: isSkipped,
-                      onTap: isSkipped ? null : () => _togglePayment(member.id, date),
+                      isFreqSkip: isFreqSkip,
+                      onTap: (isSkipped || isFreqSkip) ? null : () => _togglePayment(member.id, date),
                     );
                   }),
                   _buildDuesCell(
                     width: duesColWidth,
                     isDefaulter: isDefaulter,
                     unpaidCount: unpaidCount,
+                    debtAmount: memberDebt['debtAmount'] as double,
                     hasAdvance: hasAdvance,
                     advanceCount: advanceCount,
                   ),
@@ -493,19 +495,29 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
             ),
             const SizedBox(width: 6),
             Expanded(
-              child: Text(
-                member.name,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                  color:
-                      isDefaulter
-                          ? _PaymentSheetScreenState._warning
-                          : hasAdvance
-                          ? _PaymentSheetScreenState._primary
-                          : _PaymentSheetScreenState._textPrimary,
-                ),
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      member.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        color:
+                            isDefaulter
+                                ? _PaymentSheetScreenState._warning
+                                : hasAdvance
+                                ? _PaymentSheetScreenState._primary
+                                : _PaymentSheetScreenState._textPrimary,
+                      ),
+                    ),
+                  ),
+                  if (member.paymentFrequency != 'daily') ...[
+                    const SizedBox(width: 4),
+                    _buildFreqBadge(member.paymentFrequency),
+                  ],
+                ],
               ),
             ),
             if (isDefaulter)
@@ -545,8 +557,10 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
     required bool isPaid,
     required bool isPayoutCell,
     bool isSkipped = false,
+    bool isFreqSkip = false,
     VoidCallback? onTap,
   }) {
+    final isAnySkip = isSkipped || isFreqSkip;
     return SizedBox(
       width: width,
       child: Center(
@@ -559,14 +573,18 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
               color:
                   isSkipped
                       ? AppColors.cFFD7E0F2.withOpacity(0.3)
-                      : isPaid
-                          ? _PaymentSheetScreenState._success
-                          : AppColors.cFFEEF2FA,
+                      : isFreqSkip
+                          ? AppColors.cFFEEF2FA.withOpacity(0.5)
+                          : isPaid
+                              ? _PaymentSheetScreenState._success
+                              : AppColors.cFFEEF2FA,
               borderRadius: BorderRadius.circular(8),
               border:
-                  isSkipped
+                  isAnySkip
                       ? Border.all(
-                          color: AppColors.cFFD7E0F2,
+                          color: isSkipped
+                              ? AppColors.cFFD7E0F2
+                              : AppColors.cFFD3DDEF,
                           width: 1,
                         )
                       : isPayoutCell
@@ -582,7 +600,7 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
                               width: 1,
                             ),
               boxShadow:
-                  isPayoutCell && !isSkipped
+                  isPayoutCell && !isAnySkip
                       ? [
                           BoxShadow(
                             color:
@@ -603,19 +621,25 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
                     color: AppColors.cFFD7E0F2,
                     size: 14,
                   )
+                else if (isFreqSkip)
+                  Icon(
+                    Icons.remove,
+                    color: AppColors.cFFD3DDEF,
+                    size: 14,
+                  )
                 else if (isPaid)
                   const Icon(
                     AppIcons.check_rounded,
                     color: Colors.white,
                     size: 17,
                   ),
-                if (isPayoutCell && !isPaid && !isSkipped)
+                if (isPayoutCell && !isPaid && !isAnySkip)
                   const Icon(
                     AppIcons.star_outline_rounded,
                     color: _PaymentSheetScreenState._warning,
                     size: 16,
                   ),
-                if (isPayoutCell && isPaid && !isSkipped)
+                if (isPayoutCell && isPaid && !isAnySkip)
                   const Positioned(
                     right: 1,
                     top: 1,
@@ -637,6 +661,7 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
     required double width,
     required bool isDefaulter,
     required int unpaidCount,
+    required double debtAmount,
     required bool hasAdvance,
     required int advanceCount,
   }) {
@@ -660,7 +685,7 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
             children: [
               if (isDefaulter) ...[
                 Text(
-                  '${widget.committee.currency} ${(unpaidCount * widget.committee.contributionAmount).toInt()}',
+                  '${widget.committee.currency} ${debtAmount.toInt()}',
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -869,6 +894,64 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
       advanceAmount: advanceAmount,
       isPaymentMarked: _isPaymentMarked,
       onRefresh: () => _syncAndLoad(waitForSync: true),
+    );
+  }
+
+  /// Whether [member] is expected to pay on [date] given their payment
+  /// frequency.  Uses active (non-skipped) date indices so that when a
+  /// committee skip day falls on a scheduled pay day, the pay obligation
+  /// rolls forward to the next available day.
+  bool _isFrequencyPayDay(Member member, DateTime date) {
+    if (member.paymentFrequency == 'daily') return true;
+    final targetIdx = _dates.indexOf(date);
+    if (targetIdx == -1) return false;
+
+    // Count only active (non-skipped) dates up to and including this date.
+    int activeCount = 0;
+    for (int i = 0; i <= targetIdx; i++) {
+      if (!_isDateSkipped(_dates[i])) activeCount++;
+    }
+    // Check if the date itself is skipped — if so, it can never be a pay day.
+    if (_isDateSkipped(date)) return false;
+    // Pay day = first active date of each frequency window (1-based).
+    return activeCount % member.frequencyMultiplier == 1;
+  }
+
+  Widget _buildFreqBadge(String frequency) {
+    String label;
+    Color bgColor;
+    Color textColor;
+    switch (frequency) {
+      case 'weekly':
+        label = 'W';
+        bgColor = const Color(0xFFEEF2FF);
+        textColor = const Color(0xFF6366F1);
+        break;
+      case 'monthly':
+        label = 'M';
+        bgColor = const Color(0xFFFDF2F8);
+        textColor = const Color(0xFFEC4899);
+        break;
+      default:
+        label = 'D';
+        bgColor = const Color(0xFFECFDF5);
+        textColor = _PaymentSheetScreenState._success;
+        break;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: textColor,
+        ),
+      ),
     );
   }
 }

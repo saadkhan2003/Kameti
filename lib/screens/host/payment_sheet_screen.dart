@@ -340,14 +340,43 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       // Generate dates for the SELECTED payout cycle only
       final cycleIndex = _selectedCycle - 1; // _selectedCycle is 1-based
 
+      // Count how many periods were "borrowed" by previous cycles due to
+      // skipped-date compensation. Each skipped date in cycle N pulls one
+      // extra date from cycle N+1, so cycle N+1 must start one period later.
+      int borrowedPeriods = 0;
+      for (int prevCycle = 0; prevCycle < cycleIndex; prevCycle++) {
+        int prevSkipped = 0;
+        if (widget.committee.frequency == 'monthly') {
+          final prevStart = _addMonths(
+            committeeStartDate,
+            prevCycle * periodsPerPayout,
+          );
+          DateTime temp = prevStart;
+          for (int i = 0; i < periodsPerPayout; i++) {
+            if (_isDateSkipped(temp)) prevSkipped++;
+            temp = _addMonths(temp, 1);
+          }
+        } else {
+          final prevStart = committeeStartDate.add(
+            Duration(days: prevCycle * periodsPerPayout * collectionInterval),
+          );
+          DateTime temp = prevStart;
+          for (int i = 0; i < periodsPerPayout; i++) {
+            if (_isDateSkipped(temp)) prevSkipped++;
+            temp = temp.add(Duration(days: collectionInterval));
+          }
+        }
+        borrowedPeriods += prevSkipped;
+      }
+
       DateTime cycleStartDate;
       if (widget.committee.frequency == 'monthly') {
         cycleStartDate = _addMonths(
           committeeStartDate,
-          cycleIndex * periodsPerPayout,
+          cycleIndex * periodsPerPayout + borrowedPeriods,
         );
       } else {
-        final totalPeriodsPrior = cycleIndex * periodsPerPayout;
+        final totalPeriodsPrior = cycleIndex * periodsPerPayout + borrowedPeriods;
         final daysOffset = totalPeriodsPrior * collectionInterval;
         cycleStartDate = committeeStartDate.add(Duration(days: daysOffset));
       }
@@ -491,21 +520,24 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     int paidCount = 0;
     int duePeriods = 0;
 
+    final member = _members.firstWhere((m) => m.id == memberId);
+
     for (var date in _dates) {
       if (_isDateSkipped(date)) continue;
+      if (!_isFrequencyPayDay(member, date)) continue;
       duePeriods++;
       if (_isPaymentMarked(memberId, date)) paidCount++;
     }
 
     final unpaidCount = duePeriods - paidCount;
-    final debtAmount = unpaidCount * widget.committee.contributionAmount;
+    final debtAmount = unpaidCount * widget.committee.contributionAmount * member.frequencyMultiplier;
 
     return {
       'paidCount': paidCount,
       'duePeriods': duePeriods,
       'unpaidCount': unpaidCount,
       'debtAmount': debtAmount,
-      'isDefaulter': unpaidCount > 0, // Mark as defaulter if any unpaid
+      'isDefaulter': unpaidCount > 0,
       'severity':
           unpaidCount >= 3 ? 'high' : (unpaidCount >= 1 ? 'medium' : 'none'),
     };
@@ -534,6 +566,8 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     int currentCycleDue = 0;
     int totalPaid = 0;
     int totalDue = 0;
+    double totalCollectedAmount = 0;
+    double currentCycleCollectedAmount = 0;
 
     // Use ALL dates from start through end of CURRENT cycle so the global
     // Paid/Unpaid counters match exactly what's visible in the payment matrix
@@ -543,13 +577,14 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     for (var member in _members) {
       for (var date in allDates) {
         if (_isDateSkipped(date)) continue;
-        // All dates returned by _generateAllDatesUpToToday are <= today
+        if (!_isFrequencyPayDay(member, date)) continue;
+        final memberAmount = amountPerCell * member.frequencyMultiplier;
         totalDue++;
         if (_isPaymentMarked(member.id, date)) {
           totalPaid++;
+          totalCollectedAmount += memberAmount;
         }
 
-        // Current-cycle breakdown (for 'Cycle Amt' stat)
         final dateDaysElapsed = date.difference(startDate).inDays;
         final datePayoutCycle =
             payoutInterval > 0 ? (dateDaysElapsed ~/ payoutInterval) : 0;
@@ -558,6 +593,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
           currentCycleDue++;
           if (_isPaymentMarked(member.id, date)) {
             currentCyclePaid++;
+            currentCycleCollectedAmount += memberAmount;
           }
         }
       }
@@ -579,11 +615,11 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       'totalPaid': totalPaid,
       'totalDue': totalDue,
       'totalUnpaid': totalDue - totalPaid,
-      'totalCollected': totalPaid * amountPerCell,
+      'totalCollected': totalCollectedAmount,
       'totalPending': (totalDue - totalPaid) * amountPerCell,
       'currentCyclePaid': currentCyclePaid,
       'currentCycleDue': currentCycleDue,
-      'currentCycleCollected': currentCyclePaid * amountPerCell,
+      'currentCycleCollected': currentCycleCollectedAmount,
       'currentPayoutCycle': currentPayoutCycle + 1,
       'totalPayoutAmount': totalPayoutAmount,
       'collectionsPerPayout': collectionsPerPayout,
@@ -594,14 +630,16 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
   Map<String, dynamic> _calculateMemberAdvance(String memberId) {
     final now = DateTime.now();
     int advancePaymentCount = 0;
+    final member = _members.firstWhere((m) => m.id == memberId);
     for (var date in _dates) {
       if (_isDateSkipped(date)) continue;
+      if (!_isFrequencyPayDay(member, date)) continue;
       if (date.isAfter(now) && _isPaymentMarked(memberId, date)) {
         advancePaymentCount++;
       }
     }
     final advanceAmount =
-        advancePaymentCount * widget.committee.contributionAmount;
+        advancePaymentCount * widget.committee.contributionAmount * member.frequencyMultiplier;
     return {
       'advanceCount': advancePaymentCount,
       'advanceAmount': advanceAmount,

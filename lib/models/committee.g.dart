@@ -32,8 +32,8 @@ class CommitteeAdapter extends TypeAdapter<Committee> {
       archivedAt: fields[12] as DateTime?,
       totalCycles: fields[13] as int,
       isSynced: fields[14] as bool,
-      currency: fields[15] as String? ?? 'PKR',
-      skippedDates: (fields[16] as List?)?.cast<String>() ?? [],
+      currency: fields[15] as String,
+      skippedDates: (fields[16] as List).cast<String>(),
     );
   }
 

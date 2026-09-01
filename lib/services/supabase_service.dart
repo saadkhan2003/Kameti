@@ -28,10 +28,10 @@ class SupabaseService {
 
   static const String _committeeColumns =
       'id,code,name,host_id,contribution_amount,frequency,start_date,total_members,created_at,'
-      'is_active,payment_interval_days,is_archived,archived_at,total_cycles,is_synced,currency';
+      'is_active,payment_interval_days,is_archived,archived_at,total_cycles,is_synced,currency,skipped_dates';
 
   static const String _memberColumns =
-      'id,committee_id,member_code,name,phone,payout_order,has_received_payout,payout_date,created_at';
+      'id,committee_id,member_code,name,phone,payout_order,has_received_payout,payout_date,created_at,payment_frequency';
 
   static const String _paymentColumns =
       'id,member_id,committee_id,date,is_paid,marked_by,marked_at';

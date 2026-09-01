@@ -31,6 +31,21 @@ class Member extends HiveObject {
   @HiveField(8)
   final DateTime createdAt;
 
+  @HiveField(9)
+  String paymentFrequency; // 'daily', 'weekly', 'monthly'
+
+  /// Multiplier for the base contribution amount based on payment frequency.
+  int get frequencyMultiplier {
+    switch (paymentFrequency) {
+      case 'weekly':
+        return 7;
+      case 'monthly':
+        return 30;
+      default:
+        return 1;
+    }
+  }
+
   Member({
     required this.id,
     required this.committeeId,
@@ -41,6 +56,7 @@ class Member extends HiveObject {
     this.hasReceivedPayout = false,
     this.payoutDate,
     required this.createdAt,
+    this.paymentFrequency = 'daily',
   });
 
   Map<String, dynamic> toJson() {
@@ -54,6 +70,7 @@ class Member extends HiveObject {
       'has_received_payout': hasReceivedPayout,
       'payout_date': payoutDate?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
+      'payment_frequency': paymentFrequency,
     };
   }
 
@@ -70,6 +87,7 @@ class Member extends HiveObject {
           ? DateTime.tryParse(json['payout_date'] ?? json['payoutDate'])
           : null,
       createdAt: DateTime.parse(json['created_at'] ?? json['createdAt']),
+      paymentFrequency: json['payment_frequency'] ?? json['paymentFrequency'] ?? 'daily',
     );
   }
 
@@ -80,6 +98,7 @@ class Member extends HiveObject {
     bool? hasReceivedPayout,
     DateTime? payoutDate,
     bool clearPayoutDate = false,
+    String? paymentFrequency,
   }) {
     return Member(
       id: id,
@@ -91,6 +110,7 @@ class Member extends HiveObject {
       hasReceivedPayout: hasReceivedPayout ?? this.hasReceivedPayout,
       payoutDate: clearPayoutDate ? null : (payoutDate ?? this.payoutDate),
       createdAt: createdAt,
+      paymentFrequency: paymentFrequency ?? this.paymentFrequency,
     );
   }
 }
