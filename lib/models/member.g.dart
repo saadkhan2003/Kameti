@@ -26,7 +26,7 @@ class MemberAdapter extends TypeAdapter<Member> {
       hasReceivedPayout: fields[6] as bool,
       payoutDate: fields[7] as DateTime?,
       createdAt: fields[8] as DateTime,
-      paymentFrequency: fields[9] as String,
+      paymentFrequency: fields[9] as String? ?? 'daily',
     );
   }
 
