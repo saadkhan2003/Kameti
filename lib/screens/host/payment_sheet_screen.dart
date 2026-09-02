@@ -530,7 +530,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
     }
 
     final unpaidCount = duePeriods - paidCount;
-    final debtAmount = unpaidCount * widget.committee.contributionAmount * member.frequencyMultiplier;
+    final debtAmount = unpaidCount * widget.committee.contributionAmount * _effectiveFrequencyMultiplier(member);
 
     return {
       'paidCount': paidCount,
@@ -578,7 +578,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       for (var date in allDates) {
         if (_isDateSkipped(date)) continue;
         if (!_isFrequencyPayDay(member, date)) continue;
-        final memberAmount = amountPerCell * member.frequencyMultiplier;
+        final memberAmount = amountPerCell * _effectiveFrequencyMultiplier(member);
         totalDue++;
         if (_isPaymentMarked(member.id, date)) {
           totalPaid++;
@@ -639,7 +639,7 @@ class _PaymentSheetScreenState extends State<PaymentSheetScreen> {
       }
     }
     final advanceAmount =
-        advancePaymentCount * widget.committee.contributionAmount * member.frequencyMultiplier;
+        advancePaymentCount * widget.committee.contributionAmount * _effectiveFrequencyMultiplier(member);
     return {
       'advanceCount': advancePaymentCount,
       'advanceAmount': advanceAmount,

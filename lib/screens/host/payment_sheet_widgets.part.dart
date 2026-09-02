@@ -94,7 +94,7 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
       final date = _dates[index];
       for (var member in _members) {
         if (_isPaymentMarked(member.id, date)) {
-          total += amountPerCell * member.frequencyMultiplier;
+          total += amountPerCell * _effectiveFrequencyMultiplier(member);
         }
       }
       return total;
@@ -898,23 +898,54 @@ extension _PaymentSheetWidgetsPart on _PaymentSheetScreenState {
   }
 
   /// Whether [member] is expected to pay on [date] given their payment
-  /// frequency.  Uses active (non-skipped) date indices so that when a
-  /// committee skip day falls on a scheduled pay day, the pay obligation
-  /// rolls forward to the next available day.
+  /// frequency.  The multiplier is relative to the committee's frequency:
+  /// - Committee daily:  weekly=7 collections, monthly=30 collections
+  /// - Committee weekly:  weekly=1 collection (every week), monthly=4 collections
+  /// - Committee monthly: weekly=1 collection, monthly=1 collection
   bool _isFrequencyPayDay(Member member, DateTime date) {
     if (member.paymentFrequency == 'daily') return true;
     final targetIdx = _dates.indexOf(date);
     if (targetIdx == -1) return false;
+    if (_isDateSkipped(date)) return false;
+
+    final multiplier = _effectiveFrequencyMultiplier(member);
+    if (multiplier <= 1) return true; // same interval as committee = pay every date
 
     // Count only active (non-skipped) dates up to and including this date.
     int activeCount = 0;
     for (int i = 0; i <= targetIdx; i++) {
       if (!_isDateSkipped(_dates[i])) activeCount++;
     }
-    // Check if the date itself is skipped — if so, it can never be a pay day.
-    if (_isDateSkipped(date)) return false;
-    // Pay day = first active date of each frequency window (1-based).
-    return activeCount % member.frequencyMultiplier == 1;
+    return activeCount % multiplier == 1;
+  }
+
+  /// Effective collections between payments for [member], based on committee freq.
+  int _effectiveFrequencyMultiplier(Member member) {
+    if (member.paymentFrequency == 'daily') return 1;
+    int committeeDays;
+    switch (widget.committee.frequency) {
+      case 'weekly':
+        committeeDays = 7;
+        break;
+      case 'monthly':
+        committeeDays = 30;
+        break;
+      default:
+        committeeDays = 1;
+    }
+    int memberDays;
+    switch (member.paymentFrequency) {
+      case 'weekly':
+        memberDays = 7;
+        break;
+      case 'monthly':
+        memberDays = 30;
+        break;
+      default:
+        memberDays = 1;
+    }
+    final effective = (memberDays / committeeDays).round();
+    return effective < 1 ? 1 : effective;
   }
 
   Widget _buildFreqBadge(String frequency) {
